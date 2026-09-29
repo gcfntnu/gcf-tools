@@ -26,6 +26,14 @@ import oyaml as yaml
 # sys.path.append(str(path_root))
 
 import descriptors
+if __name__ == "__main__":
+    # Legacy setup.py installs execute an egg script through a bin wrapper;
+    # remove both locations so configmaker.py cannot shadow the package.
+    script_dirs = {Path(__file__).resolve().parent, Path(sys.argv[0]).resolve().parent}
+    sys.path[:] = [p for p in sys.path if Path(p or os.curdir).resolve() not in script_dirs]
+from configmaker.libprep import LibprepConfig, LibprepConfigError, find_read_geometry
+from configmaker.validation import (validate_inputs, ValidationResult, InputValidationError,
+                                   parse_samplesheet, parse_submission_form, VALIDATOR_VERSION)
 
 
 SEQUENCERS = {
@@ -57,27 +65,17 @@ include:
 
 
 def setup_logger(verbose=False):
+    """Configure console logging only when the standalone application starts."""
     logger = logging.getLogger("GCF-configmaker")
-    fh = logging.FileHandler(".configmaker.debug")
-    fh.setLevel(logging.DEBUG)
-    # create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.WARNING)
-    # create formatter and add it to the handlers
-    formatter = logging.Formatter("%(levelname)s %(message)s")
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
-    # add the handlers to the logger
-    logger.addHandler(fh)
-    logger.addHandler(ch)
-    if verbose:
-        logger.setLevel(10)
-        ch.setLevel(10)
-        logger.debug("setting logging to debug ...")
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(levelname)s %(message)s"))
+    handler.setLevel(logging.DEBUG if verbose else logging.WARNING)
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG if verbose else logging.WARNING)
     return logger
 
 
-logger = setup_logger()
+logger = logging.getLogger("GCF-configmaker")
 
 
 def uniq_list():
@@ -110,7 +108,7 @@ def is_dir(dirname):
         return dirname
 
 
-def is_valid_gcf_id(arg, patt="GCF-\d{4}-\d{3}"):
+def is_valid_gcf_id(arg, patt=r"GCF-\d{4}-\d{3}"):
     if arg is None:
         return True
     m = re.match(patt, arg)
@@ -136,14 +134,14 @@ def _match_project_dir(pth, project_id=None, test=False):
         project_dir = None
 
         for fn in os.listdir(pth):
-            if os.path.isdir(os.path.join(pth, fn)) and re.match("^GCF-\d{4}-\d{3}", fn):
+            if os.path.isdir(os.path.join(pth, fn)) and re.match(r"^GCF-\d{4}-\d{3}", fn):
                 if project_dir is not None:
                     msg = "runfolders contain more than one project folders existing: {}, other: {}"
                     msg += "\nuse `--project-id` option to choose one."
                     logger.error(msg.format(project_id, fn))
                 project_dir = os.path.join(pth, fn)
                 project_id = fn
-            elif test and re.match("GCF-\d{4}-\d{3}_samplesheet.tsv", fn):
+            elif test and re.match(r"GCF-\d{4}-\d{3}_samplesheet.tsv", fn):
                 project_id = fn.split("_samplesheet.tsv")[0]
                 project_dir = os.path.join(pth, project_id)
         if project_dir:
@@ -156,81 +154,21 @@ def _match_project_dir(pth, project_id=None, test=False):
 
 
 def get_data_from_samplesheet(fh):
-    """
-    returns [data] section as dataframe and [CustomOptions] section as key-value dict
-    """
-    custom_opts = False
-    header = False
-    header_d = {}
-    opts_d = {}
-    while True:
-        line = fh.readline()
-        if not line:
-            msg = "No [data]-section in samplesheet {}".format(s.name)
-            raise RuntimeError(msg)
-        if line.startswith("[Data]"):
-            return (pd.read_csv(fh, dtype={"Sample_ID": str, "Sample_Name": str}), opts_d, header_d)
-        
-        elif line.startswith("[CustomOptions]"):
-            custom_opts = True
-            continue
-        elif line.startswith("[Header]"):
-            header = True
-            continue
-        elif custom_opts:
-            els = [i.strip() for i in line.split(",") if i]
-            if len(els) == 1:
-                key, val = els[0], ""
-            else:
-                key, val = els[:2]
-            if val.lower() == "true":
-                val = True
-            if key == "Organism" and val == "N/A":
-                val = None
-            logger.debug("custom opt: {}:{}".format(key, str(val)))
-            opts_d[key] = val
-        elif header:
-            if line.startswith("["):
-                header = False
-                continue
-            els = [i.strip() for i in line.split(",") if i]
-            if len(els) == 1:
-                key, val = els[0], ""
-            else:
-                key, val = els[:2]
-            if val.lower() == "true":
-                val = True
-            logger.debug("header: {}:{}".format(key, str(val)))
-            header_d[key] = val
+    """Compatibility entry point using the shared validated SampleSheet parser."""
+    result = ValidationResult()
+    sheet = parse_samplesheet(fh.read(), getattr(fh, "name", "<stream>"), result)
+    if not result.ok:
+        raise InputValidationError(result)
+    return (pd.DataFrame(sheet["records"])[sheet["columns"]], sheet["options"], sheet["header"])
 
 
 def get_project_samples_from_samplesheet(args):
-    """
-    Return a dataframe containing project samples
-
-    !! Assuming CustomOptions are equal between all samplesheets
-    """
-
-    samples_dataframe_list = []
-    for samplesheet_i in args.samplesheet:
-        with open(samplesheet_i, "r") as fh:
-            data, opts, header = get_data_from_samplesheet(fh)
-            samples_dataframe_list.append(data)
-    df = pd.concat(samples_dataframe_list)
-    if args.project_id:
-        # subset samples on project id
-        keep = df.Sample_Project.isin(args.project_id)
-        n_samples = df.shape[0]
-        n_keep = sum(keep)
-        if n_keep < n_samples:
-            logger.debug("subsetting samples on project_id")
-            logger.debug("{} samples kept out of {}".format(n_keep, n_samples))
-            df = df[df.Sample_Project.isin(args.project_id)]
-    df["Sample_ID"] = df["Sample_ID"].astype(str)
-    df["Project_ID"] = [[i] for i in df["Sample_Project"]]  # store project-ids as list
-    df = df[["Sample_ID", "Project_ID"]]
-    df = df.convert_dtypes()
-    return df, opts, header
+    result = getattr(args, "_validation", None)
+    if result is None:
+        result = validate_inputs(args.samplesheet, args.ssub, args.project_id, args.keep_batch)
+    if not result.ok:
+        raise InputValidationError(result)
+    return result.samples.copy(), result.custom_options.copy(), result.header.copy()
 
 
 def match_fastq(sample_name, project_dir, rel_path=True):
@@ -248,20 +186,20 @@ def match_fastq(sample_name, project_dir, rel_path=True):
         elif fn == "{}_I1.fastq.gz".format(sample_name):
             i1_fastq_files.extend([os.path.join(project_dir, fn)])
         elif fn == sample_name:
-            r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + "*_R1_001.fastq.gz")))
-            r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + "*_R2_001.fastq.gz")))
-            i1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + "*_I1_001.fastq.gz")))
-        elif re.match(sample_name + "_S\d+_L\d{3}_R1_001.fastq.gz", fn):
+            r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, glob.escape(sample_name) + "*_R1_001.fastq.gz")))
+            r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, glob.escape(sample_name) + "*_R2_001.fastq.gz")))
+            i1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, glob.escape(sample_name) + "*_I1_001.fastq.gz")))
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_L\d{3}_R1_001\.fastq\.gz", fn):
             r1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
-        elif re.match(sample_name + "_S\d+_L\d{3}_R2_001.fastq.gz", fn):
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_L\d{3}_R2_001\.fastq\.gz", fn):
             r2_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
-        elif re.match(sample_name + "_S\d+_L\d{3}_I1_001.fastq.gz", fn):
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_L\d{3}_I1_001\.fastq\.gz", fn):
             i1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
-        elif re.match(sample_name + "_S\d+_R1_001.fastq.gz", fn):
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_R1_001\.fastq\.gz", fn):
             r1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
-        elif re.match(sample_name + "_S\d+_R2_001.fastq.gz", fn):
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_R2_001\.fastq\.gz", fn):
             r2_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
-        elif re.match(sample_name + "_S\d+_I1_001.fastq.gz", fn):
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_I1_001\.fastq\.gz", fn):
             i1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
             
     if (len(r1_fastq_files) == 0) and (len(r2_fastq_files) == 0):
@@ -328,11 +266,13 @@ def find_samples(df, args):
     return sample_dict
 
 
-def find_samples_batch(df, project_dirs):
+def find_samples_batch(df, args):
     """
     `find_samples` function adding Flowcell_ID postfix to Sample_ID
     """
     sample_dict = {}
+    validation = getattr(args, "_validation", None)
+    planned = {item["sample_id"]: item for item in validation.summary["planned_samples"]} if validation else None
     project_dirs = [os.path.join(run_folder, project_id) for run_folder, project_id in zip(args.runfolders, args.project_id)]
     for index, row in df.iterrows():
         for p_pth in project_dirs:
@@ -342,289 +282,120 @@ def find_samples_batch(df, project_dirs):
                 logger.warning(warn_str)
             else:
                 r2 = [] if not r2 else r2
-                Flowcell_ID = os.path.split(p_pth)[-2].split("_")[-1]
+                Flowcell_ID = Path(p_pth).parent.name.split("_")[-1]
                 Sample_ID = "{}_{}".format(row.Sample_ID, Flowcell_ID)
+                if planned is not None and Sample_ID not in planned:
+                    continue
+                project_ids = planned[Sample_ID]["project_ids"] if planned is not None else row.Project_ID
                 if len(i1) > 0:
                     sample_dict[Sample_ID] = {
                         "R1": ",".join(r1),
                         "R2": ",".join(r2),
                         "I1": ",".join(i1),
-                        "Project_ID": ",".join(row.Project_ID),
+                        "Project_ID": ",".join(project_ids),
                         "Sample_ID": Sample_ID,
                         "Src_Sample_ID": row.Sample_ID,
+                        "Flowcell_Name": Path(p_pth).parent.name,
+                        "Flowcell_ID": Flowcell_ID,
                     }
                 else:
                     sample_dict[Sample_ID] = {
                         "R1": ",".join(r1),
                         "R2": ",".join(r2),
-                        "Project_ID": ",".join(row.Project_ID),
+                        "Project_ID": ",".join(project_ids),
                         "Sample_ID": Sample_ID,
                         "Src_Sample_ID": row.Sample_ID,
+                        "Flowcell_Name": Path(p_pth).parent.name,
+                        "Flowcell_ID": Flowcell_ID,
                     }
     return sample_dict
 
 
-def find_samples_test(df, project_dirs):
+def find_samples_test(df, args):
     sample_dict = {}
-    for index, row in df.iterrows():
-        sample_dict[str(row.Sample_ID)] = {
-            "R1": "{}_R1.fastq.gz".format(row.Sample_ID),
-            "R2": "{}_R2.fastq.gz".format(row.Sample_ID),
-            "Project_ID": ",".join(row.Project_ID),
-            "Sample_ID": row.Sample_ID,
-        }
+    validation = getattr(args, "_validation", None)
+    planned = {item["sample_id"]: item for item in validation.summary["planned_samples"]} if validation else None
+    for row in df.itertuples(index=False):
+        batches = args.runfolders if args.keep_batch else [args.runfolders[0]]
+        for runfolder in batches:
+            flowcell = Path(runfolder).name
+            sid = row.Sample_ID + "_" + flowcell.split("_")[-1] if args.keep_batch else row.Sample_ID
+            if planned is not None and sid not in planned:
+                continue
+            project_ids = planned[sid]["project_ids"] if planned is not None else row.Project_ID
+            sample_dict[sid] = {
+                "R1": "{}_R1.fastq.gz".format(row.Sample_ID),
+                "R2": "{}_R2.fastq.gz".format(row.Sample_ID),
+                "Project_ID": ",".join(project_ids), "Sample_ID": sid,
+                "Flowcell_Name": flowcell, "Flowcell_ID": flowcell.split("_")[-1],
+            }
     return sample_dict
 
 
-def _customer_column_mapper(x):
-    """
-    map headers of customer-sheet to machine friendly headers
-    """
-    starts = [
-        ("Unique", "Sample_ID"),
-        ("External", "External_ID"),
-        ("Sample Group", "Sample_Group"),
-        ("Comment", "Customer_Comments"),
-        ("Sample biosource", "Sample_Biosource"),
-        ("Project", "Project_ID"),
-        ("Sample type", "Sample_Type"),
-        ("Sample Type", "Sample_Type"),
-        ("Index (If libraries are submitted  indicate what index sequence is used P7 )","Index1",),
-        ("Index2", "Index2"),
-        ("Index1", "Index1"),
-        ("Sequence1", "Index_Sequence1"),
-        ("Sequence2", "Index_Sequence2"),
-        ("Plate location", "Plate"),
-        ("Sample buffer", "Sample_Buffer"),
-        ("Sample Buffer", "Sample_Buffer"),
-        ("Volume", "Volume"),
-        ("Quantification", "Quantification"),
-        ("Concentration", "Concentration"),
-        ("260/280", "260/280"),
-        ("260/230", "260/230"),
-        ("Organism", "Organism"),
-        ("RIN", "RIN"),
-    ]
-    for src, dst in starts:
-        if x.startswith(src):
-            return dst
-    # unknown header value (may be customer added)
-    src_sanitized = x.title()
-    remove = """- ? ( ) [ ] / \ = + < > : ; " ' , * ^ | & .""".split()
-    for r in remove:
-        src_sanitized = src_sanitized.replace(r, "")
-        src_sanitized = src_sanitized.replace(" ", "_")
-    return "Submitted_" + src_sanitized
+from configmaker.columns import _customer_column_mapper, _lab_column_mapper, _demux_column_mapper
 
 
-def _lab_column_mapper(x):
-    """
-    map headers of wetlab-sheet to machine friendly headers
-    """
-    starts = [
-        ("Concentration", "Concentration"),
-        ("260/280", "260/280"),
-        ("260/230", "260/230"),
-        ("Comment", "Comments"),
-        ("Sample_ID", "Sample_ID"),
-        ("Project", "Project_ID"),
-        ("RIN", "RIN"),
-        ("SpikeIn", "SpikeIn"),
-        ("Fragment_Length", "Fragment_Length"),
-        ("Fragment_SD", "Fragment_SD"),
-        ("Sample_Name", "Lab_Sample_Name"),
-        ("KIT", "KIT"),
-        ("ERCC", "ERCC"),
-    ]
-    for src, dst in starts:
-        if x.startswith(src):
-            return dst
-    src_sanitized = x.title()
-    remove = """- ? ( ) [ ] / \ = + < > : ; " ' , * ^ | & .""".split()
-    for r in remove:
-        src_sanitized = src_sanitized.replace(r, "")
-        src_sanitized = src_sanitized.replace(" ", "_")
-    return "Lab_" + src_sanitized
-
-
-def _demux_column_mapper(x):
-    """
-    map headers of demux-sheet to machine friendly headers
-    """
-    starts = [
-        ("Unique", "Sample_ID"),
-        ("Wells", "Wells"),
-        ("External", "External_ID"),
-        ("Sample Group", "Sample_Group"),
-        ("Comment", "Customer_Comments"),
-    ]
-    for src, dst in starts:
-        if x.startswith(src):
-            return dst
-    # unknown header value (may be customer added)
-    src_sanitized = x.title()
-    remove = """- ? ( ) [ ] / \ = + < > : ; " ' , * ^ | & .""".split()
-    for r in remove:
-        src_sanitized = src_sanitized.replace(r, "")
-        src_sanitized = src_sanitized.replace(" ", "_")
-    return "Demux_" + src_sanitized
+def _validated_form(fn):
+    result = ValidationResult()
+    try:
+        content = Path(fn).read_bytes()
+    except OSError as error:
+        result.add("error", "input.unreadable", str(error), file=str(fn))
+        raise InputValidationError(result) from error
+    form = parse_submission_form(content, str(fn), result)
+    if not result.ok:
+        raise InputValidationError(result)
+    return form
 
 
 def read_customer_sheet(fn):
-    _dtypes = {"Unique Sample ID": str,
-               "External ID (optional reference sample ID)": str,}
-    df = pd.read_excel(fn, sheet_name="Sample-Submission-Form", skiprows=14, dtype=_dtypes)
-    desc = descriptors.descriptors.findall_header_descriptors(
-        df, mapper=_customer_column_mapper
-    )  # identify any header descriptors
-    df = df.rename(columns=_customer_column_mapper)
-    remove_cols = [
-        "Sample_Type",
-        "Sample_Buffer",
-        "Volume",
-        "Quantification",
-    ]  # wetlab only
-    remove_cols = list(set(df.columns).intersection(remove_cols))
-    df = df.drop(remove_cols, axis=1)
-    df = df.replace("NA", pd.NA)
-    df = df.dropna(axis="columns", how="all")  # remove empty cols
-    if not df.empty:
-        df = df.convert_dtypes()
-    logger.debug("customer descriptors: {}".format(str(desc)))
-    return df, desc
+    parsed = _validated_form(fn)["customer"]
+    return parsed["data"], parsed["descriptors"]
 
 
 def read_lab_sheet(fn):
-    df = pd.read_excel(fn, sheet_name="INFO (GCF-lab only)", dtype={"Sample_ID": str})
-    desc = descriptors.descriptors.findall_header_descriptors(df, mapper=_lab_column_mapper)
-    df = df.rename(columns=_lab_column_mapper)
-    legacy_cols = list(set(["Sample_Name", "KIT"]).intersection(df.columns))
-    df = df.drop(legacy_cols, axis=1, errors="ignore")
-    df = df.replace("NA", pd.NA)
-    df = df.dropna(axis="columns", how="all")  # remove empty cols
-    if not df.empty:
-        df = df.convert_dtypes()
-    logger.debug("lab descriptors: {}".format(str(desc)))
-    return df, desc
+    parsed = _validated_form(fn)["lab"]
+    return parsed["data"], parsed["descriptors"]
 
 
 def read_demux_sheet(fn):
-    _dtypes = {"Unique Sample ID": str,
-               "External ID (optional reference sample ID)": str,}
-    df = pd.read_excel(fn, sheet_name="Cell Multiplexing", dtype=_dtypes)
-    desc = descriptors.descriptors.findall_header_descriptors(
-        df, mapper=_demux_column_mapper
-    )  # identify any header descriptors
-    df = df.rename(columns=_demux_column_mapper)
-    df = df.replace("NA", pd.NA)
-    df = df.dropna(axis="columns", how="all")  # remove empty cols
-    if not df.empty:
-        df = df.convert_dtypes()
+    result = ValidationResult()
+    form = parse_submission_form(Path(fn).read_bytes(), str(fn), result, require_demux=True)
+    if not result.ok:
+        raise InputValidationError(result)
+    parsed = form["demux"]
+    df = parsed["data"].copy()
     if "Wells" in df.columns:
-        df["Wells"] = df["Wells"].apply(lambda x: x.replace(" ", ""))
-    logger.debug("demux descriptors: {}".format(str(desc)))
-    return df, desc
+        df["Wells"] = df["Wells"].map(lambda value: str(value).replace(" ", "") if not pd.isna(value) else value)
+    return df, parsed["descriptors"]
 
 
 def sample_submission_form_parser(ssub_path, keep_batch=None):
-    """read submission form excel file
-
-    merge sheets (customer + lab) and santize column names, values and add column descriptors
-
-    returns a merged dataframe from lab and customer where each row represent a sample and a descriptor dictionary keyed in column names
-    """
-
-    customer, desc = read_customer_sheet(ssub_path)
-    lab, lab_desc = read_lab_sheet(ssub_path)
-    # lab-sheet will take presedence over customer filled columns
-    shared_cols = list(set(customer.columns).intersection(lab.columns))
-    if "Sample_ID" in shared_cols:
-        shared_cols.remove("Sample_ID")
-    customer = customer.drop(shared_cols, axis=1)
-    for k, v in lab_desc.items():
-        if v:
-            if k not in shared_cols and not desc.get(k):
-                logger.debug("lab descriptor: {}:{}".format(k, v))
-                desc[k] = v
-
+    """Compatibility wrapper; normal initialization reuses its preflight result."""
+    form = _validated_form(ssub_path)
+    frame = form["data"].copy()
     if keep_batch:
-        flowcell_id = os.path.split(ssub_path)[-2].split('_')[-1]
-        customer["Sample_ID"] = customer["Sample_ID"].astype(str) + "_" + flowcell_id
-        lab["Sample_ID"] = lab["Sample_ID"].astype(str) + "_" + flowcell_id
-
-    if not lab.empty:
-        merged_ssub = pd.merge(customer, lab, on="Sample_ID", how="inner")
-    else:
-        merged_ssub = customer
-    merged_ssub["Sample_ID"] = merged_ssub["Sample_ID"].astype(str)
-    merged_ssub.index = merged_ssub["Sample_ID"]
-    desc = descriptors.descriptors.add_default_descriptors(merged_ssub, desc)
-
-    return merged_ssub, desc
-
-
-def _make_header_uniq(df):
-    columns = df.columns.values.copy()
-    dup_vals = set(df.columns[df.columns.duplicated()])
-    logger.error("duplicate col names: {}".format(dup_vals))
-    for d in dup_vals:
-        dups = df.columns[df.columns == d]
-        uniq_names = ["{}_{}".format(k, i + 1) for i, k in enumerate(dups)]
-        columns[df.columns == d] = uniq_names
-    df.columns = columns
-    return df
+        frame["Sample_ID"] += "_" + Path(ssub_path).parent.name.split("_")[-1]
+    frame.index = frame["Sample_ID"]
+    return frame, form["descriptors"]
 
 
 def merge_samples_with_submission_form(sample_dict, args):
     """
     """
-    submission_forms, desc = {}, {}
-    for submission_form in args.ssub:
-        ssub, sub_desc = sample_submission_form_parser(submission_form, keep_batch=args.keep_batch)
-        pth = os.path.abspath(submission_form)
-        if len(set(ssub.columns)) != len(ssub.columns):
-            ssub = _make_header_uniq(ssub)
-        submission_forms[pth] = ssub.to_dict(orient="index")
-
-        for k, v in sub_desc.items():
-            if k in desc:
-                if desc[k] != v:
-                    default_v = descriptors.descriptors.DEFAULT_DESCRIPTORS.get(k)
-                    if desc[k] == default_v:
-                        # update descriptor if is new and not default value
-                        desc[k] = v
-            else:
-                desc[k] = v
-
-    merge = dict()
-    for pth, sf_dict in submission_forms.items():
-        for sample_id, vals in sf_dict.items():
-            if sample_id not in merge:
-                merge[sample_id] = vals
-            else:
-                # merge info from sample
-                sample = merge[sample_id]
-                for k, v in vals.items():
-                    if k in ["Flowcell_Name", "Flowcell_ID", "Project_ID"]:
-                        # special case flowcell name to multiple values by comma sep
-                        v = ",".join([sample[k], v])
-                    elif (pd.isnull(v) and pd.isnull(sample[k])) or (sample[k] == v):
-                        # equal info between submission forms
-                        pass
-                    else:
-                        # unequal info in submission forms and we are not looking at flowcell
-                        msg = "Sampleinfo ({}) at {} are updated with values from {}/Sample-Submission-Form.xlsx. ".format(v, k, pth)
-                        msg2 = "Specify a custom sample submission form with --sample-submission-form to force values."
-                        logger.warning(msg + msg2)
-                    sample[k] = v
-                merge[sample_id] = sample
-    merge = pd.DataFrame.from_dict(merge, orient="index")
+    result = getattr(args, "_validation", None)
+    if result is None:
+        result = validate_inputs(args.samplesheet, args.ssub, args.project_id, args.keep_batch)
+    if not result.ok:
+        raise InputValidationError(result)
+    merge = result.metadata.copy()
+    desc = copy.deepcopy(result.descriptors)
     check_existence_of_samples(sample_dict.keys(), merge)
     sample_df = pd.DataFrame.from_dict(sample_dict, orient="index")
     if "Project_ID" in sample_df.columns and "Project_ID" in merge:
         # use Project_ID from samplesheet over sample-submission-form
         merge = merge.drop("Project_ID", axis=1)
-    sample_df = sample_df.merge(merge, on="Sample_ID", how="left")
+    sample_df = sample_df.merge(merge.reset_index(drop=True), on="Sample_ID", how="left", validate="one_to_one")
     sample_df.reset_index()
     sample_df.index = sample_df["Sample_ID"]
 
@@ -633,7 +404,14 @@ def merge_samples_with_submission_form(sample_dict, args):
         sample_df["Project_ID"] = args.new_project_id
 
     desc = descriptors.descriptors.add_default_descriptors(sample_df, desc)
-    sample_df, desc = descriptors.descriptors.infer_by_descriptor(sample_df, desc)
+    # Descriptor inference sanitizes strings, including IDs; identity fields
+    # must retain exactly the values already accepted by metadata preflight.
+    identities = sample_df[[c for c in ("Sample_ID", "Project_ID", "Src_Project_ID") if c in sample_df]].copy()
+    sample_df, desc = descriptors.descriptors.infer_by_descriptor(sample_df.drop(columns=identities.columns), desc)
+    for column in identities:
+        sample_df[column] = identities[column]
+    sample_df.index = sample_df["Sample_ID"]
+    sample_df = descriptors.descriptors.order_columns_by_descriptors(sample_df, desc)
     if "Organism" in sample_df.columns:
         if len(set(sample_df.Organism.values)) == 1:  # single customer org
             if args.organism is not None:
@@ -669,25 +447,8 @@ def check_existence_of_samples(samples, df):
             extra = ",... +{} samples".format(n_diff2 - 10)
         vals2 = ",".join(list(diff2)) + extra
         msg = "Samples {} are contained in sample submission form, but not in SampleSheet. Sample info from these samples are omitted."
-        logger.warning(msg.format(vals2))
+        logger.info(msg.format(vals2))
     return None
-
-
-def find_read_geometry(runfolders):
-    n_matches = set()
-    for fn in runfolders:
-        stats_fn = os.path.join(fn, "Stats", "Stats.json")
-        read_geometry = []
-        with open(stats_fn) as fh:
-            S = json.load(fh)
-        for read in S["ReadInfosForLanes"][0]["ReadInfos"]:
-            if not read["IsIndexedRead"]:
-                n_cycles = int(read["NumCycles"])
-                read_geometry.append(n_cycles)
-        n_matches.add(",".join(map(str, read_geometry)))
-    if len(n_matches) > 1:
-        raise ValueError("Read geometry mismatch between runfolders. Check Stats.json!")
-    return read_geometry
 
 
 def find_machine(runfolders):
@@ -709,7 +470,7 @@ def find_fastq_md5sums(runfolders, project_id):
             fn = os.path.join(pth, 'md5sum_{}_fastq.txt'.format(pid))
             fn_list.append(fn)
             if os.path.isfile(fn):
-                df = pd.read_table(fn, header=None, sep="\s+", names=['md5sum', 'filename'])
+                df = pd.read_table(fn, header=None, sep=r"\s+", names=['md5sum', 'filename'])
                 df['filename'] = df['filename'].apply(lambda x: os.path.split(x)[-1])
                 df = df.set_index('filename')
                 df_list.append(df)
@@ -811,8 +572,14 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
                 if md5 and val:
                     config["samples"][sample_id][col_name+ "_md5sum"] = ','.join(md5) 
 
-    if custom_opts.get("Libprep",'').startswith("Parse Biosciences"):
-        demux_df, demux_desc = read_demux_sheet(args.ssub[0])
+    if opts.get("Libprep",'').startswith("Parse Biosciences"):
+        validation = getattr(args, "_validation", None)
+        if validation is not None:
+            demux_df = validation.forms[0]["demux"]["data"].copy()
+            if "Wells" in demux_df:
+                demux_df["Wells"] = demux_df["Wells"].map(lambda value: str(value).replace(" ", "") if not pd.isna(value) else value)
+        else:
+            demux_df, _ = read_demux_sheet(args.ssub[0])
 
         config['wells'] = {}
         for k,v in demux_df.to_dict(orient="index").items():
@@ -868,72 +635,66 @@ def create_fastq_dir(sample_dict, args, output_dir=None, overwrite=True):
 
 
 
-def add_workflow(config, src_dir=None):
-    """download snakemake workflow for libprep specific workflow
-    """
-    src_dir = src_dir or "src"
-    wf_path = os.path.join(src_dir, "gcf-workflows")
-    if not os.path.exists(src_dir):
-        os.makedirs(src_dir, exist_ok=True)
-        cmd = "cd src && git clone {}".format(GCF_WORKFLOWS_SRC)
-        subprocess.check_call(cmd, shell=True)
+def _merge_defaults(config, defaults):
+    """Fill missing nested kit settings while retaining explicit project options."""
+    for key, value in defaults.items():
+        if key not in config:
+            config[key] = copy.deepcopy(value)
+        elif isinstance(config[key], dict) and isinstance(value, dict):
+            _merge_defaults(config[key], value)
 
-    with open(os.path.join(wf_path, "libprep.config"), "r") as libprepconf_fh:
-        libconf = yaml.safe_load(libprepconf_fh)
 
-    libkit = config["libprepkit"] + (" PE" if len(config["read_geometry"]) > 1 else " SE")
-    kitconf = libconf.get(libkit)
-    if not kitconf:
-        logger.warning("Libprepkit {} is not defined in libprep.config. Running with default settings.".format(libkit))
-        workflow = "default"
-        kitconf = libconf["default"]
-    else:
-        workflow = kitconf["workflow"]
+def add_workflow(config, src_dir=None, *, libprep_config=None,
+                 expected_sha256=None, expected_entry=None, expected_read_geometry=None):
+    """Select a kit from one snapshot; standalone sources remain portable."""
+    wf_path = Path(src_dir or "src") / "gcf-workflows"
+    if not wf_path.exists():
+        wf_path.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.check_call(["git", "clone", GCF_WORKFLOWS_SRC, str(wf_path)])
 
-    reference_db = kitconf.get('db', {}).get('reference_db')
-    if reference_db:
-        if 'db' not in config:
-            config['db'] = {}
-        config['db']['reference_db'] = reference_db
-        
-    if not "workflow" in config:
-        config["workflow"] = workflow
-    
-    for k, v in kitconf.items():
-        if k not in config:
-            logger.info("adding {} to conf".format(k))
-            config[k] = v
-    
+    snapshot = (libprep_config if isinstance(libprep_config, LibprepConfig)
+                else LibprepConfig.load(libprep_config or wf_path / "libprep.config"))
+    if expected_sha256 is not None and snapshot.sha256 != expected_sha256:
+        raise LibprepConfigError("Libprep configuration hash mismatch for {}: expected {}, got {}".format(
+            snapshot.source, expected_sha256, snapshot.sha256))
+    selection = snapshot.select(config.get("libprepkit"), config["read_geometry"])
+    if expected_entry is not None and selection.entry != expected_entry:
+        raise LibprepConfigError("Libprep entry mismatch: expected {!r}, got {!r}".format(expected_entry, selection.entry))
+    if expected_read_geometry is not None and tuple(expected_read_geometry) != selection.read_geometry:
+        raise LibprepConfigError("Read geometry changed since BFQ selection: expected {}, got {}".format(
+            expected_read_geometry, selection.read_geometry))
+    if config.get("workflow", selection.workflow) != selection.workflow:
+        raise LibprepConfigError("Configured workflow conflicts with selected libprep entry {!r}".format(selection.entry))
+
+    _merge_defaults(config, selection.parameters)
+    config["libprep_selection"] = selection.diagnostics()
+    logger.warning("Libprep selection: %s", json.dumps(selection.diagnostics(), sort_keys=True))
+    snapshot.write(wf_path / "libprep.config")
     with open("Snakefile", "w") as sn:
-        sn.write(SNAKEFILE_TEMPLATE.format(workflow=workflow))
-
+        sn.write(SNAKEFILE_TEMPLATE.format(workflow=selection.workflow))
     return config
 
-def project_summary(config):
-    """
-    print project summary
-    """
-    summary = dict()
-    for s, info in config["samples"].items():
-        summary[s] = set(x.split("/")[0] for x in info["R1"].split(","))
-
-    count = dict()
-    for s, f in summary.items():
-        if len(f) in count.keys():
-            count[len(f)] += 1
-        else:
-            count[len(f)] = 1
-    dirname = os.path.dirname(str(args.output))
-    with open(os.path.join(dirname, ".configmaker.log"), "w") as conflog:
-        print("Summary:")
-        for nf, ns in count.items():
-            line = "{} sample{} found in {} flowcell{}".format(ns, "s" if ns > 1 else "", nf, "s" if nf > 1 else "")
-            print(line)
-            conflog.write(line + "\n")
-        conflog.write("Sample summary:\n")
-        for s, f in summary.items():
-            conflog.write("Sample {} found in: {}\n".format(s, ", ".join(f)))
-    print("Full sample summary log written to {}".format(os.path.join(dirname, ".configmaker.log")))
+def project_summary(config, output="config.yaml", validation=None):
+    """Persist analysis-time FASTQ discovery, separate from metadata preflight."""
+    samples = []
+    for sid, info in config["samples"].items():
+        flowcells = sorted(set(filter(None, info.get("Flowcell_Name", "").split(","))))
+        samples.append({"sample_id": sid, "flowcells": flowcells})
+    planned = {item["sample_id"] for item in validation.summary["planned_samples"]} if validation else set(config["samples"])
+    report = {"schema_version": 1, "kind": "fastq_discovery", "samples": samples,
+              "sample_count": len(samples), "planned_sample_count": len(planned),
+              "missing_sample_ids": sorted(planned - set(config["samples"]))}
+    directory = Path(output).parent
+    summary_file = directory / "configmaker.analysis-summary.json"
+    summary_file.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    lines = ["FASTQ discovery: {} of {} planned sample(s) found.".format(len(samples), len(planned))]
+    lines.extend("Sample {} found in: {}".format(item["sample_id"], ", ".join(item["flowcells"])) for item in samples)
+    if report["missing_sample_ids"]:
+        lines.append("No FASTQs found for: " + ", ".join(report["missing_sample_ids"]))
+    (directory / ".configmaker.log").write_text("\n".join(lines) + "\n")
+    print(lines[0])
+    print("FASTQ discovery summary written to {}".format(summary_file))
+    return report
 
 
 def check_input(args):
@@ -954,8 +715,8 @@ def check_input(args):
                 submission_forms.append(ssub_fn)
 
     if args.samplesheet is not None:
-        logger.debug("overriding samplesheet with command line arg: {}".format(args.samplesheet.name))
-        args.samplesheet = [args.samplesheet.name]
+        logger.debug("overriding samplesheet with command line arg: {}".format(args.samplesheet))
+        args.samplesheet = [str(args.samplesheet)]
     else:
         if len(samplesheets) == 0:
             msg = "cannot find SampleSheet.csv in runfolders. Use --samplesheet for manual override"
@@ -963,7 +724,7 @@ def check_input(args):
             raise RuntimeError(msg)
         args.samplesheet = samplesheets
     if args.ssub is not None:
-        args.ssub = [args.ssub.name]
+        args.ssub = [str(args.ssub)]
     else:
         if len(submission_forms) == 0:
             msg = "cannot find Sample-Submission-Form.xlsx in runfolders. Use --submission-form for manual override"
@@ -1000,7 +761,7 @@ def subsample_input_type(arg):
     return s
 
 
-def parse_args():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-p", "--project-id",
                         nargs="+",
@@ -1021,17 +782,17 @@ def parse_args():
                         )
     parser.add_argument("-s", "--sample-sheet",
                         dest="samplesheet",
-                        type=argparse.FileType("r"),
+                        type=Path,
                         help="IEM Samplesheet",
                         )
     parser.add_argument("-o","--output",
                         default="config.yaml",
                         help="Output config file",
-                        type=argparse.FileType("w"),
+                        type=Path,
                         )
     parser.add_argument("-S","--sample-submission-form",
                         dest="ssub",
-                        type=argparse.FileType("r"),
+                        type=Path,
                         help="GCF Sample Submission Form",
                         )
     parser.add_argument("--subsample",
@@ -1045,6 +806,12 @@ def parse_args():
     parser.add_argument("--libkit",
                         help="Library preparation kit name. (if applicable for all samples). Overrides value from samplesheet."
                         )
+    parser.add_argument("--libprep-config", type=Path,
+                        help="Explicit configuration snapshot (default: src/gcf-workflows/libprep.config)")
+    parser.add_argument("--libprep-sha256", help="Require this configuration SHA-256")
+    parser.add_argument("--libprep-entry", help="Require this exact selected entry")
+    parser.add_argument("--expected-read-geometry", nargs="+", type=int,
+                        help="Require these read lengths from Stats.json")
     parser.add_argument("--machine",
                         help="Sequencer model."
                         )
@@ -1084,52 +851,53 @@ def parse_args():
                         help="Activate test-mode. (no fastq files needed)",
                         )
 
-    args = parser.parse_args()
+    parser.add_argument("--expected-validation-version", help="Require this shared validator version before initializing output")
+    args = parser.parse_args(argv)
     return args
 
 
-if __name__ == "__main__":
-    args = parse_args()
-    if args.verbose:
-        logger = setup_logger(verbose=True)
-    args = check_input(args)
-    samples_df, custom_opts, header = get_project_samples_from_samplesheet(args)
-    args.organism = args.organism or custom_opts.get("Organism")
-    args.organism = args.organism or descriptors.fuzzmatch.fuzzmatch_organism(args.organism)
-
-    if args.test:
-        sample_dict = find_samples_test(samples_df, args)
-    else:
-        if args.keep_batch:
+def main(argv=None):
+    args = parse_args(argv)
+    setup_logger(args.verbose)
+    try:
+        if args.expected_validation_version and args.expected_validation_version != VALIDATOR_VERSION:
+            raise ValueError("Shared validator version mismatch: expected {}, installed {}. Install matching gcf-tools in the BFQ and configmaker environments.".format(args.expected_validation_version, VALIDATOR_VERSION))
+        args = check_input(args)
+        validation = validate_inputs(args.samplesheet, args.ssub, args.project_id, args.keep_batch)
+        print(validation.render_text(), file=sys.stdout if validation.ok else sys.stderr)
+        if not validation.ok:
+            return 2
+        args._validation = validation
+        samples_df, custom_opts, header = get_project_samples_from_samplesheet(args)
+        args.organism = args.organism or custom_opts.get("Organism")
+        args.organism = args.organism or descriptors.fuzzmatch.fuzzmatch_organism(args.organism)
+        if args.test:
+            sample_dict = find_samples_test(samples_df, args)
+        elif args.keep_batch:
             sample_dict = find_samples_batch(samples_df, args)
         else:
             sample_dict = find_samples(samples_df, args)
+        if not sample_dict:
+            raise ValueError("FASTQ discovery failed: no matching FASTQs were found for {} planned sample(s). Check runfolders, project directories and Sample_ID spelling. Metadata preflight passed.".format(validation.summary["planned_sample_count"]))
+        merged_samples, desc = merge_samples_with_submission_form(sample_dict, args)
+        fastq_dir = create_fastq_dir(sample_dict, args)
+        md5sums = find_fastq_md5sums(args.runfolders, args.project_id)
+        config = create_default_config(merged_samples, custom_opts, args, fastq_dir=fastq_dir, descriptors=desc, md5sums=md5sums)
+        config = add_workflow(config, libprep_config=args.libprep_config,
+                              expected_sha256=args.libprep_sha256,
+                              expected_entry=args.libprep_entry,
+                              expected_read_geometry=args.expected_read_geometry)
+        with open(args.output, "w") as output:
+            yaml.safe_dump(config, output)
+        if not args.skip_peppy:
+            import peppy_support
+            peppy_support.create_peppy(config, output_dir="pep")
+        project_summary(config, args.output, validation)
+        return 0
+    except (InputValidationError, LibprepConfigError, OSError, RuntimeError, ValueError) as error:
+        logger.error("%s", error)
+        return 2
 
-    merged_samples, desc = merge_samples_with_submission_form(sample_dict, args)
-    
-    fastq_dir = create_fastq_dir(sample_dict, args)
-    
-    md5sums = find_fastq_md5sums(args.runfolders, args.project_id)
-    config = create_default_config(merged_samples, custom_opts, args, fastq_dir=fastq_dir, descriptors=desc, md5sums=md5sums)
 
-    #if args.create_project:
-    config = add_workflow(config)
-
-    # validate organism scientific name and reference database before writing configfile
-    #check_organism_and_reference_db(config)
-
-    yaml.safe_dump(config, args.output)
-    
-    if not args.skip_peppy:
-        import peppy_support
-        peppy_support.create_peppy(config, output_dir="pep")
-
-
-    #_ = pd.DataFrame.from_dict(desc).T
-    #summary = (merged_samples.dtypes.rename("pd_dtype")
-    #           .to_frame()
-    #           .merge(_, how="left", left_index=True, right_index=True)
-    #           )
-    #print(summary.dropna(axis="columns", how="all").fillna(""))
-
-    project_summary(config)
+if __name__ == "__main__":
+    sys.exit(main())
