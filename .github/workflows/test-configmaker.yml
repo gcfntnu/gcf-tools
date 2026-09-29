@@ -5,6 +5,17 @@ name: Test configmaker
 on: [push, pull_request]
 
 jobs:
+  libprep:
+    name: Shared libprep API and standalone CLI
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - run: python -m pip install . pytest
+    - run: python -m pytest -q tests
+
   build:
 
     runs-on: ubuntu-latest
