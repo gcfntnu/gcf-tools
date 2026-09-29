@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name = "gcf-tools",
-    version = "0.2",
+    version = "0.3.0",
     author = "GCF, NTNU, Trondheim - Arnar Flatberg, Geir Amund Svan Hasle",
     author_email = "arnar.flatberg@ntnu.no",
     description = ("In-house tool to create configs used in bio informatics pipelines at GCF, NTNU, Trondheim."),
