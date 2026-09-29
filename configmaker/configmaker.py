@@ -26,6 +26,12 @@ import oyaml as yaml
 # sys.path.append(str(path_root))
 
 import descriptors
+if __name__ == "__main__":
+    # Legacy setup.py installs execute an egg script through a bin wrapper;
+    # remove both locations so configmaker.py cannot shadow the package.
+    script_dirs = {Path(__file__).resolve().parent, Path(sys.argv[0]).resolve().parent}
+    sys.path[:] = [p for p in sys.path if Path(p or os.curdir).resolve() not in script_dirs]
+from configmaker.libprep import LibprepConfig, LibprepConfigError, find_read_geometry
 
 
 SEQUENCERS = {
@@ -673,23 +679,6 @@ def check_existence_of_samples(samples, df):
     return None
 
 
-def find_read_geometry(runfolders):
-    n_matches = set()
-    for fn in runfolders:
-        stats_fn = os.path.join(fn, "Stats", "Stats.json")
-        read_geometry = []
-        with open(stats_fn) as fh:
-            S = json.load(fh)
-        for read in S["ReadInfosForLanes"][0]["ReadInfos"]:
-            if not read["IsIndexedRead"]:
-                n_cycles = int(read["NumCycles"])
-                read_geometry.append(n_cycles)
-        n_matches.add(",".join(map(str, read_geometry)))
-    if len(n_matches) > 1:
-        raise ValueError("Read geometry mismatch between runfolders. Check Stats.json!")
-    return read_geometry
-
-
 def find_machine(runfolders):
     n_matches = set()
     for pth in runfolders:
@@ -868,45 +857,43 @@ def create_fastq_dir(sample_dict, args, output_dir=None, overwrite=True):
 
 
 
-def add_workflow(config, src_dir=None):
-    """download snakemake workflow for libprep specific workflow
-    """
-    src_dir = src_dir or "src"
-    wf_path = os.path.join(src_dir, "gcf-workflows")
-    if not os.path.exists(src_dir):
-        os.makedirs(src_dir, exist_ok=True)
-        cmd = "cd src && git clone {}".format(GCF_WORKFLOWS_SRC)
-        subprocess.check_call(cmd, shell=True)
+def _merge_defaults(config, defaults):
+    """Fill missing nested kit settings while retaining explicit project options."""
+    for key, value in defaults.items():
+        if key not in config:
+            config[key] = copy.deepcopy(value)
+        elif isinstance(config[key], dict) and isinstance(value, dict):
+            _merge_defaults(config[key], value)
 
-    with open(os.path.join(wf_path, "libprep.config"), "r") as libprepconf_fh:
-        libconf = yaml.safe_load(libprepconf_fh)
 
-    libkit = config["libprepkit"] + (" PE" if len(config["read_geometry"]) > 1 else " SE")
-    kitconf = libconf.get(libkit)
-    if not kitconf:
-        logger.warning("Libprepkit {} is not defined in libprep.config. Running with default settings.".format(libkit))
-        workflow = "default"
-        kitconf = libconf["default"]
-    else:
-        workflow = kitconf["workflow"]
+def add_workflow(config, src_dir=None, *, libprep_config=None,
+                 expected_sha256=None, expected_entry=None, expected_read_geometry=None):
+    """Select a kit from one snapshot; standalone sources remain portable."""
+    wf_path = Path(src_dir or "src") / "gcf-workflows"
+    if not wf_path.exists():
+        wf_path.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.check_call(["git", "clone", GCF_WORKFLOWS_SRC, str(wf_path)])
 
-    reference_db = kitconf.get('db', {}).get('reference_db')
-    if reference_db:
-        if 'db' not in config:
-            config['db'] = {}
-        config['db']['reference_db'] = reference_db
-        
-    if not "workflow" in config:
-        config["workflow"] = workflow
-    
-    for k, v in kitconf.items():
-        if k not in config:
-            logger.info("adding {} to conf".format(k))
-            config[k] = v
-    
+    snapshot = (libprep_config if isinstance(libprep_config, LibprepConfig)
+                else LibprepConfig.load(libprep_config or wf_path / "libprep.config"))
+    if expected_sha256 is not None and snapshot.sha256 != expected_sha256:
+        raise LibprepConfigError("Libprep configuration hash mismatch for {}: expected {}, got {}".format(
+            snapshot.source, expected_sha256, snapshot.sha256))
+    selection = snapshot.select(config.get("libprepkit"), config["read_geometry"])
+    if expected_entry is not None and selection.entry != expected_entry:
+        raise LibprepConfigError("Libprep entry mismatch: expected {!r}, got {!r}".format(expected_entry, selection.entry))
+    if expected_read_geometry is not None and tuple(expected_read_geometry) != selection.read_geometry:
+        raise LibprepConfigError("Read geometry changed since BFQ selection: expected {}, got {}".format(
+            expected_read_geometry, selection.read_geometry))
+    if config.get("workflow", selection.workflow) != selection.workflow:
+        raise LibprepConfigError("Configured workflow conflicts with selected libprep entry {!r}".format(selection.entry))
+
+    _merge_defaults(config, selection.parameters)
+    config["libprep_selection"] = selection.diagnostics()
+    logger.warning("Libprep selection: %s", json.dumps(selection.diagnostics(), sort_keys=True))
+    snapshot.write(wf_path / "libprep.config")
     with open("Snakefile", "w") as sn:
-        sn.write(SNAKEFILE_TEMPLATE.format(workflow=workflow))
-
+        sn.write(SNAKEFILE_TEMPLATE.format(workflow=selection.workflow))
     return config
 
 def project_summary(config):
@@ -1045,6 +1032,12 @@ def parse_args():
     parser.add_argument("--libkit",
                         help="Library preparation kit name. (if applicable for all samples). Overrides value from samplesheet."
                         )
+    parser.add_argument("--libprep-config", type=Path,
+                        help="Explicit configuration snapshot (default: src/gcf-workflows/libprep.config)")
+    parser.add_argument("--libprep-sha256", help="Require this configuration SHA-256")
+    parser.add_argument("--libprep-entry", help="Require this exact selected entry")
+    parser.add_argument("--expected-read-geometry", nargs="+", type=int,
+                        help="Require these read lengths from Stats.json")
     parser.add_argument("--machine",
                         help="Sequencer model."
                         )
@@ -1113,7 +1106,14 @@ if __name__ == "__main__":
     config = create_default_config(merged_samples, custom_opts, args, fastq_dir=fastq_dir, descriptors=desc, md5sums=md5sums)
 
     #if args.create_project:
-    config = add_workflow(config)
+    try:
+        config = add_workflow(config, libprep_config=args.libprep_config,
+                              expected_sha256=args.libprep_sha256,
+                              expected_entry=args.libprep_entry,
+                              expected_read_geometry=args.expected_read_geometry)
+    except LibprepConfigError as error:
+        logger.error("%s", error)
+        sys.exit(2)
 
     # validate organism scientific name and reference database before writing configfile
     #check_organism_and_reference_db(config)
