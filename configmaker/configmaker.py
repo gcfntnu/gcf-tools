@@ -108,7 +108,7 @@ def is_dir(dirname):
         return dirname
 
 
-def is_valid_gcf_id(arg, patt="GCF-\d{4}-\d{3}"):
+def is_valid_gcf_id(arg, patt=r"GCF-\d{4}-\d{3}"):
     if arg is None:
         return True
     m = re.match(patt, arg)
@@ -134,14 +134,14 @@ def _match_project_dir(pth, project_id=None, test=False):
         project_dir = None
 
         for fn in os.listdir(pth):
-            if os.path.isdir(os.path.join(pth, fn)) and re.match("^GCF-\d{4}-\d{3}", fn):
+            if os.path.isdir(os.path.join(pth, fn)) and re.match(r"^GCF-\d{4}-\d{3}", fn):
                 if project_dir is not None:
                     msg = "runfolders contain more than one project folders existing: {}, other: {}"
                     msg += "\nuse `--project-id` option to choose one."
                     logger.error(msg.format(project_id, fn))
                 project_dir = os.path.join(pth, fn)
                 project_id = fn
-            elif test and re.match("GCF-\d{4}-\d{3}_samplesheet.tsv", fn):
+            elif test and re.match(r"GCF-\d{4}-\d{3}_samplesheet.tsv", fn):
                 project_id = fn.split("_samplesheet.tsv")[0]
                 project_dir = os.path.join(pth, project_id)
         if project_dir:
@@ -186,20 +186,20 @@ def match_fastq(sample_name, project_dir, rel_path=True):
         elif fn == "{}_I1.fastq.gz".format(sample_name):
             i1_fastq_files.extend([os.path.join(project_dir, fn)])
         elif fn == sample_name:
-            r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + "*_R1_001.fastq.gz")))
-            r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + "*_R2_001.fastq.gz")))
-            i1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + "*_I1_001.fastq.gz")))
-        elif re.match(sample_name + "_S\d+_L\d{3}_R1_001.fastq.gz", fn):
+            r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, glob.escape(sample_name) + "*_R1_001.fastq.gz")))
+            r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, glob.escape(sample_name) + "*_R2_001.fastq.gz")))
+            i1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, glob.escape(sample_name) + "*_I1_001.fastq.gz")))
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_L\d{3}_R1_001\.fastq\.gz", fn):
             r1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
-        elif re.match(sample_name + "_S\d+_L\d{3}_R2_001.fastq.gz", fn):
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_L\d{3}_R2_001\.fastq\.gz", fn):
             r2_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
-        elif re.match(sample_name + "_S\d+_L\d{3}_I1_001.fastq.gz", fn):
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_L\d{3}_I1_001\.fastq\.gz", fn):
             i1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
-        elif re.match(sample_name + "_S\d+_R1_001.fastq.gz", fn):
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_R1_001\.fastq\.gz", fn):
             r1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
-        elif re.match(sample_name + "_S\d+_R2_001.fastq.gz", fn):
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_R2_001\.fastq\.gz", fn):
             r2_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
-        elif re.match(sample_name + "_S\d+_I1_001.fastq.gz", fn):
+        elif re.fullmatch(re.escape(sample_name) + r"_S\d+_I1_001\.fastq\.gz", fn):
             i1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
             
     if (len(r1_fastq_files) == 0) and (len(r2_fastq_files) == 0):
@@ -407,10 +407,11 @@ def merge_samples_with_submission_form(sample_dict, args):
     # Descriptor inference sanitizes strings, including IDs; identity fields
     # must retain exactly the values already accepted by metadata preflight.
     identities = sample_df[[c for c in ("Sample_ID", "Project_ID", "Src_Project_ID") if c in sample_df]].copy()
-    sample_df, desc = descriptors.descriptors.infer_by_descriptor(sample_df, desc)
+    sample_df, desc = descriptors.descriptors.infer_by_descriptor(sample_df.drop(columns=identities.columns), desc)
     for column in identities:
         sample_df[column] = identities[column]
     sample_df.index = sample_df["Sample_ID"]
+    sample_df = descriptors.descriptors.order_columns_by_descriptors(sample_df, desc)
     if "Organism" in sample_df.columns:
         if len(set(sample_df.Organism.values)) == 1:  # single customer org
             if args.organism is not None:
@@ -469,7 +470,7 @@ def find_fastq_md5sums(runfolders, project_id):
             fn = os.path.join(pth, 'md5sum_{}_fastq.txt'.format(pid))
             fn_list.append(fn)
             if os.path.isfile(fn):
-                df = pd.read_table(fn, header=None, sep="\s+", names=['md5sum', 'filename'])
+                df = pd.read_table(fn, header=None, sep=r"\s+", names=['md5sum', 'filename'])
                 df['filename'] = df['filename'].apply(lambda x: os.path.split(x)[-1])
                 df = df.set_index('filename')
                 df_list.append(df)
@@ -572,7 +573,13 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
                     config["samples"][sample_id][col_name+ "_md5sum"] = ','.join(md5) 
 
     if opts.get("Libprep",'').startswith("Parse Biosciences"):
-        demux_df, demux_desc = read_demux_sheet(args.ssub[0])
+        validation = getattr(args, "_validation", None)
+        if validation is not None:
+            demux_df = validation.forms[0]["demux"]["data"].copy()
+            if "Wells" in demux_df:
+                demux_df["Wells"] = demux_df["Wells"].map(lambda value: str(value).replace(" ", "") if not pd.isna(value) else value)
+        else:
+            demux_df, _ = read_demux_sheet(args.ssub[0])
 
         config['wells'] = {}
         for k,v in demux_df.to_dict(orient="index").items():

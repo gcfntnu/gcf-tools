@@ -1,18 +1,36 @@
 import hashlib
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 import yaml
+from openpyxl import load_workbook
 
 ROOT = Path(__file__).resolve().parents[1]
 RUN = ROOT / ".tests/configmaker/201109_NB501038_0241_AH2JYJBGXG"
 CONTENT = b"Kit SE:\n  workflow: rnaseq\n  filter:\n    trim:\n      fastp:\n        params: '-q 17'\n"
 
 
+@pytest.fixture
+def legacy_run(tmp_path):
+    run = tmp_path / "run" / RUN.name
+    shutil.copytree(RUN, run)
+    form = run / "Sample-Submission-Form.xlsx"
+    workbook = load_workbook(form)
+    customer = workbook["Sample-Submission-Form"]
+    # The historical fixture has a free-text note below the sample table.
+    # Repair only that known note in this private copy; populated rows without
+    # IDs must still fail validation everywhere else.
+    assert [cell.coordinate for cell in customer[48] if cell.value is not None] == ["J48"]
+    customer["J48"] = None
+    workbook.save(form)
+    return run
+
+
 @pytest.mark.parametrize("explicit", [False, True])
-def test_standalone_cli_outside_opt(tmp_path, explicit):
+def test_standalone_cli_outside_opt(tmp_path, legacy_run, explicit):
     workflow = tmp_path / "src/gcf-workflows"
     workflow.mkdir(parents=True)
     (workflow / "libprep.config").write_bytes(CONTENT)
@@ -20,7 +38,7 @@ def test_standalone_cli_outside_opt(tmp_path, explicit):
         sys.executable,
         "-m",
         "configmaker.configmaker",
-        str(RUN),
+        str(legacy_run),
         "--libkit",
         "Kit",
         "--skip-peppy",
@@ -54,7 +72,7 @@ def test_standalone_cli_outside_opt(tmp_path, explicit):
 
 
 @pytest.mark.parametrize("problem", ["missing", "malformed", "unknown", "hash"])
-def test_standalone_cli_actionable_config_error(tmp_path, problem):
+def test_standalone_cli_actionable_config_error(tmp_path, legacy_run, problem):
     workflow = tmp_path / "src/gcf-workflows"
     workflow.mkdir(parents=True)
     if problem != "missing":
@@ -65,7 +83,7 @@ def test_standalone_cli_actionable_config_error(tmp_path, problem):
         sys.executable,
         "-m",
         "configmaker.configmaker",
-        str(RUN),
+        str(legacy_run),
         "--libkit",
         "Kti" if problem == "unknown" else "Kit",
         "--skip-peppy",

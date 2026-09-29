@@ -423,3 +423,43 @@ def test_unnamed_populated_csv_column_is_rejected(tmp_path):
     result, report = report_for([sheet], [form])
     assert not result.ok
     assert_error_mentions(report, "header")
+
+
+def test_unknown_descriptor_dtype_is_a_header_error(tmp_path):
+    sheet = sample_sheet(tmp_path / "SampleSheet.csv", [["S1", PROJECT]])
+    headers = ["Unique Sample ID", "External ID", "Sample Group [dtype=typo]", "Project ID"]
+    form = submission_form(tmp_path / "submission.xlsx", [customer_row("S1")], customer_headers=headers)
+    _, report = report_for([sheet], [form])
+    assert_error_mentions(report, "dtype")
+    assert report["errors"][0]["row"] == 15
+
+
+def test_missing_metadata_has_originating_samplesheet_context(tmp_path):
+    sheet = sample_sheet(tmp_path / "SampleSheet.csv", [["missing", PROJECT]])
+    form = submission_form(tmp_path / "submission.xlsx", [customer_row("other")])
+    _, report = report_for([sheet], [form])
+    finding = next(item for item in report["errors"] if item["code"] == "sample.missing_metadata")
+    assert finding["file"] == str(sheet)
+    assert finding["row"] == 5
+    assert finding["column"] == "Sample_ID"
+
+
+@pytest.mark.parametrize("include_demux", [True, False])
+def test_parse_biosciences_uses_required_shared_demux_worksheet(tmp_path, include_demux):
+    from openpyxl import load_workbook
+
+    sheet = sample_sheet(tmp_path / "SampleSheet.csv", [["S1", PROJECT]])
+    sheet.write_text(sheet.read_text().replace("[Data]", "[CustomOptions]\nLibprep,Parse Biosciences Evercode\n[Data]"))
+    form = submission_form(tmp_path / "submission.xlsx", [customer_row("S1")])
+    if include_demux:
+        book = load_workbook(form)
+        demux = book.create_sheet("Cell Multiplexing")
+        demux.append(["Unique Sample ID", "Wells"])
+        demux.append(["S1", "A1, A2"])
+        book.save(form)
+    result, report = report_for([sheet], [form])
+    assert result.ok is include_demux, report
+    if include_demux:
+        assert result.forms[0]["demux"]["data"].iloc[0]["Sample_ID"] == "S1"
+    else:
+        assert_error_mentions(report, "Cell Multiplexing")

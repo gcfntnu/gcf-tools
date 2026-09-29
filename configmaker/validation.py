@@ -234,6 +234,11 @@ def _worksheet(book, path, name, header_row, mapper, result, optional_empty=Fals
     except (ValueError, TypeError) as error:
         result.add("error", "workbook.invalid_descriptor", "Cannot parse column descriptors: {}".format(error), row=header_row, **context)
         return None
+    invalid_types = {column: values["dtype"] for column, values in desc.items()
+                     if "dtype" in values and values["dtype"] not in descriptor_tools.DTYPES}
+    if invalid_types:
+        result.add("error", "workbook.invalid_descriptor", "Unknown descriptor dtype(s): {}.".format(invalid_types), row=header_row, details={"invalid_dtypes": invalid_types}, **context)
+        return None
     mapped = [mapper(name) for name in frame.columns]
     duplicates = _duplicates(mapped)
     if duplicates:
@@ -363,12 +368,13 @@ def validate_inputs(samplesheets, submission_forms, project_ids=None, keep_batch
     selected_rows = [r for sheet in result.sheets for r in sheet["records"] if selected is None or r["Sample_Project"] in selected]
     if result.sheets and not selected_rows:
         result.add("error", "sample.no_selected_samples", "No SampleSheet samples match the requested project selection.", details={"project_ids": sorted(selected) if selected is not None else []})
-    sample_projects, planned = {}, {}
+    sample_projects, planned, planned_context = {}, {}, {}
     for row in selected_rows:
         sid, pid = row["Sample_ID"], row["Sample_Project"]
         if pid not in sample_projects.setdefault(sid, []):
             sample_projects[sid].append(pid)
         effective_id = sid + "_" + _batch(row["_file"]) if keep_batch else sid
+        planned_context.setdefault(effective_id, {"file": row["_file"], "row": row["_row"], "column": "Sample_ID"})
         item = planned.setdefault(effective_id, {"sample_id": effective_id, "project_ids": [], "sample_group": None})
         if pid not in item["project_ids"]:
             item["project_ids"].append(pid)
@@ -423,16 +429,17 @@ def validate_inputs(samplesheets, submission_forms, project_ids=None, keep_batch
                     if candidate.strip() == raw_id.strip() and candidate != raw_id:
                         near.append(candidate)
             if near:
-                result.add("error", "sample.whitespace_mismatch", "Sample_ID {!r} has only whitespace-differing metadata matches: {}. Correct the inputs; IDs are not rewritten.".format(sid, ", ".join(repr(value) for value in sorted(set(near)))), sample_id=sid, details={"candidates": sorted(set(near))})
+                result.add("error", "sample.whitespace_mismatch", "Sample_ID {!r} has only whitespace-differing metadata matches: {}. Correct the inputs; IDs are not rewritten.".format(sid, ", ".join(repr(value) for value in sorted(set(near)))), sample_id=sid, details={"candidates": sorted(set(near))}, **planned_context[sid])
             elif merge_losses:
                 for loss in merge_losses:
                     result.add("error", "sample.merge_loss", "SampleSheet Sample_ID {!r} is lost during the customer/lab inner join; it is missing from worksheet {!r}.".format(sid, loss["worksheet"]), sample_id=sid, **loss)
             else:
-                result.add("error", "sample.missing_metadata", "SampleSheet Sample_ID {!r} is absent from effective submission metadata.".format(sid), sample_id=sid)
+                result.add("error", "sample.missing_metadata", "SampleSheet Sample_ID {!r} is absent from effective submission metadata.".format(sid), sample_id=sid, **planned_context[sid])
         for sid, item in planned.items():
             project_set = metadata_projects.get(sid, set())
             if project_set and project_set != set(item["project_ids"]):
-                result.add("warning", "sample.project_precedence", "Sample_ID {!r}: submission projects {} differ from SampleSheet projects {}; SampleSheet takes precedence.".format(sid, sorted(project_set), item["project_ids"]), sample_id=sid, column="Project_ID")
+                context = dict(planned_context[sid], column="Sample_Project")
+                result.add("warning", "sample.project_precedence", "Sample_ID {!r}: submission projects {} differ from SampleSheet projects {}; SampleSheet takes precedence.".format(sid, sorted(project_set), item["project_ids"]), sample_id=sid, **context)
     extras = sorted(set(metadata) - set(planned))
     if extras and can_match:
         result.add("info", "metadata.extra_samples", "{} extra submission sample(s) are valid and omitted from the planned analysis: {}.".format(len(extras), ", ".join(extras)), details={"sample_ids": extras, "count": len(extras)})
