@@ -6,7 +6,7 @@ on: [push, pull_request]
 
 jobs:
   libprep:
-    name: Shared libprep API and standalone CLI
+    name: Shared validation, libprep API and standalone CLI
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -34,47 +34,48 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install --upgrade setuptools wheel
         python setup.py build
-        python setup.py install 
+        python setup.py install
     - name: configmaker.py can initialize
       run: |
         configmaker.py --help
     - name: create_testdata.py can initialize
-      run: | 
+      run: |
         create_testdata.py --help
     - name: Setup tmp
       run: |
         mkdir tmp
+        python tests/prepare_cli_fixtures.py .tests/configmaker tmp-fixtures
     - name: configmaker can create fastq dir
       working-directory: tmp
       run: |
-        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/
+        configmaker.py ../tmp-fixtures/201019_M03942_0354_000000000-CVF53/
         rm -rf *
     - name: configmaker can use multiple runfolders
       working-directory: tmp
-      run: | 
-        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ ../.tests/configmaker/201020_M03942_0355_000000000-CVF55/ 
+      run: |
+        configmaker.py ../tmp-fixtures/201019_M03942_0354_000000000-CVF53/ ../tmp-fixtures/201020_M03942_0355_000000000-CVF55/
         rm -rf *
     - name: configmaker can keep batch with multiple runfolders
       working-directory: tmp
-      run: | 
-        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ ../.tests/configmaker/201020_M03942_0355_000000000-CVF55/ --keep-batch
+      run: |
+        configmaker.py ../tmp-fixtures/201019_M03942_0354_000000000-CVF53/ ../tmp-fixtures/201020_M03942_0355_000000000-CVF55/ --keep-batch
         rm -rf *
     - name: configmaker can create microbiome project
       working-directory: tmp
       run: |
-        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/
+        configmaker.py ../tmp-fixtures/201019_M03942_0354_000000000-CVF53/
         rm -rf *
     - name: configmaker can create single-cell project
       working-directory: tmp
       run: |
-        configmaker.py ../.tests/configmaker/201022_NB501038_0238_AHKWNTBGXG/
+        configmaker.py ../tmp-fixtures/201022_NB501038_0238_AHKWNTBGXG/
         rm -rf *
     - name: configmaker can create rna-seq project
       working-directory: tmp
       run: |
-        configmaker.py ../.tests/configmaker/201109_NB501038_0241_AH2JYJBGXG
+        configmaker.py ../tmp-fixtures/201109_NB501038_0241_AH2JYJBGXG
         rm -rf *
     - name: configmaker may use header descriptors in submission-form
       working-directory: tmp
       run: |
-        configmaker.py ../.tests/configmaker/201109_NB501038_0241_AH2JYJBGXG --sample-submission-form ../.tests/configmaker/201109_NB501038_0241_AH2JYJBGXG/test_descriptor_headers.xlsx
+        configmaker.py ../tmp-fixtures/201109_NB501038_0241_AH2JYJBGXG --sample-submission-form ../tmp-fixtures/201109_NB501038_0241_AH2JYJBGXG/test_descriptor_headers.xlsx

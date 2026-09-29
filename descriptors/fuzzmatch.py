@@ -12,7 +12,6 @@ from thefuzz import fuzz, process
 import pandas as pd
 
 logger = logging.getLogger('GCF-configmaker')
-logger.setLevel(10)
 
 SERVER= "https://rest.ensembl.org"
 ENS_ORG_DB = os.path.join(os.path.dirname(__file__), 'ens_org.pkl')
@@ -58,11 +57,9 @@ if os.path.exists(ENS_ORG_DB):
     with open(ENS_ORG_DB, 'rb') as fh:
         ORG_DB = pickle.load(fh)
 else:
-    ORG_DB = []
-    for div in ['Vertebrates', 'Plants', 'Bacteria', 'Fungi']:
-        ORG_DB = fetch_ensembl_species(division='Ensembl'+ div, db=ORG_DB)
-    with open(ENS_ORG_DB, 'wb') as fh:
-        pickle.dump(ORG_DB, fh)
+    # Library imports must never fetch data or create package files. The
+    # packaged database is installed as package_data; rebuilding it is explicit.
+    ORG_DB = {}
 
 
 def fuzzmatch_organism(query, min_score=80, min_letters=4):
@@ -71,6 +68,8 @@ def fuzzmatch_organism(query, min_score=80, min_letters=4):
     """
     if pd.isna(query) or query in ['N/A', 'NA', '', None]:
         return None
+    if not ORG_DB:
+        raise RuntimeError("Packaged organism database is missing; reinstall gcf-tools.")
     best_score = 0
     best_match = {}
     logger.debug('Fuzzy matching org query: {}'.format(query))
