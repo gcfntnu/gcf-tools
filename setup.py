@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name = "gcf-tools",
-    version = "0.1",
+    version = "0.2",
     author = "GCF, NTNU, Trondheim - Arnar Flatberg, Geir Amund Svan Hasle",
     author_email = "arnar.flatberg@ntnu.no",
     description = ("In-house tool to create configs used in bio informatics pipelines at GCF, NTNU, Trondheim."),
@@ -18,7 +18,7 @@ setup(
     url = "https://github.com/gcfntnu/gcf-tools",
     scripts = ['configmaker/configmaker.py', 'testdata/create_testdata.py'],
     packages=['configmaker', 'testdata', 'peppy_support', 'descriptors'],
-    install_requires=['pandas', 'xlrd==1.2.0', 'oyaml', 'thefuzz', 'six', 'requests', 'python-Levenshtein', 'openpyxl'],
-    setup_requires=['pandas', 'xlrd==1.2.0', 'oyaml', 'thefuzz', 'six', 'requests', 'python-Levenshtein', 'openpyxl'],
+    install_requires=['pandas', 'xlrd==1.2.0', 'oyaml', 'PyYAML', 'thefuzz', 'six', 'requests', 'python-Levenshtein', 'openpyxl'],
+    setup_requires=['pandas', 'xlrd==1.2.0', 'oyaml', 'PyYAML', 'thefuzz', 'six', 'requests', 'python-Levenshtein', 'openpyxl'],
     package_data={"": ["*.yaml", "*.pkl"]},
 )
