@@ -77,3 +77,24 @@ def test_standalone_cli_actionable_config_error(tmp_path, problem):
     assert "ERROR" in result.stderr
     assert "Traceback" not in result.stderr
     assert not (tmp_path / "Snakefile").exists()
+
+
+def test_legacy_script_wrapper_does_not_shadow_package(tmp_path):
+    # Reproduce setup.py/egg installs: __file__ points inside the egg, while
+    # argv[0] and sys.path[0] point at a separate bin/configmaker.py wrapper.
+    script = ROOT / "configmaker/configmaker.py"
+    wrapper = tmp_path / "configmaker.py"
+    wrapper.write_text(
+        "from pathlib import Path\n"
+        f"source = {str(script)!r}\n"
+        "__file__ = source\n"
+        "exec(compile(Path(source).read_text(), source, 'exec'), globals())\n"
+    )
+    result = subprocess.run(
+        [sys.executable, str(wrapper), "--help"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "--libprep-config" in result.stdout

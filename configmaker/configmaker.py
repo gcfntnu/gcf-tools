@@ -27,8 +27,10 @@ import oyaml as yaml
 
 import descriptors
 if __name__ == "__main__":
-    script_dir = Path(__file__).resolve().parent
-    sys.path[:] = [p for p in sys.path if Path(p or os.curdir).resolve() != script_dir]
+    # Legacy setup.py installs execute an egg script through a bin wrapper;
+    # remove both locations so configmaker.py cannot shadow the package.
+    script_dirs = {Path(__file__).resolve().parent, Path(sys.argv[0]).resolve().parent}
+    sys.path[:] = [p for p in sys.path if Path(p or os.curdir).resolve() not in script_dirs]
 from configmaker.libprep import LibprepConfig, LibprepConfigError, find_read_geometry
 
 
