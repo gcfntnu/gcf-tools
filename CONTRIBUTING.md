@@ -63,6 +63,7 @@ python3.11 -m venv "$GCF_DEV/venv"
 export PATH="$GCF_DEV/venv/bin:$PATH"
 export PIP_NO_INDEX=1
 export PIP_FIND_LINKS="$GCF_WHEELHOUSE"
+export PIP_CACHE_DIR="$GCF_DEV/pip-cache"
 python -m pip install setuptools wheel pytest
 python -m pip install --no-build-isolation -e "$GCF_REPO"
 python -m pip check

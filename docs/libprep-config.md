@@ -28,8 +28,10 @@ read lengths and workflow. `LibprepConfigError` carries actionable failures.
 ## Standalone configmaker
 
 Without flags, configmaker reads `src/gcf-workflows/libprep.config` in the project.
-The Python `add_workflow(config, src_dir=...)` API also supports other workflow
-locations. If the workflow tree is absent, it is cloned as before.
+The Python `add_workflow(config, src_dir=...)` API also accepts other workflow
+locations for loading/materialization, but the generated Snakefile still includes
+the literal `src/gcf-workflows` path (a known launcher limitation). If the workflow
+tree is absent, it is cloned as before.
 
 An explicit file can be supplied independently of the workflow location using
 `--libprep-config PATH`, together with the usual runfolder/project selection and
@@ -79,7 +81,10 @@ the geometry-specific entry once Stats.json is available. Both BFQ's Python
 environment and the interpreter running `configmaker.py` must contain compatible
 gcf-tools; BFQ checks the exact validator version at that subprocess boundary.
 
-BFQ owns authoritative source selection and captured per-run bytes. Standalone
+At that BFQ baseline, the authoritative source is fixed to
+`/opt/gcf-workflows/libprep.config`; `BFQ_LIBPREP_CONFIG` is ignored with a warning.
+BFQ captures bytes for the execution, so later source edits cannot change that
+selection; a deliberate restart from analysis captures configuration again. Standalone
 configmaker retains the portable local/explicit source behavior above. Metadata
 parsing, structured reports and passive imports now follow
 [input-validation.md](input-validation.md). Rebuild and manually verify relevant

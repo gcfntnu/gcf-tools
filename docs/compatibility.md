@@ -89,7 +89,8 @@ recommended execution recipe**. Producer repair belongs to #63/#64.
   a FASTQ content/read-length check. [Libprep policy](libprep-config.md#kit-and-read-geometry-policy)
   defines matching, layout checks and explicit errors.
 - Standalone callers choose the local or explicit libprep source; the library has
-  no mandatory `/opt`. BFQ chooses its configured authoritative source and passes
+  no mandatory `/opt`. BFQ uses the fixed authoritative source described in the
+  libprep guide and passes
   captured bytes/hash/entry/geometry across the subprocess boundary. Nested kit
   defaults fill missing project settings; explicit project values win. Effective
   bytes are materialized in the analysis workflow tree even for an external
@@ -127,7 +128,8 @@ identity and retains `Src_Sample_ID` in real batch discovery.
 Run from a dedicated project cwd and normally retain the default output filename.
 An absolute `--output` path does not relocate the other artifacts. Configmaker
 does not calculate or verify input checksums: it copies supplied values into
-generated metadata. Missing checksum files warn and omit values; incomplete or
+generated metadata. If no checksum manifests exist, it warns and omits values;
+if some exist, missing manifests are silently skipped. Incomplete or
 colliding basename mappings have [known failure/ambiguity risks](known-limitations.md).
 
 ## Generated values, normalization and PEP

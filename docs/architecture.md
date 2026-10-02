@@ -19,12 +19,11 @@ substitute current workflow `main` for that comparator without recording a new S
 | `testdata/create_testdata.py` | Historical BFQ-output subset producer, separately installed; [not yet restored](known-limitations.md#testdata-producer) |
 | `tests/`, `.tests/configmaker/` | API/subprocess tests and older fixture inputs; not interchangeable with the testdata producer or proof of valid paired read content |
 
-Standalone flow is: resolve local project/metadata paths, enforce the expected
-validator version, validate metadata, discover FASTQs, merge/convert descriptors,
+Standalone flow is: enforce the expected validator version, resolve local
+project/metadata paths, validate metadata, discover FASTQs, merge/convert descriptors,
 rebuild links, read optional checksums, assemble defaults and geometry, select
 the local libprep snapshot, write the Snakefile/config, export PEP, then write
-discovery summaries. More precisely, the version guard runs before path
-resolution. Early validation is read-only; the later sequence is not transactional.
+discovery summaries. Early validation is read-only; the later sequence is not transactional.
 See [failure boundaries](compatibility.md#failure-and-mutation-boundaries).
 
 BFQ owns instrument discovery, persistent manager state, demultiplexing,
@@ -63,6 +62,10 @@ public guarantee for every importable helper (for example unused `uniq_list` or
 inventory gap.
 
 ## BFQ subprocess and file boundary
+
+BFQ source filenames in this guide are relative to
+[`bcl2fastq_pipeline/bcl2fastq_pipeline/`](https://github.com/gcfntnu/gcf-bfq/tree/e1042837a2cb5270ffa49fcf03675287569914c1/bcl2fastq_pipeline/bcl2fastq_pipeline)
+at the fixed baseline.
 
 At the fixed BFQ revision, `afterFastq.py` launches `/opt/conda/bin/configmaker.py`
 with a flowcell output path, `-p`, `--libkit`, `--machine`,

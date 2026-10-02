@@ -17,12 +17,11 @@ executed probes from source inspection.
 | Directory-order project choice | `_match_project_dir` logs multiple automatic matches but returns the last; with several explicit IDs it returns the first matching directory per run. `os.listdir` order is not a selection policy | Explicit selection/acceptance decision; fixtures should avoid ambiguity |
 | Independently matched mates | `match_fastq` sorts R1/R2 independently, without matching lanes or counts. A sample can initialize with unmatched mates; per-sample-directory prefix glob is also broader than flat-file matching | Add coverage under #62 as scoped, then separate acceptance/correction work |
 | PEP derivation narrower than discovery | `peppy_utils.py:peppy_project_dict` derives renamed flat paths for non-single-cell data even when discovery accepted flat lane-style filenames. Batch IDs and single-cell layouts also need dedicated path coverage | Default fixture uses renamed flat files; future lane/batch profiles must assert resolved paths |
-| Launcher ignores output/PEP choices | `SNAKEFILE_TEMPLATE` always loads `config.yaml` and `pep/pep_config.yaml`; `main` neither changes those names for `--output` nor sets workflow `skip_peppy` for `--skip-peppy` | CLI success alone cannot establish downstream usability; dedicated launcher compatibility task |
+| Launcher ignores output/PEP/source choices | `SNAKEFILE_TEMPLATE` always loads `config.yaml`, `pep/pep_config.yaml` and `src/gcf-workflows`; `main` neither changes those names for `--output` nor sets workflow `skip_peppy` for `--skip-peppy`. API `add_workflow(src_dir=...)` changes materialization location but not the include path | CLI/API success alone cannot establish downstream usability; dedicated launcher compatibility task |
 | Late failures and overwrites | `main` calls `create_fastq_dir` before geometry/kit checks; `create_fastq_dir` recursively replaces the existing link root. Later errors can leave links, snapshots, Snakefile, YAML or PEP partly updated | Separate transactional/output decision, using private output directories meanwhile |
 | Incomplete checksum mapping | `find_fastq_md5sums` keys by basename (collisions across runs overwrite); `create_default_config` joins lookup results directly. A missing checksum returns `None`, causing an uncaught `TypeError` after link creation when another checksum file exists | Dedicated checksum failure/identity coverage and behavior decision |
 | Lossy annotations | `_infer_dtype_string` strips punctuation; `_tryhard_numeric` turns `10-20` into 15 and removes limit/unit information from e.g. `<5`. Later coercion/stringification changes types and missing values | Explicit normalization/migration decision; protected IDs do not imply all annotation text is lossless |
 | Organism assignment depends on pandas indexing | `infer_by_descriptor` assigns `col[i]` with integer positions while sample index labels are strings. Under pandas 3.0.6 the probe retains `Human` at sample `001` instead of the canonical match | Capture deployed dependency behavior before upgrade/correction; no matcher replacement under #60 |
-| Categorical enum conversion can raise | `_infer_dtype_categorical` asserts membership but never assigns `out` on the valid `subtype='enum', enum=[...]` branch; `Sample_Type` default uses this branch. Valid `DNA` can raise `UnboundLocalError` before links are made | Newly confirmed defect; focused regression/correction needed, not a new restriction on valid sample types |
 | Nested duplicate YAML keys | `LibprepConfig._parse` rejects duplicate top-level kit names, but nested duplicate parameter names are accepted by `safe_load` with last value winning | Do not describe selection validation as complete workflow-parameter validation; define stricter acceptance separately |
 
 ## Fixed workflow comparator gaps
@@ -67,8 +66,14 @@ safe generation:
   it does not reuse the current quoted CSV / `[BCLConvert_Data]` parser.
 
 The older `.tests/configmaker` data exercise input interpretation; they are not
-validated output of a safe producer. The assessment found two malformed FASTQs,
-so fixture presence must not be treated as content validation. The new #62
+validated output of a safe producer. The assessment's malformed FASTQs were
+reconfirmed (11 decompressed lines each):
+
+- `201019_M03942_0354_000000000-CVF53/GCF-2020-747/116_R1.fastq.gz`
+- `201020_M03942_0355_000000000-CVF55/GCF-2020-748/116_R1.fastq.gz`
+
+Both paths are relative to `.tests/configmaker`. Fixture presence must not be
+treated as content validation. The new #62
 synthetic paired fixture must be independent of the producer being repaired.
 The historical RNA workbook's note at customer J48 is deliberately invalid under
 current rules; `tests/prepare_cli_fixtures.py` and the legacy CLI fixture repair
