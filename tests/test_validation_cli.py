@@ -57,9 +57,8 @@ def make_run(tmp_path, planned=("001",), submitted=None, discovered=("001",)):
 
 
 def cli(run, work, *arguments):
-    # Resolve the checkout under test even when subprocess cwd is elsewhere.
+    # Exercise the installed package; never inject a checkout into subprocesses.
     env = dict(os.environ)
-    env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
     return subprocess.run(
         [sys.executable, "-m", "configmaker.configmaker", str(run),
          "--libkit", "Kit", "--organism", "Homo sapiens", "--skip-peppy", *arguments],
@@ -173,7 +172,7 @@ importlib.import_module('configmaker.configmaker')
 assert (list(root.handlers), list(application.handlers)) == before
 assert not list(Path('.').iterdir())
 """
-    env = dict(os.environ, PYTHONPATH=str(ROOT), PYTHONDONTWRITEBYTECODE="1")
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
     result = subprocess.run(
         [sys.executable, "-c", script], cwd=tmp_path, env=env,
         capture_output=True, text=True, timeout=30,

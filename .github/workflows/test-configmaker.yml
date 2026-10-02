@@ -1,5 +1,3 @@
-# This workflow will install gcf-tools and test configmaker
-
 name: Test configmaker
 
 on: [push, pull_request]
@@ -8,74 +6,70 @@ jobs:
   libprep:
     name: Shared validation, libprep API and standalone CLI
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    - run: python -m pip install . pytest
-    - run: python -m pytest -q tests
-
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Acquire the exact development baseline once
+        run: python3.11 scripts/dev.py setup
+      - name: Editable, wheel and sdist checks offline
+        run: python3.11 scripts/dev.py check all
+      - name: Retain source, dependency and check evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python311-check-evidence
+          include-hidden-files: true
+          path: |
+            ../gcf-tools-local/setups/*/identity.json
+            ../gcf-tools-local/setups/*/packages.txt
+            ../gcf-tools-local/runs/*/identity.json
+            ../gcf-tools-local/runs/*/*packages.txt
+            ../gcf-tools-local/runs/*/tests.xml
+            ../gcf-tools-local/runs/*/tests.log
+            ../gcf-tools-local/runs/*/build.log
+            ../gcf-tools-local/runs/*/dist/contents.json
+            ../gcf-tools-local/runs/*/wheel-tests/tests.xml
+            ../gcf-tools-local/runs/*/sdist-tests.log
   build:
-
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.8']
-
+    name: build (3.8)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools wheel
-        python setup.py build
-        python setup.py install
-    - name: configmaker.py can initialize
-      run: |
-        configmaker.py --help
-    - name: create_testdata.py can initialize
-      run: |
-        create_testdata.py --help
-    - name: Setup tmp
-      run: |
-        mkdir tmp
-        python tests/prepare_cli_fixtures.py .tests/configmaker tmp-fixtures
-    - name: configmaker can create fastq dir
-      working-directory: tmp
-      run: |
-        configmaker.py ../tmp-fixtures/201019_M03942_0354_000000000-CVF53/
-        rm -rf *
-    - name: configmaker can use multiple runfolders
-      working-directory: tmp
-      run: |
-        configmaker.py ../tmp-fixtures/201019_M03942_0354_000000000-CVF53/ ../tmp-fixtures/201020_M03942_0355_000000000-CVF55/
-        rm -rf *
-    - name: configmaker can keep batch with multiple runfolders
-      working-directory: tmp
-      run: |
-        configmaker.py ../tmp-fixtures/201019_M03942_0354_000000000-CVF53/ ../tmp-fixtures/201020_M03942_0355_000000000-CVF55/ --keep-batch
-        rm -rf *
-    - name: configmaker can create microbiome project
-      working-directory: tmp
-      run: |
-        configmaker.py ../tmp-fixtures/201019_M03942_0354_000000000-CVF53/
-        rm -rf *
-    - name: configmaker can create single-cell project
-      working-directory: tmp
-      run: |
-        configmaker.py ../tmp-fixtures/201022_NB501038_0238_AHKWNTBGXG/
-        rm -rf *
-    - name: configmaker can create rna-seq project
-      working-directory: tmp
-      run: |
-        configmaker.py ../tmp-fixtures/201109_NB501038_0241_AH2JYJBGXG
-        rm -rf *
-    - name: configmaker may use header descriptors in submission-form
-      working-directory: tmp
-      run: |
-        configmaker.py ../tmp-fixtures/201109_NB501038_0241_AH2JYJBGXG --sample-submission-form ../tmp-fixtures/201109_NB501038_0241_AH2JYJBGXG/test_descriptor_headers.xlsx
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      - name: Acquire historical runtime comparator once
+        shell: bash
+        run: |
+          mkdir -p .dev/legacy/tmp .dev/legacy/cache
+          export TMPDIR="$PWD/.dev/legacy/tmp"
+          export PIP_CACHE_DIR="$PWD/.dev/legacy/cache"
+          python -m venv .dev/legacy/venv
+          .dev/legacy/venv/bin/python -m pip download --only-binary=:all: -r requirements-python38.txt -d .dev/legacy/wheels
+          .dev/legacy/venv/bin/python -m pip install --no-index --find-links .dev/legacy/wheels -r requirements-python38.txt
+          .dev/legacy/venv/bin/python -m pip install --no-index --no-build-isolation --no-deps .
+          cp tests/support/sitecustomize.py .dev/legacy/venv/lib/python3.8/site-packages/sitecustomize.py
+      - name: Installed commands and historical initialization offline
+        shell: bash
+        run: |
+          export GCF_DEV_OFFLINE=1 PYTHONDONTWRITEBYTECODE=1 PIP_NO_INDEX=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+          export TMPDIR="$PWD/.dev/legacy/tmp"
+          export PIP_CACHE_DIR="$PWD/.dev/legacy/cache"
+          unset PYTHONPATH
+          git rev-parse HEAD > .dev/legacy/source.txt
+          .dev/legacy/venv/bin/python -m pip freeze --all > .dev/legacy/packages.txt
+          .dev/legacy/venv/bin/python -m pip check
+          .dev/legacy/venv/bin/python scripts/legacy_check.py .dev/legacy/run
+      - name: Retain legacy dependency identity
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python38-check-identity
+          include-hidden-files: true
+          path: |
+            .dev/legacy/packages.txt
+            .dev/legacy/source.txt

@@ -10,3 +10,17 @@ eggs/
 .installed.cfg
 *.egg
 MANIFEST
+.dev/
+.venv/
+venv/
+env/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+tmp/
+tmp-fixtures/
+*.log
