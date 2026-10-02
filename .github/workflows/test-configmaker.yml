@@ -23,16 +23,19 @@ jobs:
           name: python311-check-evidence
           include-hidden-files: true
           path: |
-            ../gcf-tools-local/setups/*/identity.json
-            ../gcf-tools-local/setups/*/packages.txt
-            ../gcf-tools-local/runs/*/identity.json
-            ../gcf-tools-local/runs/*/*packages.txt
-            ../gcf-tools-local/runs/*/tests.xml
-            ../gcf-tools-local/runs/*/tests.log
-            ../gcf-tools-local/runs/*/build.log
-            ../gcf-tools-local/runs/*/dist/contents.json
-            ../gcf-tools-local/runs/*/wheel-tests/tests.xml
-            ../gcf-tools-local/runs/*/sdist-tests.log
+            ${{ github.workspace }}-local/setups/*/identity.json
+            ${{ github.workspace }}-local/setups/*/packages.txt
+            ${{ github.workspace }}-local/setups/*/acquisition.log
+            ${{ github.workspace }}-local/runs/*/identity.json
+            ${{ github.workspace }}-local/runs/*/*packages.txt
+            ${{ github.workspace }}-local/runs/*/tests.xml
+            ${{ github.workspace }}-local/runs/*/tests.log
+            ${{ github.workspace }}-local/runs/*/build.log
+            ${{ github.workspace }}-local/runs/*/dist/contents.json
+            ${{ github.workspace }}-local/runs/*/wheel-tests/tests.xml
+            ${{ github.workspace }}-local/runs/*/wheel-tests/tests.log
+            ${{ github.workspace }}-local/runs/*/sdist-setup.log
+            ${{ github.workspace }}-local/runs/*/sdist-tests.log
   build:
     name: build (3.8)
     runs-on: ubuntu-22.04
@@ -73,3 +76,4 @@ jobs:
           path: |
             .dev/legacy/packages.txt
             .dev/legacy/source.txt
+            .dev/legacy/run/*/command.log

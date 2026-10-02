@@ -20,7 +20,7 @@ certificate environment settings can be supplied during acquisition. Linux
 platforms without wheels for this baseline fail explicitly; the exercised target
 is x86-64. Interpreter acquisition itself is ordinary personal provisioning.
 
-All mutable state lives in the sibling **`<checkout-name>-local/`** directory:
+Environments, caches, build snapshots and check output live in the sibling **`<checkout-name>-local/`** directory:
 `setups/` contains independently acquired wheels, caches and environments;
 `runs/` retains check logs, temporary inputs, outputs, builds and fresh wheel
 venvs. Thus even installed-command cwd is outside the checkout. Do not share or
@@ -125,7 +125,8 @@ Each setup/check retains `identity.json`, exact `packages.txt`, source/fixture
 hashes and commit/dirty state (when Git exists). Setup records requirements and
 wheel SHA-256 values. Checks reject changed wheels, changed pins and installed
 version drift. Archives have SHA-256 values and complete member lists in
-`dist/contents.json`; pytest emits transcripts and JUnit results. Setup and
+`dist/contents.json`; pytest emits transcripts and JUnit results. Editable installation may create ignored `gcf_tools.egg-info` in its own
+checkout; the separate Python 3.8 CI job uses its private `.dev/legacy`. Setup and
 build-failure artifacts remain available for diagnosis. Source-distribution
 identity is explicitly reported without an invented Git SHA. No index
 credentials or shell environment dumps are recorded in these identity files.
