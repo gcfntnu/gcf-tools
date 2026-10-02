@@ -1,0 +1,16 @@
+include README.md CONTRIBUTING.md AGENTS.md requirements-dev.txt requirements-python38.txt
+include pyproject.toml setup.py MANIFEST.in
+recursive-include configmaker *.py
+recursive-include testdata *.py
+recursive-include peppy_support *.py
+recursive-include descriptors *.py *.yaml *.pkl
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include docs *.md
+# Historical facility fixtures are Git-only; sdist tests generate safe substitutes.
+prune .tests
+prune .github
+prune .dev
+prune build
+prune dist
+global-exclude __pycache__ *.py[cod] *.log
