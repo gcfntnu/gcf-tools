@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Mapping, Tuple
 
 import pandas as pd
 
@@ -26,7 +26,7 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Mapping[str, Any]]:
     return value
 
 
-def _canonical_id(key: Any, record: Mapping[str, Any], columns: tuple[str, ...], label: str) -> str:
+def _canonical_id(key: Any, record: Mapping[str, Any], columns: Tuple[str, ...], label: str) -> str:
     key = str(key)
     embedded = [str(record[column]) for column in columns if column in record and pd.notna(record[column])]
 
