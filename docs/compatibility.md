@@ -76,9 +76,13 @@ recommended execution recipe**. Producer repair belongs to #63/#64.
   use unambiguous inputs and inspect observed sample counts.
 - SampleSheet custom options are merged in input order; later values win with
   `samplesheet.option_override` warnings. `--libkit` and truthy `--organism`
-  then override their respective custom options. The metadata preflight requires
-  the Parse `Cell Multiplexing` sheet based on SampleSheet `Libprep`, before the
-  CLI kit override is applied. Broader override acceptance is not demonstrated.
+  then override their respective custom options. Metadata preflight requires
+  the Parse `Cell Multiplexing` sheet when either SampleSheet `Libprep` or the
+  explicit CLI kit override selects Parse. The original SampleSheet requirement
+  remains even when overriding away from Parse. The additive validator `libkit`
+  keyword carries this selection without mutating SampleSheet custom options.
+  Parse selected only by CLI now also emits validated `wells`. See the
+  [ASCII/override contract](input-validation.md#ascii-diagnostics-and-kit-overrides).
 - `Sample_ID`, `Project_ID` and `Src_Project_ID` bypass descriptor string
   sanitization during configmaker merge. SampleSheet projects replace submission
   projects in generated samples. Other metadata still goes through descriptors.
@@ -180,6 +184,15 @@ with `subsample_name`; selected project/run fields move there when varying.
 Experiment/library fields and descriptors are copied to PEP YAML. The current
 templates assume renamed flat files or a particular single-cell directory shape;
 do not infer that every discoverable FASTQ layout resolves through PEP correctly.
+
+## Deliberate input tightening (#71)
+
+Sample IDs in sequencing, customer, lab and required multiplexing tables, plus
+multiplexing Wells values, must be ASCII. Invalid original cells fail with stable
+`sample.non_ascii_id` / `workbook.non_ascii_wells` errors before merge/conversion
+or initialization. Descriptive Unicode metadata retains its existing treatment.
+Valid ASCII identities (including leading zeros), well syntax, joins, precedence,
+lanes and batch behavior remain unchanged. Report/API schema stays at version 1.
 
 ## Failure and mutation boundaries
 

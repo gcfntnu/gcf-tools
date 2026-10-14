@@ -25,6 +25,7 @@ result = validate_inputs(
     submission_forms=["/runs/flowcell/Sample-Submission-Form.xlsx"],
     project_ids=None,  # None: all projects; otherwise an iterable of project IDs
     keep_batch=False,
+    libkit=None,  # Optional standalone kit override; Parse requires multiplexing validation
 )
 print(result.render_text())
 report = result.to_dict()       # ordinary JSON-serializable dictionary
@@ -33,7 +34,7 @@ if not result.ok:
     raise SystemExit(2)
 ```
 
-Each input argument accepts a path or iterable of paths. Input/read/parse errors
+The samplesheets/submission_forms arguments accept a path or iterable of paths. Input/read/parse errors
 are collected in the result; unexpected programming errors propagate. A result
 with `ok == False` must not be used to initialize an analysis. No success cache is
 maintained: each call reads and hashes the exact bytes it parses.
@@ -57,7 +58,8 @@ Important failures include `sample.missing_id`, `sample.missing_metadata`,
 `sample.merge_loss`, `sample.whitespace_mismatch`, `sample.conflicting_projects`,
 `sample.duplicate_definition`, `workbook.duplicate_id`,
 `workbook.duplicate_columns`, `workbook.missing_columns`, and
-`workbook.missing_worksheet`. Successful informational results include
+`workbook.missing_worksheet`, `sample.non_ascii_id`, and
+`workbook.non_ascii_wells`. Successful informational results include
 `metadata.extra_samples`, `workbook.empty_lab`, and `workbook.merge_excluded`.
 Warnings include `sample.project_precedence`, `sample.id_whitespace`,
 `samplesheet.option_override`, and `metadata.cross_form_override`.
@@ -93,6 +95,14 @@ compatibility contract; external consumers should use `to_dict()`.
 - Missing IDs in populated rows and duplicate IDs within a worksheet are errors.
   Fully empty template rows are ignored. Duplicate headers are detected before
   pandas can rename them, including collisions after column mapping.
+- Sample IDs must contain only ASCII characters in SampleSheet `Sample_ID`,
+  customer `Unique Sample ID`, lab `Sample_ID`, and required Cell Multiplexing
+  `Unique Sample ID` cells. Populated multiplexing `Wells` specifications must
+  also be ASCII. Reject original values before blank handling, merges,
+  descriptor conversion or ordinary-space removal can hide invalid content.
+  This is a deliberate tightening of accepted inputs (#71), not a renaming rule.
+  It does not restrict comments/descriptive metadata or introduce new ASCII
+  punctuation, whitespace or plate-layout rules.
 - Identifiers use exact string comparison: text `001` is different from `1`.
   Whitespace is reported and never silently stripped. Store zero-prefixed Excel
   IDs as text; numeric cell display formatting is not an identifier value.
@@ -113,6 +123,35 @@ compatibility contract; external consumers should use `to_dict()`.
 
 Input-format failures suppress dependent sample-matching errors. Independently
 readable files/worksheets still get checked in the same call.
+
+### ASCII diagnostics and kit overrides
+
+`sample.non_ascii_id` and `workbook.non_ascii_wells` are error-level findings.
+Each includes file, worksheet when applicable, 1-based row and canonical column.
+`details.value` preserves the original string; `details.characters` lists distinct
+non-ASCII characters in encounter order as `{character, code_point}` entries
+(e.g. `Å`, `U+00C5`, or an invisible nonbreaking space, `U+00A0`). Text diagnostics
+also show code points and request input correction. JSON report schema/API remains
+1; the optional keyword-only `libkit` argument is additive. No transliteration,
+stripping or automatic replacement is offered: `ÅTEST`, `ATEST` and `TEST` are
+distinct identities. All independent invalid cells in parsed worksheets are
+reported, including rows that would otherwise be discarded by a join or superseded
+by a later form. Whitespace-only non-ASCII machine cells are rejected too.
+
+Without `libkit`, the existing SampleSheet selection applies. When `libkit`
+selects Parse Biosciences, preflight also requires and validates Cell Multiplexing
+before discovery or output creation. The original SampleSheet Parse requirement
+is retained even if an override selects a different kit, preserving earlier
+validation behavior. `custom_options` remains the original merged SampleSheet
+options; the override is not written into it. Non-Parse inputs do not start
+validating an unused multiplexing worksheet.
+
+Standalone configmaker passes `--libkit` into this shared preflight and emits
+validated `wells` for Parse selected through either route. Previously a Parse
+CLI override alone could bypass multiplexing preflight and omit `wells`.
+Existing ASCII well-list/range strings and removal of ordinary ASCII spaces
+are unchanged. BFQ callers without an override use the same validation entry
+point and gain the new rejection rules without a call-signature change.
 
 ## Standalone configmaker
 
