@@ -180,3 +180,72 @@ assert not list(Path('.').iterdir())
     assert result.returncode == 0, result.stderr
     assert result.stdout == ""
     assert not list(tmp_path.iterdir())
+
+
+def parse_run(tmp_path, kit_source, sample_id="BIO001", wells="A1, A2-A4"):
+    from openpyxl import load_workbook
+
+    run, work = make_run(tmp_path)
+    if kit_source == "sheet":
+        sheet = run / "SampleSheet.csv"
+        sheet.write_text(sheet.read_text().replace("[Data]", "[CustomOptions]\nLibprep,Parse Biosciences Test\n[Data]"))
+    book = load_workbook(run / "Sample-Submission-Form.xlsx")
+    demux = book.create_sheet("Cell Multiplexing")
+    demux.append(["Unique Sample ID", "Wells", "Comment"])
+    demux.append([sample_id, wells, "blå"])
+    book.save(run / "Sample-Submission-Form.xlsx")
+    return run, work
+
+
+def parse_cli(run, work, kit_source, *arguments):
+    command = [sys.executable, "-m", "configmaker.configmaker", str(run),
+               "--organism", "Homo sapiens", "--skip-peppy"]
+    if kit_source == "override":
+        command += ["--libkit", "Parse Biosciences Test"]
+    return subprocess.run(command + list(arguments), cwd=work, env=dict(os.environ),
+                          capture_output=True, text=True, timeout=30)
+
+
+@pytest.mark.parametrize("kit_source", ["sheet", "override"])
+@pytest.mark.parametrize("sample_id,wells,code", [("ÅTEST_B_NK", "A1", "sample.non_ascii_id"),
+                                                 ("BIO001", "A1\u00a0", "workbook.non_ascii_wells")])
+@pytest.mark.parametrize("existing", [False, True])
+def test_parse_invalid_cells_fail_before_discovery_and_preserve_outputs(tmp_path, kit_source, sample_id, wells, code, existing):
+    run, work = parse_run(tmp_path, kit_source, sample_id, wells)
+    # No workflow tree; no FASTQs. Invalid input must fail before either boundary.
+    (run / PROJECT / "001_R1.fastq.gz").unlink()
+    originals = {p: p.read_bytes() for p in (run / "SampleSheet.csv", run / "Sample-Submission-Form.xlsx")}
+    output = work / "config.yaml"
+    if existing:
+        output.write_text("existing: keep\n")
+        (work / "data").mkdir()
+        (work / "data/sentinel").write_text("keep\n")
+    before = {str(p.relative_to(work)): p.read_bytes() for p in work.rglob('*') if p.is_file()}
+    result = parse_cli(run, work, kit_source)
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert code in result.stderr and "Cell Multiplexing" in result.stderr
+    assert "Metadata preflight FAILED" in result.stderr
+    assert "FASTQ discovery failed" not in result.stderr
+    assert "Traceback" not in result.stderr
+    assert {str(p.relative_to(work)): p.read_bytes() for p in work.rglob('*') if p.is_file()} == before
+    assert not (work / "src").exists()
+    assert not (work / "data/raw").exists()
+    assert all(p.read_bytes() == content for p, content in originals.items())
+
+
+@pytest.mark.parametrize("kit_source", ["sheet", "override"])
+def test_parse_valid_ascii_cli_preserves_wells_and_sample_identities(tmp_path, kit_source):
+    run, work = parse_run(tmp_path, kit_source, "001", "A1, A2-A4")
+    install_workflow(work)
+    (work / "src/gcf-workflows/libprep.config").write_text(
+        "Parse Biosciences Test SE:\n  workflow: singlecell\n  library_layout: single\n")
+    result = parse_cli(run, work, kit_source)
+    assert result.returncode == 0, result.stdout + result.stderr
+    config = yaml.safe_load((work / "config.yaml").read_text())
+    assert config["libprepkit"] == "Parse Biosciences Test"
+    assert set(config["samples"]) == {"001"}
+    assert config["samples"]["001"]["Sample_ID"] == "001"
+    assert set(config["wells"]) == {"001"}
+    assert config["wells"]["001"]["Sample_ID"] == "001"
+    assert config["wells"]["001"]["Wells"] == "A1,A2-A4"
+    assert config["wells"]["001"]["Customer_Comments"] == "blå"

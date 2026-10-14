@@ -34,6 +34,24 @@ def _identifier(value):
     return str(value)
 
 
+def _check_ascii(value, result, code, **context):
+    """Reject original machine identifiers without normalizing their spelling."""
+    if not isinstance(value, str) or value.isascii():
+        return True
+    characters = [
+        {"character": char, "code_point": "U+{:04X}".format(ord(char))}
+        for char in dict.fromkeys(value) if not char.isascii()
+    ]
+    result.add(
+        "error", code,
+        "{} {!r} contains non-ASCII characters: {}. Correct the input; values are not renamed or normalized.".format(
+            context["column"], value,
+            ", ".join("{!r} ({})".format(item["character"], item["code_point"]) for item in characters)),
+        details={"value": value, "characters": characters}, **context,
+    )
+    return False
+
+
 def _plain(value):
     if _blank(value):
         return None
@@ -134,7 +152,11 @@ def parse_samplesheet(content, path, result):
         reader = csv.reader(io.StringIO(text, newline=""), strict=True)
         for cells in reader:
             rownum = reader.line_num
-            if not cells or all(not cell.strip() for cell in cells):
+            # Preserve blank-row handling outside the protected Sample_ID cell.
+            non_ascii_id = (section in ("data", "bclconvert_data") and headers is not None
+                            and "Sample_ID" in headers and headers.index("Sample_ID") < len(cells)
+                            and not cells[headers.index("Sample_ID")].isascii())
+            if not cells or (all(not cell.strip() for cell in cells) and not non_ascii_id):
                 continue
             tag = cells[0].strip()
             if tag.startswith("[") and tag.endswith("]") and all(not c.strip() for c in cells[1:]):
@@ -163,6 +185,9 @@ def parse_samplesheet(content, path, result):
                     continue
                 record = {key: value for key, value in zip(headers, cells) if key}
                 record.update(_file=path, _row=rownum)
+                if "Sample_ID" in record:
+                    _check_ascii(record["Sample_ID"], result, "sample.non_ascii_id",
+                                 file=path, row=rownum, column="Sample_ID", sample_id=record["Sample_ID"])
                 if "Sample_ID" in record and not record["Sample_ID"].strip():
                     result.add("error", "sample.missing_id", "Populated sample row has no Sample_ID.", file=path, row=rownum, column="Sample_ID")
                     continue
@@ -245,14 +270,24 @@ def _worksheet(book, path, name, header_row, mapper, result, optional_empty=Fals
         result.add("error", "workbook.duplicate_columns", "Duplicate columns after header mapping: {}.".format(", ".join(duplicates)), row=header_row, details={"columns": duplicates}, **context)
         return None
     frame.columns = mapped
-    populated = [i for i, row in enumerate(data_rows) if any(not _blank(value) for value in row)]
+    # Check raw cells before blank detection, merges or descriptor conversion.
+    # Non-ASCII whitespace alone is invalid, including in an otherwise empty row.
+    invalid_ascii_rows = set()
+    for i, row in frame.iterrows():
+        for column in ("Sample_ID", "Wells") if name == "Cell Multiplexing" else ("Sample_ID",):
+            if column in frame.columns and not _check_ascii(
+                    row[column], result, "sample.non_ascii_id" if column == "Sample_ID" else "workbook.non_ascii_wells",
+                    row=header_row + i + 1, column=column, **context):
+                invalid_ascii_rows.add(i)
+    populated = [i for i, row in enumerate(data_rows)
+                 if any(not _blank(value) for value in row) or i in invalid_ascii_rows]
     if optional_empty and not populated:
         return {"data": pd.DataFrame(columns=["Sample_ID"]), "descriptors": desc, "rows": {}}
     if "Sample_ID" not in frame.columns:
         expected = "Unique Sample ID" if name != LAB_SHEET else "Sample_ID"
         result.add("error", "workbook.missing_columns", "Required Sample_ID header ({} at row {}) is missing.".format(expected, header_row), row=header_row, column="Sample_ID", **context)
         return None
-    valid_rows, source_rows, broken = [], {}, False
+    valid_rows, source_rows, broken = [], {}, bool(invalid_ascii_rows)
     for i in populated:
         row = frame.iloc[i].copy()
         rownum = header_row + i + 1
@@ -331,13 +366,15 @@ def _batch(path):
     return Path(path).parent.name.split("_")[-1]
 
 
-def validate_inputs(samplesheets, submission_forms, project_ids=None, keep_batch=False):
+def validate_inputs(samplesheets, submission_forms, project_ids=None, keep_batch=False, *, libkit=None):
     """Validate input paths, returning all independent metadata findings.
 
     Cross-file repeated IDs intentionally merge; later forms override metadata
     with a warning. Repeats within a worksheet, or a lane, are ambiguous errors.
     Malformed inputs are reported rather than raised. Unexpected coding errors
     propagate. Only an ``ok`` result is suitable for project initialization.
+    ``libkit`` additionally requires Parse multiplexing validation when selected
+    by a caller override; original SampleSheet Parse requirements are retained.
     """
     result = ValidationResult()
     samplesheets, submission_forms = _paths(samplesheets), _paths(submission_forms)
@@ -357,7 +394,8 @@ def validate_inputs(samplesheets, submission_forms, project_ids=None, keep_batch
                         result.add("warning", "samplesheet.option_override", "Custom option {!r} differs between SampleSheets; the last sheet takes precedence.".format(key), file=path, column=key)
                 result.custom_options.update(sheet["options"])
                 result.header = sheet["header"]
-    require_demux = str(result.custom_options.get("Libprep", "")).startswith("Parse Biosciences")
+    require_demux = any(str(kit).startswith("Parse Biosciences")
+                        for kit in (result.custom_options.get("Libprep", ""), libkit))
     for path in submission_forms:
         path, content = _read(path, "submission_form", result)
         if content is not None:

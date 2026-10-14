@@ -463,3 +463,118 @@ def test_parse_biosciences_uses_required_shared_demux_worksheet(tmp_path, includ
         assert result.forms[0]["demux"]["data"].iloc[0]["Sample_ID"] == "S1"
     else:
         assert_error_mentions(report, "Cell Multiplexing")
+
+
+def add_multiplexing(form, rows):
+    from openpyxl import load_workbook
+
+    book = load_workbook(form)
+    demux = book.create_sheet("Cell Multiplexing")
+    demux.append(["Unique Sample ID", "Wells", "Comment"])
+    for row in rows:
+        demux.append(row)
+    book.save(form)
+
+
+@pytest.mark.parametrize("value", ["ÅTEST", "ØTEST", "ÆTEST", "样本", "A\u030aTEST", "ＴＥＳＴ", "A\u200bB", "\u00a0", "A\u202fB"])
+@pytest.mark.parametrize("location", ["samplesheet", "customer", "lab", "multiplexing"])
+def test_non_ascii_ids_rejected_in_every_source_with_original_context(tmp_path, value, location):
+    sheet = sample_sheet(tmp_path / "SampleSheet.csv", [[value if location == "samplesheet" else "001", PROJECT]])
+    form = submission_form(tmp_path / "form.xlsx", [customer_row(value if location == "customer" else "001")],
+                           [[value if location == "lab" else "001", 2.0]])
+    add_multiplexing(form, [[value if location == "multiplexing" else "BIO001", "A1, A2", "blå"]])
+    before = {p: p.read_bytes() for p in (sheet, form)}
+    result, report = report_for([sheet], [form], libkit="Parse Biosciences Test")
+    assert not result.ok
+    finding = next(f for f in report["errors"] if f["code"] == "sample.non_ascii_id")
+    expected = {"samplesheet": (sheet, None, 5), "customer": (form, "Sample-Submission-Form", 16),
+                "lab": (form, "INFO (GCF-lab only)", 2), "multiplexing": (form, "Cell Multiplexing", 2)}
+    path, worksheet, row = expected[location]
+    assert (finding["file"], finding.get("worksheet"), finding["row"], finding["column"]) == (str(path), worksheet, row, "Sample_ID")
+    assert finding["details"]["value"] == value
+    offending = set(value) - set(chr(n) for n in range(128))
+    assert {d["character"] for d in finding["details"]["characters"]} == offending
+    for char in offending:
+        assert "U+{:04X}".format(ord(char)) in result.render_text()
+    assert "Correct the input" in result.render_text()
+    assert all(p.read_bytes() == data for p, data in before.items())
+    assert report["schema_version"] == 1
+    assert not report["summary"]["matching_complete"]
+
+
+@pytest.mark.parametrize("wells", ["Ａ1", "A1–A3", "A1,\u00a0A2", "A1\u200b", "\u00a0"])
+def test_non_ascii_wells_rejected_before_space_or_blank_conversion(tmp_path, wells):
+    sheet = sample_sheet(tmp_path / "SampleSheet.csv", [["001", PROJECT]])
+    form = submission_form(tmp_path / "form.xlsx", [customer_row("001")])
+    add_multiplexing(form, [["BIO001", wells, "blå"]])
+    result, report = report_for([sheet], [form], libkit="Parse Biosciences Test")
+    assert not result.ok
+    finding = next(f for f in report["errors"] if f["code"] == "workbook.non_ascii_wells")
+    assert (finding["file"], finding["worksheet"], finding["row"], finding["column"]) == (str(form), "Cell Multiplexing", 2, "Wells")
+    assert finding["details"]["value"] == wells
+
+
+def test_independent_invalid_fields_survive_join_and_later_form_override(tmp_path):
+    sheet = sample_sheet(tmp_path / "SampleSheet.csv", [["001", PROJECT]])
+    bad = submission_form(tmp_path / "bad.xlsx", [customer_row("001"), customer_row("ÅEXTRA")], [["001", 1]])
+    add_multiplexing(bad, [["ÅBIO", "A1\u00a0", "text"]])
+    good = submission_form(tmp_path / "good.xlsx", [customer_row("001")])
+    add_multiplexing(good, [["BIO", "A1", "text"]])
+    result, report = report_for([sheet], [bad, good], libkit="Parse Biosciences Test")
+    assert not result.ok
+    errors = [f for f in report["errors"] if "non_ascii" in f["code"]]
+    assert len(errors) == 3
+    assert {f["file"] for f in errors} == {str(bad)}
+    assert {f["details"]["value"] for f in errors} == {"ÅEXTRA", "ÅBIO", "A1\u00a0"}
+
+
+@pytest.mark.parametrize("selected_by", ["sheet", "override", "both", "override_away"])
+def test_parse_selection_validates_multiplexing_without_changing_custom_options(tmp_path, selected_by):
+    sheet = sample_sheet(tmp_path / "SampleSheet.csv", [["001", PROJECT]])
+    sheet_kit = "Parse Biosciences Test" if selected_by != "override" else "Kit"
+    sheet.write_text(sheet.read_text().replace("[Data]", "[CustomOptions]\nLibprep," + sheet_kit + "\n[Data]"))
+    override = {"sheet": None, "override": "Parse Biosciences Test", "both": "Parse Biosciences Other", "override_away": "Kit"}[selected_by]
+    form = submission_form(tmp_path / "form.xlsx", [customer_row("001", group="blå")])
+    missing, report = report_for([sheet], [form], libkit=override)
+    assert not missing.ok
+    assert any(f["code"] == "workbook.missing_worksheet" and f["worksheet"] == "Cell Multiplexing" for f in report["errors"])
+    add_multiplexing(form, [["001", "A1, A2-A4", "blå"], ["1", "B1", "样本"], ["BIO_1-2", "C1", "é"]])
+    valid, report = report_for([sheet], [form], libkit=override)
+    assert valid.ok, report
+    assert valid.custom_options["Libprep"] == sheet_kit
+    assert valid.forms[0]["demux"]["data"].Sample_ID.tolist() == ["001", "1", "BIO_1-2"]
+    assert valid.forms[0]["demux"]["data"].iloc[0].Wells == "A1, A2-A4"
+    assert valid.metadata.iloc[0].Sample_Group == "blå"
+
+
+def test_non_parse_does_not_start_validating_unused_multiplexing_sheet(tmp_path):
+    sheet = sample_sheet(tmp_path / "SampleSheet.csv", [["001", PROJECT]])
+    form = submission_form(tmp_path / "form.xlsx", [customer_row("001", group="blå")])
+    add_multiplexing(form, [["ÅBIO", "A1\u00a0", "blå"]])
+    result, report = report_for([sheet], [form])
+    assert result.ok, report
+    assert result.forms[0]["demux"] is None
+
+
+def test_blank_csv_rows_only_tighten_the_sample_identifier_cell(tmp_path):
+    sheet = sample_sheet(tmp_path / "SampleSheet.csv", [["001", PROJECT, "blå"]],
+                         headers=["Sample_ID", "Sample_Project", "Description"])
+    form = submission_form(tmp_path / "form.xlsx", [customer_row("001")])
+    sheet.write_text(sheet.read_text() + ",,\u00a0\n")
+    result, report = report_for([sheet], [form])
+    assert result.ok, report
+    sheet.write_text(sheet.read_text() + "\u00a0,,\n")
+    result, report = report_for([sheet], [form])
+    assert not result.ok
+    finding = next(f for f in report["errors"] if f["code"] == "sample.non_ascii_id")
+    assert finding["row"] == 7
+    assert finding["details"]["value"] == "\u00a0"
+
+
+def test_non_ascii_only_lab_row_is_not_treated_as_empty_template(tmp_path):
+    sheet = sample_sheet(tmp_path / "SampleSheet.csv", [["001", PROJECT]])
+    form = submission_form(tmp_path / "form.xlsx", [customer_row("001")], [["\u00a0", None]])
+    result, report = report_for([sheet], [form])
+    assert not result.ok
+    assert any(f["code"] == "sample.non_ascii_id" and f["worksheet"] == "INFO (GCF-lab only)"
+               for f in report["errors"])
