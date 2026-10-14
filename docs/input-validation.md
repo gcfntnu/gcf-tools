@@ -1,11 +1,18 @@
 # Shared SampleSheet and submission-form validation
 
+This page owns metadata matching and validator/discovery report contracts.
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for setup/checks and
+[compatibility.md](compatibility.md) for generated paths, values and later failure
+side effects.
+
 `gcf-tools 0.3.0` provides the metadata-only validator used by configmaker and
 BFQ/flowcell-manager. It requires no FASTQs, analysis directory, generated
 configuration, BFQ installation or network access. Importing it does not create
 files or configure logging. Input files are never modified.
 
 ## Public API (version 1)
+
+API illustration (substitute private local files; no run output or BFQ is needed):
 
 ```python
 import json
@@ -136,14 +143,16 @@ sanitization, preserving IDs and intentional multi-project lists.
 
 ## Coordinated deployment and integration tests
 
-Deploy/install this gcf-tools change in both the BFQ Python environment and the
-interpreter that executes `configmaker.py` before deploying BFQ issue #121.
-BFQ requires API 1 / package >= 0.3.0. Its configmaker call passes
-`--expected-validation-version 0.3.0`; a different installed validator version
-fails before output initialization. Rebuild the BFQ image after updating the
-companion dependency. The paired BFQ PR documents the scheduler/manual commands.
+The shared validation work in BFQ #121 / gcf-tools #56 is implemented. At the
+[inspected BFQ baseline](architecture.md), BFQ requires API 1 / package >= 0.3.0.
+Its configmaker call passes its imported `VALIDATOR_VERSION` through
+`--expected-validation-version` (0.3.0 at this baseline); a different subprocess
+validator version fails before output initialization. Install compatible tools
+in both interpreters and rebuild the BFQ image as part of a deliberate deployment.
+Do not infer installed versions from this source inspection.
 
-Before merging, test on a copied representative run:
+For changes affecting these interfaces, the facility integration gate uses a
+copied representative run with isolated state/output paths:
 
 1. Install both branches and run the BFQ manual validation command on a valid
    sheet/form subset with extra submission samples. Confirm passed metadata,
@@ -163,10 +172,12 @@ Before merging, test on a copied representative run:
 6. Test a failed validation with an existing config and a nonexistent output
    parent; both should show input diagnostics without truncating/creating output.
 
-Automated checks: `python -m pytest -q tests`. The CI fixture matrix also runs
-legacy project initialization and multi-flowcell/keep-batch workflows. Real
-sequencer conversion and production email delivery remain server integration
-checks.
+Automated checks and their limits are listed in
+[CONTRIBUTING.md](../CONTRIBUTING.md#available-checks). The older CI fixture matrix
+also initializes legacy and multi-flowcell/keep-batch projects, but can clone a
+moving workflow tree; it is not the offline local acceptance recipe. Real
+sequencer conversion, scientific workflow execution and deliberate email delivery
+checks remain facility integration. Routine development must mock/block email.
 
 ## Issues found during implementation
 
