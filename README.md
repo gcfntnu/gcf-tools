@@ -17,9 +17,25 @@ execute the scientific workflows itself.
 | Find CLI options, generated values, paths and compatibility boundaries | [Compatibility](docs/compatibility.md) |
 | Interpret SampleSheets, workbooks, IDs and validation reports | [Input validation](docs/input-validation.md) |
 | Select library kits, read geometry and configuration snapshots | [Library-preparation configuration](docs/libprep-config.md) |
-| See commands actually exercised, source revisions and limits | [Verification record](docs/verification-60.md) |
+| See commands actually exercised, source revisions and limits | [Current packaging verification](docs/verification-61.md), [earlier contract evidence](docs/verification-60.md) |
 | Find defects and missing evidence before changing behavior | [Known limitations](docs/known-limitations.md) |
 | Start an agent task | [AGENTS.md](AGENTS.md), then the issue and contributor guide |
+
+## Development quick start
+
+From a fresh Linux checkout with Python 3.11 and venv support:
+
+```bash
+python3.11 scripts/dev.py setup
+python3.11 scripts/dev.py check all
+```
+
+Setup acquires the exact development dependencies once. Checks then run offline,
+including editable installation, fresh-wheel validation and source-distribution
+testing. Mutable state stays in the sibling `<checkout-name>-local/` directory.
+See the [development guide](docs/development.md) for fast/CLI tiers, package
+boundaries, dependency overrides and evidence. Production requirements remain
+separate from the development baseline.
 
 ## Entry points and use
 
@@ -53,10 +69,9 @@ compatible, and describe observable changes even when correcting a defect.
 [Foundation tracker #66](https://github.com/gcfntnu/gcf-tools/issues/66) aims to let
 either developer start from a clean checkout, run a representative example and
 submit a bounded change with an agent without an undocumented setup handover.
-This documentation is the initial contract, not completion of that milestone:
-[#61](https://github.com/gcfntnu/gcf-tools/issues/61) owns reproducible setup and
-packaging, [#62](https://github.com/gcfntnu/gcf-tools/issues/62) synthetic paired-end
+The initial contract and #61 setup/package checks are implemented; the milestone
+also needs [#62](https://github.com/gcfntnu/gcf-tools/issues/62) synthetic paired-end
 CLI coverage, [#63](https://github.com/gcfntnu/gcf-tools/issues/63) and
 [#64](https://github.com/gcfntnu/gcf-tools/issues/64) testdata inspection/restoration,
 and [#65](https://github.com/gcfntnu/gcf-tools/issues/65) the completed guide and
-independent onboarding trial. None of those planned commands is assumed to exist.
+independent onboarding trial. These remaining issues do not block the documented local packaging/check loop.

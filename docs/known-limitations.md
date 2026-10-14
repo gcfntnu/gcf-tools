@@ -98,5 +98,6 @@ BFQ baseline README's claim of import-time `.configmaker.debug` logging is stale
 current imports are passive and `.configmaker.log` is written on successful
 discovery summary. Its historical libprep deployment notes also predate the
 current validator requirement. Use the present source/contracts here; BFQ
-[PR #141](https://github.com/gcfntnu/gcf-bfq/pull/141) is the related, unmerged
-guidance update, not a dependency of this documentation PR.
+[PR #141](https://github.com/gcfntnu/gcf-bfq/pull/141) was the related, then-unmerged
+guidance update at the #60 assessment. It is now merged; #61 reuses its local
+setup/check conventions without a BFQ dependency.

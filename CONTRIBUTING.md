@@ -35,88 +35,43 @@ so another developer can resume without chat history.
 
 ## Current setup
 
-Use a full Git checkout: current tests need tracked `.tests/configmaker` fixtures
-that are not a complete installed-source distribution. Linux, Git, a Python
-interpreter with `venv`, and local symlink support are needed. Python 3.11 is the
-current full-test CI baseline; this PR rehearsed 3.11.16. The earlier assessment
-also exercised 3.12.14. Neither declares the deployed stack or removes legacy
-support: CI still has a Python 3.8 script/build job, and `setup.py` does not declare
-`python_requires`. Packaging/support clarification belongs to #61.
-
-Initial provisioning is distinct from routine checks. Dependencies are declared
-in [setup.py](setup.py); there is no lock, dev extra or unified check runner yet.
-The recipe below assumes a **prepared, compatible local wheel directory** for
-those dependencies plus `pytest`, `setuptools`, `wheel` and their dependencies.
-Acquire that once using your ordinary dependency access, or copy an existing
-wheel set into your task directory. #61 owns a repeatable acquisition recipe.
-Do not silently fall back to network installation if the offline install fails.
-
-From your worktree root, choose an unused sibling directory and set
-`GCF_WHEELHOUSE` to the absolute path of those prepared wheels. The following
-recipe was exercised with that provisioning condition:
+Use Linux/Python 3.11 with Git and venv support. From this task's fresh checkout:
 
 ```bash
-GCF_REPO="$PWD"
-GCF_DEV="${GCF_REPO}-local"
-mkdir -p "$GCF_DEV"
-python3.11 -m venv "$GCF_DEV/venv"
-export PATH="$GCF_DEV/venv/bin:$PATH"
-export PIP_NO_INDEX=1
-export PIP_FIND_LINKS="$GCF_WHEELHOUSE"
-export PIP_CACHE_DIR="$GCF_DEV/pip-cache"
-python -m pip install setuptools wheel pytest
-python -m pip install --no-build-isolation -e "$GCF_REPO"
-python -m pip check
-mkdir -p "$GCF_DEV/tmp"
-export TMPDIR="$GCF_DEV/tmp"
-export PYTHONDONTWRITEBYTECODE=1
-export PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+python3.11 scripts/dev.py setup
+python3.11 scripts/dev.py check fast
+python3.11 scripts/dev.py check all
 ```
 
-Do not reuse this directory while another process owns it. The editable install
-refers to this worktree only. Keep the shell environment task-local; do not edit
-shell startup files or activate a global environment. `pip check` checks declared
-dependencies, not generated-value compatibility with a particular pandas version.
+Setup acquires the exact development dependencies once using ordinary package
+access; subsequent checks are offline. Environments, caches, builds and outputs
+live in this checkout's uniquely named sibling `<checkout-name>-local/`.
+No activation, global configuration, production paths or prepared-wheel handoff
+is required. The [development guide](docs/development.md) owns acquisition,
+disconnected setup, explicit overrides, failure identities and sdist testing.
 
 ## Available checks
 
-These commands run from the worktree root after setup. Use the relevant tier;
-`tests` is the union of the first two commands, not an additional acceptance gate.
-
-| Tier | Command | What it establishes |
+| Tier | Shared command | Evidence |
 | --- | --- | --- |
-| Fast API checks | `python -m pytest -q -p no:cacheprovider tests/test_validation.py tests/test_libprep.py tests/test_workflow_config.py` | Metadata joins/diagnostics, immutable kit selection and geometry, local workflow configuration assembly |
-| gcf-tools CLI/file checks | `python -m pytest -q -p no:cacheprovider tests/test_validation_cli.py tests/test_libprep_cli.py` | Real module subprocesses, file/symlink output, version guards and early failure behavior, using private inputs/local kit stubs |
-| Both | `python -m pytest -q -p no:cacheprovider tests` | Current suite; this is not full BFQ or scientific integration |
+| Fast API | `python3.11 scripts/dev.py check fast` | Validator/libprep/workflow assembly and offline/email guard |
+| Real CLI/files | `python3.11 scripts/dev.py check cli` | Existing assertions with installed subprocesses and private file inputs |
+| Both | `python3.11 scripts/dev.py check tests` | All current tests in the prepared editable environment |
+| Distribution | `python3.11 scripts/dev.py check wheel` or `check sdist` | Fresh non-editable wheel imports/scripts/resources/tests; sdist adds its own setup/tests |
+| Full local gate | `python3.11 scripts/dev.py check all` | Editable plus wheel plus sdist; same command as CI |
+| Historical initialization | `python3.11 scripts/dev.py check legacy` | Git-only seven-case legacy matrix, with local workflow configuration stubs |
 
-The CLI tests create their own local projects. Existing success cases use
-`--skip-peppy` and principally single-end inputs. They do **not** yet supply the
-representative paired-end/default-PEP contract coverage planned in #62. The
-[verification record](docs/verification-60.md) separates an additional one-off
-default-PEP probe from reusable test coverage.
+Both installed help commands and both module forms run outside the checkout in
+each profile. Tests never inject the source tree via PYTHONPATH. Historical
+inputs remain Git-only; the source archive includes a documented synthetic SE
+substitute retaining the existing libprep assertions. #62 owns representative
+paired-end/default-PEP coverage; it can add `tests/test_*_cli.py` without CI edits.
 
-Check all supported invocation forms outside the source directory:
-
-```bash
-mkdir -p "$GCF_DEV/smoke"
-cd "$GCF_DEV/smoke"
-configmaker.py --help
-create_testdata.py --help
-python -m configmaker.configmaker --help
-python -m testdata.create_testdata --help
-cd "$GCF_REPO"
-```
-
-This verifies script/module invocation in an editable environment, not wheel
-completeness or successful testdata production. No build command or unified
-`scripts/dev.py` is advertised here before #61 provides it.
-
-Current local checks pre-stage local workflow configuration and use packaged
-organism data. They have no email path and require no services/downloads. Do not
-copy the older CI initialization matrix into the routine loop: an absent workflow
-tree triggers a live, unpinned clone. Do not execute testdata production as a
-smoke test. If extending tests into BFQ/email, install an explicit SMTP prohibition
-that also reaches subprocesses; mock delivery. `BFQ_ENV=test` alone is insufficient.
+See [#61 verification](docs/verification-61.md) for actual results and limitations;
+[#60 verification](docs/verification-60.md) remains historical evidence. No local
+check executes scientific workflows or the dormant testdata producer. Routine
+Python/subprocess checks block network and SMTP; never use BFQ_ENV as a substitute
+for mail isolation. No passing test establishes scientific compatibility.
 
 ## Optional suite/container integration
 
@@ -136,10 +91,9 @@ in development; actual delivery checks belong to deliberately run facility
 integration. See the existing [metadata](docs/input-validation.md#coordinated-deployment-and-integration-tests)
 and [libprep](docs/libprep-config.md#coordinated-bfq-deployment) integration notes.
 
-BFQ #138/#139 are related, independent work. At the #60 review,
-[BFQ PR #141](https://github.com/gcfntnu/gcf-bfq/pull/141) proposed matching
-worktree/environment/ownership and PR conventions. Its BFQ-specific setup runner
-is not a gcf-tools command and its completion is not a prerequisite here.
+The merged [BFQ PR #141](https://github.com/gcfntnu/gcf-bfq/pull/141) supplied useful
+setup/check, worktree-isolation and evidence conventions. Each repository remains
+independently usable; gcf-tools does not require BFQ or its development environment.
 
 ## PR handoff
 
