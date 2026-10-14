@@ -14,7 +14,7 @@ python-Levenshtein==0.25.1
 Levenshtein==0.25.1
 rapidfuzz==3.9.7
 six==1.17.0
-requests==2.32.4
+requests==2.33.0
 et-xmlfile==2.0.0
 certifi==2026.7.22
 urllib3==2.2.3
