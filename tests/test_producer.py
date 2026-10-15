@@ -43,7 +43,7 @@ def test_parser_preserves_arguments_and_explicit_restrictions(source, tmp_path):
                              "--seed", "42", "--verbose"])
     assert vars(args) == dict(runfolder="source", output="result", samples="001,CTRL",
                              n_reads=8, n_samples=2, no_fastq_rename=True,
-                             libprep_config="kits.yaml", project_id=PROJECT, seed=42, verbose=True)
+                             libprep_config="kits.yaml", project_id=PROJECT, seed=42, verbose=True, parse_cells=None)
     defaults = parser.parse_args(["source"])
     assert (defaults.n_reads, defaults.n_samples, defaults.seed) == (1000, 3, 123456)
     run, config = source

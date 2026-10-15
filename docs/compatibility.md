@@ -73,6 +73,14 @@ then published without replacement; original workbook/Stats bytes retain their
 stated provenance. See the guide for exact source, identifier and filesystem
 restrictions and the auxiliary manifest; these do not change configmaker formats.
 
+The additive [#83 Parse profile](testdata.md#parse-wt-v4-selected-cell-producer-83)
+uses `--parse-cells` or `BFQoutput.sample_parse_cells(output_dir, selection, overwrite=False)`
+to retain all explicit WT v4 cell-key matches. It conflicts with explicit read-count,
+sample-selection and seed arguments; ordinary reservoir defaults remain unchanged.
+Both profiles now preserve optional `RunInfo.xml` bytes/hash, while Stats remains
+the geometry authority. The selection schema is auxiliary; configmaker formats
+and shared validation rules are unchanged.
+
 ## Metadata, selection and configuration authority
 
 - [Input validation](input-validation.md#accepted-input-and-matching-rules) defines

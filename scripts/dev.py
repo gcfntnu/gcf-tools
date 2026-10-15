@@ -199,7 +199,7 @@ def tests(python, env, work, root, profile):
     if profile == "example":
         selection = ("test_paired_cli.py::test_paired_example_installed_cli_default_pep",)
     elif profile == "producer":
-        selection = ("test_producer_cli.py",)
+        selection = ("test_producer_cli.py", "test_parse_cells_cli.py")
     run([python, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp", work / "pytest-tmp",
          "--junitxml", work / "tests.xml", *[root / "tests" / p for p in selection]],
         env, work, work / "tests.log")
