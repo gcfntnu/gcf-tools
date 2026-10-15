@@ -17,8 +17,6 @@ import tempfile
 import time
 import zipfile
 
-import producer_tools
-
 ROOT = Path(__file__).resolve().parents[1]
 DEV = ROOT.parent / (ROOT.name + "-local")
 BASELINE = ROOT / "requirements-dev.txt"
@@ -150,7 +148,6 @@ def setup(args):
     requirements = Path(args.requirements).resolve() if args.requirements else BASELINE
     shutil.copy2(requirements, work / "requirements.txt")
     report = {"source": identity(ROOT), "python": sys.version, "platform": platform.platform(),
-              "producer_tools": producer_tools.TOOLS,
               "requirements_origin": str(requirements), "requirements_sha256": sha(requirements),
               "requirements": requirements.read_text(), "acquisition": "local wheels" if args.wheelhouse else "package index"}
     write_json(work / "identity.json", report)
@@ -160,9 +157,6 @@ def setup(args):
     if args.wheelhouse:
         command += ["--no-index", "--find-links", str(Path(args.wheelhouse).resolve())]
     run(command, env, work, work / "acquisition.log")
-    tool_archives = work / "producer-tools"
-    producer_tools.acquire(tool_archives, args.producer_tools)
-    producer_tools.install(tool_archives, python)
     install_guard(python)
     env = environment(work, python)
     run([python, "-m", "pip", "install", "--no-index", "--find-links", wheels, "-r", requirements], env, work)
@@ -171,7 +165,6 @@ def setup(args):
     verify_baseline(python, env, work, requirements)
     freeze(python, env, work)
     state = {"python": str(python), "wheelhouse": str(wheels), "setup": str(work),
-             "producer_tools": str(tool_archives),
              "baseline_sha256": sha(BASELINE), "pyproject_sha256": sha(ROOT / "pyproject.toml"),
              "requirements_sha256": sha(work / "requirements.txt"),
              "wheel_sha256": {p.name: sha(p) for p in sorted(wheels.glob("*.whl"))}}
@@ -198,9 +191,6 @@ def load_setup():
     actual = {p.name: sha(p) for p in Path(state["wheelhouse"]).glob("*.whl")}
     if actual != state["wheel_sha256"]:
         raise RuntimeError("Prepared dependency wheels changed; rerun setup")
-    if "producer_tools" not in state:
-        raise RuntimeError("Producer tool provisioning changed; rerun setup")
-    producer_tools.verify_installed(Path(state["python"]))
     return state
 
 
@@ -271,7 +261,6 @@ def distribution_checks(state, work, include_sdist):
     wheel_python = work / "wheel-venv/bin/python"
     wheel_env = environment(work, wheel_python)
     run([sys.executable, "-m", "venv", wheel_python.parent.parent], wheel_env, work)
-    producer_tools.install(state["producer_tools"], wheel_python)
     install_guard(wheel_python)
     run([wheel_python, "-m", "pip", "install", "--no-index", "--find-links", state["wheelhouse"],
          "-r", Path(state["setup"]) / "requirements.txt", wheel], wheel_env, work)
@@ -295,7 +284,6 @@ def distribution_checks(state, work, include_sdist):
         root = next(extracted.iterdir())
         # Exercise the exact documented sdist setup/check interface, fresh env.
         run([sys.executable, root / "scripts/dev.py", "setup", "--wheelhouse", state["wheelhouse"],
-             "--producer-tools", state["producer_tools"],
              "--requirements", Path(state["setup"]) / "requirements.txt"], env, root, work / "sdist-setup.log")
         run([sys.executable, root / "scripts/dev.py", "check", "tests"], env, root, work / "sdist-tests.log")
 
@@ -336,7 +324,6 @@ def main():
     setup_parser = sub.add_parser("setup", help="One-time dependency acquisition and editable install")
     setup_parser.add_argument("--wheelhouse", help="Optional existing wheels for disconnected provisioning; copied privately")
     setup_parser.add_argument("--requirements", help="Explicit development baseline override; recorded, never a production policy")
-    setup_parser.add_argument("--producer-tools", help="Optional directory of pinned producer-tool archives for disconnected provisioning")
     check_parser = sub.add_parser("check", help="Repeat offline checks using prepared dependencies")
     check_parser.add_argument("profile", choices=("fast", "cli", "tests", "wheel", "sdist", "all", "legacy", "example", "producer"), default="fast", nargs="?")
     args = parser.parse_args()

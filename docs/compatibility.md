@@ -54,19 +54,24 @@ message suggestions into automation.
 
 ### create_testdata.py
 
-The existing parser accepts positional `runfolder`, `--output` (default `None`,
-although execution needs a destination), `--n-reads` (CLI default 1000),
-`--n-samples` (3), `--samples` (comma-separated explicit IDs, supersedes random
-sample selection), `--no-fastq-rename` (false), `--verbose` (false), and the
-additive `--libprep-config` (unset). An explicit local YAML file is authoritative
-and never falls back to a download; omission retains the historical remote
-workflow configuration. `BFQoutput(path, libprep_config=...)` exposes the same
-selection, retaining the old SE-before-PE lookup.
-`BFQoutput.sample` has a different Python default, `n_reads=10000`, and
-`overwrite=True`. These are inventoried for compatibility review, **not a
-recommended execution recipe**. The [#63 harness](testdata.md#producer-inspection-and-legacy-smoke-63)
-repairs YAML loading and exercises a legacy-shaped synthetic case. Safe modern
-source generation remains #64.
+The existing installed script, module and `BFQoutput` names remain. The bounded
+[#64 producer](testdata.md#safe-flat-paired-producer-64) requires positional
+`runfolder`, `--output`, explicit `--project-id`/`--samples`, local
+`--libprep-config` and the existing `--no-fastq-rename` route. `--seed` is additive
+(default 123456). `--n-reads` remains CLI 1000 / Python 10000, interpreted per mate
+file in one flat pair. `--n-samples` remains recognizable but automatic selection
+is refused. No source downloads or native sampling/compression commands remain.
+
+`BFQoutput(dirname=None, libprep_config=None, project_id=None)` adds project
+selection. Its `sample` argument order remains compatible, with additive trailing
+`seed`; `overwrite` now defaults false and even explicit true refuses an occupied
+destination. Flat names are preserved; historical rename/multi-file routes fail.
+Project/sample selection comes from shared metadata validation, not ExperimentName
+or generated TSV. Shared geometry-based libprep selection deliberately replaces
+legacy SE-first lookup. Every supported pair is validated and sampled together,
+then published without replacement; original workbook/Stats bytes retain their
+stated provenance. See the guide for exact source, identifier and filesystem
+restrictions and the auxiliary manifest; these do not change configmaker formats.
 
 ## Metadata, selection and configuration authority
 

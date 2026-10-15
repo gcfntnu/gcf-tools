@@ -1,85 +1,119 @@
-"""Installed producer with real, pinned tools; no mocks of FASTQ processing."""
-import gzip
+"""Installed real producer, independent record oracle and normal PEP consumer."""
+import csv
+import hashlib
+import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
 import pytest
+import yaml
 
-from producer_fixture import PROJECT, contents, legacy_source
-
-
-def records(path):
-    lines = gzip.decompress(path.read_bytes()).decode("ascii").splitlines()
-    assert len(lines) % 4 == 0
-    output = []
-    for index in range(0, len(lines), 4):
-        header, sequence, plus, quality = lines[index:index + 4]
-        assert header.startswith("@synthetic:CTRL:")
-        assert plus == "+"
-        assert len(sequence) == len(quality)
-        assert set(sequence) <= set("ACGT")
-        output.append((header, sequence, plus, quality))
-    return output
+from producer_fixture import PROJECT, RUN, contents, modern_source, records, write_records
 
 
-def run_producer(tmp_path, source, config, reads=8):
-    output = tmp_path / "result"
-    command = [str(Path(sys.executable).parent / "create_testdata.py"), str(source),
-               "--output", str(output), "--samples", "CTRL", "--n-reads", str(reads),
-               "--libprep-config", str(config)]
-    result = subprocess.run(command, cwd=tmp_path, capture_output=True, text=True, timeout=30)
-    (tmp_path / "producer-transcript.txt").write_text(result.stdout + result.stderr)
-    return result, output
+def command(source, config, output, *extra):
+    return [str(Path(sys.executable).parent / "create_testdata.py"), str(source),
+            "--output", str(output), "--samples", "001,CTRL", "--n-reads", "8",
+            "--libprep-config", str(config), "--project-id", PROJECT, "--no-fastq-rename", *extra]
 
 
-def test_real_installed_producer_smoke(tmp_path):
-    for name, args, expected in [("seqkit", ["version"], "seqkit v2.10.1"),
-                                 ("gzip", ["--version"], "gzip 1.12")]:
-        result = subprocess.run([str(Path(sys.executable).parent / name), *args],
-                                capture_output=True, text=True, check=True)
-        assert result.stdout.splitlines()[0] == expected
-    source, config = legacy_source(tmp_path / "source")
+def test_real_installed_producer_and_normal_pep(tmp_path):
+    source, config = modern_source(tmp_path / "source with spaces")
     before = contents(source)
-    result, output = run_producer(tmp_path, source, config)
+    output = tmp_path / RUN
+    result = subprocess.run(command(source, config, output), cwd=tmp_path, capture_output=True, text=True, timeout=30)
+    (tmp_path / "producer-transcript.txt").write_text(result.stdout + result.stderr)
     assert result.returncode == 0, result.stdout + result.stderr
     assert contents(source) == before
-    assert not (tmp_path / ".libprep.config").exists()
-    assert sorted(p.name for p in (output / PROJECT).iterdir()) == [
-        "CTRL_S1_R1_001.fastq.gz", "CTRL_S1_R2_001.fastq.gz"]
-    selected = []
-    for mate in (1, 2):
-        observed = records(output / PROJECT / f"CTRL_S1_R{mate}_001.fastq.gz")
-        original = records(source / PROJECT / f"CTRL_R{mate}.fastq.gz")
-        assert len(observed) == 8
-        assert all(record in original for record in observed)
-        assert [original.index(record) for record in observed] == sorted(original.index(record) for record in observed)
-        assert all(record[0].endswith(f"/{mate}") for record in observed)
-        assert all(len(record[1]) == (75 if mate == 1 else 150) for record in observed)
-        selected.append([record[0].rsplit("/", 1)[0] for record in observed])
-    assert selected[0] == selected[1]
-    sheet = (output / "SampleSheet.csv").read_text()
-    assert "CTRL," in sheet and "001," not in sheet and "001A," not in sheet
-    assert (output / "Stats/Stats.json").read_bytes() == (source / "Stats/Stats.json").read_bytes()
-    assert (output / "Sample-Submission-Form.xlsx").read_bytes() == (source / "Sample-Submission-Form.xlsx").read_bytes()
-
-
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="#64: equal per-file seeds do not validate reordered input mates")
-def test_pending_64_real_producer_rejects_reordered_pairs(tmp_path):
-    source, config = legacy_source(tmp_path / "source")
-    second = source / PROJECT / "CTRL_R2.fastq.gz"
-    original = records(second)
-    second.write_bytes(gzip.compress(("\n".join(line for record in reversed(original) for line in record) + "\n").encode(), mtime=0))
-    before = contents(source)
-    result, output = run_producer(tmp_path, source, config, reads=24)
+    assert not (output / "bcl.done").exists()
+    work = tmp_path / "analysis"
+    fixture = Path(__file__).parent / "fixtures/paired"
+    shutil.copytree(fixture / "workflow", work / "src/gcf-workflows")
+    result = subprocess.run([str(Path(sys.executable).parent / "configmaker.py"), str(output),
+                             "--project-id", PROJECT], cwd=work, capture_output=True, text=True, timeout=30)
+    (tmp_path / "configmaker-transcript.txt").write_text(result.stdout + result.stderr)
+    assert result.returncode == 0, result.stdout + result.stderr
+    generated = yaml.safe_load((work / "config.yaml").read_text())
+    pep = yaml.safe_load((work / "pep/pep_config.yaml").read_text())
+    with (work / "pep/sample_table.csv").open() as handle:
+        rows = {row["sample_name"]: row for row in csv.DictReader(handle)}
+    assert set(generated["samples"]) == set(rows) == {"001", "CTRL"}
+    assert generated["read_geometry"] == [75, 150]
+    assert generated["libprep_selection"]["entry"] == "Synthetic PE"
+    assert generated["workflow"] == "rnaseq"
+    assert rows["001"]["External_ID"] == "007"
+    for sample in rows:
+        ids = []
+        for mate in (1, 2):
+            key = f"R{mate}"
+            relative = f"{RUN}/{PROJECT}/{sample}_{key}.fastq.gz"
+            assert generated["samples"][sample][key] == relative
+            assert pep["sample_modifiers"]["derive"]["sources"][key].format(**rows[sample]) == relative
+            link = work / generated["fastq_dir"] / relative
+            produced = output / PROJECT / f"{sample}_{key}.fastq.gz"
+            assert link.resolve() == produced
+            observed = records(produced)
+            original = records(source / PROJECT / produced.name)
+            assert len(observed) == 8
+            assert all(record in original for record in observed)
+            positions = [original.index(record) for record in observed]
+            assert positions == sorted(set(positions))
+            ids.append([record[0].rsplit("/", 1)[0] for record in observed])
+            digest = hashlib.md5(produced.read_bytes()).hexdigest()
+            assert rows[sample][key + "_md5sum"] == generated["samples"][sample][key + "_md5sum"] == digest
+        assert ids[0] == ids[1]
+    summary = json.loads((work / "configmaker.analysis-summary.json").read_text())
+    assert summary["sample_count"] == summary["planned_sample_count"] == 2
+    assert summary["missing_sample_ids"] == []
     assert contents(source) == before
-    assert result.returncode != 0, "reordered pairs were accepted"
 
 
-def test_installed_producer_local_config_missing_fails_without_download(tmp_path):
-    source, _ = legacy_source(tmp_path / "source")
-    result, output = run_producer(tmp_path, source, tmp_path / "missing.yaml")
+@pytest.mark.parametrize("damage", ["reordered", "missing_config", "missing_metadata", "missing_mate"])
+def test_installed_failures_are_nonzero_and_leave_no_output(tmp_path, damage):
+    source, config = modern_source(tmp_path / "source")
+    if damage == "reordered":
+        path = source / PROJECT / "001_R2.fastq.gz"
+        write_records(path, list(reversed(records(path))))
+    elif damage == "missing_config":
+        config.unlink()
+    elif damage == "missing_metadata":
+        (source / "Sample-Submission-Form.xlsx").unlink()
+    else:
+        (source / PROJECT / "001_R2.fastq.gz").unlink()
+    before = contents(source)
+    output = tmp_path / "output"
+    result = subprocess.run(command(source, config, output), cwd=tmp_path, capture_output=True, text=True, timeout=30)
     assert result.returncode == 1
-    assert "No such file" in result.stderr
+    assert "Testdata producer failed:" in result.stderr
     assert "offline checks prohibit" not in result.stderr
     assert not output.exists()
+    assert contents(source) == before
+    assert not list(tmp_path.glob(".*-stage-*"))
+
+
+def test_two_installed_invocations_cannot_replace_each_other(tmp_path):
+    source, config = modern_source(tmp_path / "source")
+    output = tmp_path / "output"
+    processes = [subprocess.Popen(command(source, config, output), cwd=tmp_path,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) for _ in range(2)]
+    results = [process.communicate(timeout=30) for process in processes]
+    assert sorted(process.returncode for process in processes) == [0, 1], results
+    assert len(records(output / PROJECT / "001_R1.fastq.gz")) == 8
+    assert not list(tmp_path.glob(".*-stage-*"))
+    before = contents(output)
+    result = subprocess.run(command(source, config, output), cwd=tmp_path, capture_output=True, text=True, timeout=30)
+    assert result.returncode == 1 and "Destination already exists" in result.stderr
+    assert contents(output) == before
+
+
+def test_installed_module_form_generates_same_output(tmp_path):
+    source, config = modern_source(tmp_path / "source")
+    outputs = [tmp_path / "script", tmp_path / "module"]
+    commands = [command(source, config, outputs[0]),
+                [sys.executable, "-m", "testdata.create_testdata", *command(source, config, outputs[1])[1:]]]
+    for argv in commands:
+        result = subprocess.run(argv, cwd=tmp_path, capture_output=True, text=True, timeout=30)
+        assert result.returncode == 0, result.stdout + result.stderr
+    assert contents(outputs[0]) == contents(outputs[1])
