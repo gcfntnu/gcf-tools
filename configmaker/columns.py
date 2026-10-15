@@ -92,3 +92,16 @@ def _demux_column_mapper(x):
         src_sanitized = src_sanitized.replace(r, "")
         src_sanitized = src_sanitized.replace(" ", "_")
     return "Demux_" + src_sanitized
+
+
+POOLED_BIOLOGICAL_FIELDS = ("Sample_Group", "Sample_Biosource", "External_ID")
+
+
+def _pooled_biological_field(header):
+    """Recognize only canonical fields and established customer header aliases.
+
+    Lab sheets may contain those same biological headers. This validation-only
+    lookup does not change either worksheet's emitted column names.
+    """
+    field = header if header in POOLED_BIOLOGICAL_FIELDS else _customer_column_mapper(header)
+    return field if field in POOLED_BIOLOGICAL_FIELDS else None

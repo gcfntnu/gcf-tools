@@ -14,7 +14,7 @@ from pathlib import Path
 import pandas as pd
 
 from configmaker import __version__
-from configmaker.columns import _customer_column_mapper, _lab_column_mapper, _demux_column_mapper
+from configmaker.columns import _customer_column_mapper, _lab_column_mapper, _demux_column_mapper, _pooled_biological_field
 from descriptors import descriptors as descriptor_tools
 
 VALIDATION_API_VERSION = 1
@@ -234,7 +234,7 @@ def parse_samplesheet(content, path, result):
     return {"path": path, "records": records, "columns": [h for h in headers if h], "options": options, "header": header}
 
 
-def _worksheet(book, path, name, header_row, mapper, result, optional_empty=False):
+def _worksheet(book, path, name, header_row, mapper, result, optional_empty=False, pooled=False):
     context = {"file": path, "worksheet": name}
     if name not in book.sheet_names:
         result.add("error", "workbook.missing_worksheet", "Required worksheet {!r} is missing.".format(name), **context)
@@ -264,6 +264,7 @@ def _worksheet(book, path, name, header_row, mapper, result, optional_empty=Fals
     if invalid_types:
         result.add("error", "workbook.invalid_descriptor", "Unknown descriptor dtype(s): {}.".format(invalid_types), row=header_row, details={"invalid_dtypes": invalid_types}, **context)
         return None
+    reserved = {mapper(header): _pooled_biological_field(header) for header in frame.columns}
     mapped = [mapper(name) for name in frame.columns]
     duplicates = _duplicates(mapped)
     if duplicates:
@@ -297,6 +298,18 @@ def _worksheet(book, path, name, header_row, mapper, result, optional_empty=Fals
             continue
         sid = _identifier(row["Sample_ID"])
         row["Sample_ID"] = sid
+        if pooled:
+            for column, field in reserved.items():
+                value = row[column]
+                if field and not _blank(value) and not (isinstance(value, str) and value == "NA"):
+                    result.add(
+                        "error", "workbook.pooled_biological_metadata",
+                        "Pooled library {!r} has {}={!r}; biological metadata belongs in Cell Multiplexing. "
+                        "Correct the input; values are not moved or cleared.".format(sid, field, _plain(value)),
+                        row=rownum, column=field, sample_id=sid,
+                        details={"value": _plain(value), "mapped_column": column}, **context,
+                    )
+                    broken = True
         if "External_ID" in row and not _blank(row["External_ID"]):
             row["External_ID"] = _identifier(row["External_ID"])
         if sid != sid.strip():
@@ -318,9 +331,9 @@ def _worksheet(book, path, name, header_row, mapper, result, optional_empty=Fals
         if col != "Sample_ID":
             frame[col] = frame[col].map(lambda value: pd.NA if _blank(value) or (isinstance(value, str) and value == "NA") else value)
     frame = frame.dropna(axis=1, how="all")
-    if name == CUSTOMER_SHEET:
+    if name == CUSTOMER_SHEET and not pooled:
         frame = frame.drop(columns=["Sample_Type", "Sample_Buffer", "Volume", "Quantification"], errors="ignore")
-    elif name == LAB_SHEET:
+    elif name == LAB_SHEET and not pooled:
         frame = frame.drop(columns=["KIT"], errors="ignore")
     return {"data": frame, "descriptors": desc, "rows": source_rows}
 
@@ -329,8 +342,8 @@ def parse_submission_form(content, path, result, require_demux=False):
     """Read both worksheets and reproduce configmaker's lab-precedence join."""
     try:
         with pd.ExcelFile(io.BytesIO(content)) as book:
-            customer = _worksheet(book, path, CUSTOMER_SHEET, 15, _customer_column_mapper, result)
-            lab = _worksheet(book, path, LAB_SHEET, 1, _lab_column_mapper, result, optional_empty=True)
+            customer = _worksheet(book, path, CUSTOMER_SHEET, 15, _customer_column_mapper, result, pooled=require_demux)
+            lab = _worksheet(book, path, LAB_SHEET, 1, _lab_column_mapper, result, optional_empty=True, pooled=require_demux)
             demux = _worksheet(book, path, "Cell Multiplexing", 1, _demux_column_mapper, result) if require_demux else None
     except (OSError, ValueError, KeyError, TypeError, ImportError, EOFError) as error:
         result.add("error", "workbook.parse_failed", "Cannot parse submission workbook: {}".format(error), file=path)

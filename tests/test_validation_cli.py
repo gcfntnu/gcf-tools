@@ -190,6 +190,8 @@ def parse_run(tmp_path, kit_source, sample_id="BIO001", wells="A1, A2-A4"):
         sheet = run / "SampleSheet.csv"
         sheet.write_text(sheet.read_text().replace("[Data]", "[CustomOptions]\nLibprep,Parse Biosciences Test\n[Data]"))
     book = load_workbook(run / "Sample-Submission-Form.xlsx")
+    book["Sample-Submission-Form"]["B16"] = None
+    book["Sample-Submission-Form"]["C16"] = None
     demux = book.create_sheet("Cell Multiplexing")
     demux.append(["Unique Sample ID", "Wells", "Comment"])
     demux.append([sample_id, wells, "blå"])
