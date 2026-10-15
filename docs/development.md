@@ -15,7 +15,10 @@ python3.11 scripts/dev.py check all
 exact [development baseline](../requirements-dev.txt), installs an isolated venv
 and this checkout editable, and verifies every pinned version plus `pip check`.
 No prepared wheel directory, activated environment, global installation, BFQ,
-credentials, `/opt`, `/mnt`, container or workflow checkout is needed. Index and
+credentials, `/opt`, `/mnt`, container or workflow checkout is needed. Setup also
+downloads hash-pinned seqkit/gzip archives from upstream/conda-forge for the
+[legacy producer smoke](testdata.md#producer-inspection-and-legacy-smoke-63).
+The producer tool baseline currently requires Linux x86-64. Index and
 certificate environment settings can be supplied during acquisition. Linux
 platforms without wheels for this baseline fail explicitly; the exercised target
 is x86-64. Interpreter acquisition itself is ordinary personal provisioning.
@@ -32,10 +35,12 @@ usable. A moved checkout or changed project/baseline requires setup again.
 A deliberately disconnected setup can reuse an existing wheel directory:
 
 ```bash
-python3.11 scripts/dev.py setup --wheelhouse /absolute/path/to/prepared/wheels
+python3.11 scripts/dev.py setup --wheelhouse /absolute/path/to/prepared/wheels \
+  --producer-tools /absolute/path/to/prepared/producer-tools
 ```
 
-This optional path copies the selected wheels into the task's own wheelhouse;
+These optional paths copy the selected wheels and pinned tool archives into the
+task's own workspace;
 it is not the default prerequisite. An intentional dependency experiment uses
 `setup --requirements /absolute/path/to/exact-requirements.txt`. The file must
 contain exact `name==version` lines including all runtime, development and build
@@ -53,6 +58,7 @@ both script and module forms from an isolated cwd.
 | Profile | Scope |
 | --- | --- |
 | `example` | One installed default-PEP [paired example](testdata.md), with retained inputs and outputs |
+| `producer` | Installed legacy producer using real pinned tools, plus focused failure coverage |
 | `fast` | API tests and offline/email guard checks |
 | `cli` | Existing real CLI/file tests, including private copies of historical Git inputs |
 | `tests` | Fast plus CLI; no archive build |
@@ -72,12 +78,15 @@ plugin autoload and user site packages, and uses invocation-private temp/cache
 paths. The test-only `sitecustomize.py` is copied into each private venv, never
 into a distribution. With `GCF_DEV_OFFLINE=1` it blocks socket/DNS/SMTP events,
 shell execution and external executables, except the checked interpreter,
-installed tools and fixed local OS-identity probes needed by pip. Tests verify
+installed commands, fixed local OS-identity probes needed by pip and the pinned
+private seqkit/gzip binaries with the producer's fixed operation shapes. Their
+hashes are checked before each execution. Tests verify
 SMTP, SMTP_SSL, reloads/custom ports and ordinary Python subprocess inheritance.
 This is an accidental-side-effect guard, not a security sandbox for hostile code
 or arbitrary non-Python children. Do not remove it or add unreviewed exemptions.
-No current check sends mail or runs the testdata producer; only producer help and
-imports are exercised. `BFQ_ENV=test` is not a replacement for this protection.
+No current check sends mail. The producer executes only on tiny synthetic copies
+under the [legacy harness](testdata.md#producer-inspection-and-legacy-smoke-63).
+`BFQ_ENV=test` is not a replacement for this protection.
 
 ## Distribution boundary and source testing
 

@@ -56,6 +56,7 @@ disconnected setup, explicit overrides, failure identities and sdist testing.
 | --- | --- | --- |
 | Fast API | `python3.11 scripts/dev.py check fast` | Validator/libprep/workflow assembly and offline/email guard |
 | Paired example | `python3.11 scripts/dev.py check example` | Installed default-PEP initialization with verified synthetic pairs; [guide](docs/testdata.md) |
+| Legacy producer | `python3.11 scripts/dev.py check producer` | Installed producer with pinned real tools and tiny synthetic legacy-shaped inputs; [limitations](docs/testdata.md#producer-inspection-and-legacy-smoke-63) |
 | Real CLI/files | `python3.11 scripts/dev.py check cli` | Existing assertions with installed subprocesses and private file inputs |
 | Both | `python3.11 scripts/dev.py check tests` | All current tests in the prepared editable environment |
 | Distribution | `python3.11 scripts/dev.py check wheel` or `check sdist` | Fresh non-editable wheel imports/scripts/resources/tests; sdist adds its own setup/tests |
@@ -71,7 +72,8 @@ automatically without CI edits.
 
 See [#61 verification](docs/verification-61.md) for actual results and limitations;
 [#60 verification](docs/verification-60.md) remains historical evidence. No local
-check executes scientific workflows or the dormant testdata producer. Routine
+check executes scientific workflows. The producer smoke executes only tiny
+synthetic legacy-shaped sources with the documented unresolved safety defects. Routine
 Python/subprocess checks block network and SMTP; never use BFQ_ENV as a substitute
 for mail isolation. No passing test establishes scientific compatibility.
 

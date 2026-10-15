@@ -43,21 +43,22 @@ No workflow changes belong in this PR.
 
 ## Testdata producer
 
-Installed help works; production execution is not endorsed. Source
+The #63 offline harness and real pinned-tool synthetic smoke now work;
+production execution is not endorsed. Source
 `testdata/create_testdata.py:BFQoutput._inspect`, `sample`, `sample_samplesheet`
-shows why [#63](https://github.com/gcfntnu/gcf-tools/issues/63) must establish an
-offline harness before [#64](https://github.com/gcfntnu/gcf-tools/issues/64) restores
-safe generation:
+and [the harness guide](testdata.md#producer-inspection-and-legacy-smoke-63)
+identify what [#64](https://github.com/gcfntnu/gcf-tools/issues/64) must repair:
 
-- Inspection can run `wget` on moving workflow `main`, write `.libprep.config` in
-  cwd, then reference `yaml` without importing it. Ordinary construction is not
-  a read-only/offline inspection API.
+- Explicit local configuration now loads safely and without downloads. Without
+  it, inspection still downloads from moving workflow `main`, now in memory.
+  The missing YAML import/loader defect and cwd config mutation are repaired.
+  Historical SE-first kit precedence remains distinct from configmaker's selector.
 - It infers project identity from `ExperimentName`, expects a project sample TSV,
   and copies obsolete `bcl.done` plus Stats/InterOp/workbook content. Current BFQ
   state is not represented by that marker.
 - Sampling defaults to recursively deleting an existing destination. No overlap
-  guard protects source/ancestor destinations. Commands use shell interpolation
-  and some exit statuses are ignored.
+  guard protects source/ancestor destinations. Commands now use direct argv;
+  the caller still ignores sampling/compression exit statuses.
 - Sample selection uses unseeded `random.choices` (with replacement). Each file
   uses `seqkit sample -s 123456`, which by itself does not prove paired-read
   identity. Prefix globbing, filename-based R1/R2 inference and renaming multiple

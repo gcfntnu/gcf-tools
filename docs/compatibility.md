@@ -57,10 +57,16 @@ message suggestions into automation.
 The existing parser accepts positional `runfolder`, `--output` (default `None`,
 although execution needs a destination), `--n-reads` (CLI default 1000),
 `--n-samples` (3), `--samples` (comma-separated explicit IDs, supersedes random
-sample selection), `--no-fastq-rename` (false) and `--verbose` (false).
+sample selection), `--no-fastq-rename` (false), `--verbose` (false), and the
+additive `--libprep-config` (unset). An explicit local YAML file is authoritative
+and never falls back to a download; omission retains the historical remote
+workflow configuration. `BFQoutput(path, libprep_config=...)` exposes the same
+selection, retaining the old SE-before-PE lookup.
 `BFQoutput.sample` has a different Python default, `n_reads=10000`, and
 `overwrite=True`. These are inventoried for compatibility review, **not a
-recommended execution recipe**. Producer repair belongs to #63/#64.
+recommended execution recipe**. The [#63 harness](testdata.md#producer-inspection-and-legacy-smoke-63)
+repairs YAML loading and exercises a legacy-shaped synthetic case. Safe modern
+source generation remains #64.
 
 ## Metadata, selection and configuration authority
 
