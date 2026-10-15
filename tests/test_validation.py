@@ -450,7 +450,7 @@ def test_parse_biosciences_uses_required_shared_demux_worksheet(tmp_path, includ
 
     sheet = sample_sheet(tmp_path / "SampleSheet.csv", [["S1", PROJECT]])
     sheet.write_text(sheet.read_text().replace("[Data]", "[CustomOptions]\nLibprep,Parse Biosciences Evercode\n[Data]"))
-    form = submission_form(tmp_path / "submission.xlsx", [customer_row("S1")])
+    form = submission_form(tmp_path / "submission.xlsx", [["S1", None, None, PROJECT]])
     if include_demux:
         book = load_workbook(form)
         demux = book.create_sheet("Cell Multiplexing")
@@ -534,7 +534,7 @@ def test_parse_selection_validates_multiplexing_without_changing_custom_options(
     sheet_kit = "Parse Biosciences Test" if selected_by != "override" else "Kit"
     sheet.write_text(sheet.read_text().replace("[Data]", "[CustomOptions]\nLibprep," + sheet_kit + "\n[Data]"))
     override = {"sheet": None, "override": "Parse Biosciences Test", "both": "Parse Biosciences Other", "override_away": "Kit"}[selected_by]
-    form = submission_form(tmp_path / "form.xlsx", [customer_row("001", group="blå")])
+    form = submission_form(tmp_path / "form.xlsx", [["001", None, None, PROJECT]])
     missing, report = report_for([sheet], [form], libkit=override)
     assert not missing.ok
     assert any(f["code"] == "workbook.missing_worksheet" and f["worksheet"] == "Cell Multiplexing" for f in report["errors"])
@@ -544,7 +544,7 @@ def test_parse_selection_validates_multiplexing_without_changing_custom_options(
     assert valid.custom_options["Libprep"] == sheet_kit
     assert valid.forms[0]["demux"]["data"].Sample_ID.tolist() == ["001", "1", "BIO_1-2"]
     assert valid.forms[0]["demux"]["data"].iloc[0].Wells == "A1, A2-A4"
-    assert valid.metadata.iloc[0].Sample_Group == "blå"
+    assert valid.forms[0]["demux"]["data"].iloc[0].Customer_Comments == "blå"
 
 
 def test_non_parse_does_not_start_validating_unused_multiplexing_sheet(tmp_path):

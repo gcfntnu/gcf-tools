@@ -124,6 +124,49 @@ compatibility contract; external consumers should use `to_dict()`.
 Input-format failures suppress dependent sample-matching errors. Independently
 readable files/worksheets still get checked in the same call.
 
+### Pooled-library metadata (Parse)
+
+The existing Parse selection condition (SampleSheet or explicit kit override,
+including an override away from a Parse SampleSheet) now also rejects populated
+biological-only fields on customer and lab library rows: `Sample_Group`,
+`Sample_Biosource`, and `External_ID`. Put these annotations on biological rows
+in Cell Multiplexing. Other single-cell kits, including ordinary 10x, and unused
+multiplexing worksheets do not activate this rule.
+
+Recognition uses the established customer header aliases (`Sample Group`,
+`Sample biosource`, `External ID` and their existing prefix mappings), or exact
+canonical field names, after bracket descriptors are removed. These same known
+biological headers are checked on the lab worksheet even where its ordinary
+output mapper would prefix the name with `Lab_`. This validation lookup does not
+rename emitted columns or classify arbitrary custom names. For example,
+`Library External ID` is permitted and retains the existing custom-column mapping.
+
+Empty/whitespace-only cells, spreadsheet missing values and the exact string
+`NA` are missing under the existing non-ID convention. Numeric zero, false and
+other populated values are not empty. Checks examine original cells before
+identifier conversion, customer/lab joins, descriptor conversion and later-form
+overrides. `workbook.pooled_biological_metadata` identifies file, worksheet, row,
+canonical column, library `sample_id`, and `details.value`; `details.mapped_column`
+records the ordinary worksheet mapping. Inputs are never cleared or repaired.
+This deliberately tightens accepted Parse inputs: older workbooks with biological
+annotations on library rows need operator correction before processing.
+
+For this multiplexed path only, populated customer `Sample_Type`, `Sample_Buffer`,
+`Volume`, `Quantification`, and lab `KIT` columns are retained instead of dropped.
+All allowed custom columns continue through the normal mappings, precedence,
+descriptors and sample string serialization into `config.samples`. Distinct
+library concentrations and zero-valued custom metrics are valid. Existing descriptor
+constraints still apply (for example the default `Sample_Type` enum is DNA/RNA);
+this retention change does not make arbitrary values valid for constrained fields. Non-multiplexed
+column dropping is unchanged. Cell Multiplexing columns remain in `config.wells`
+with existing mappings and types (for example `Sample biosource` maps to
+`Demux_Sample_Biosource`); well-space normalization is unchanged. No schema rename,
+biological relationship inference or general normalization rewrite is introduced.
+
+Tools owns this validation/config propagation. Companion workflows #200 owns
+sample/library TSVs, barcode-based AnnData joins and `bfq/metadata/` delivery.
+The input section determines metadata ownership, not equality across libraries.
+
 ### ASCII diagnostics and kit overrides
 
 `sample.non_ascii_id` and `workbook.non_ascii_wells` are error-level findings.

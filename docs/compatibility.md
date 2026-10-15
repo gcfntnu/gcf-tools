@@ -214,3 +214,14 @@ lanes and batch behavior remain unchanged. Report/API schema stays at version 1.
 Failures and overwrite behavior are observable compatibility concerns. The early
 validation protections are intentional; incomplete rollback and inconsistent
 launchers are defects to fix under separately scoped, tested changes.
+
+
+## Multiplexed metadata tightening (#68)
+
+[The pooled-library contract](input-validation.md#pooled-library-metadata-parse)
+rejects populated biological-only fields before any Parse config/output work,
+including lab cells and values otherwise hidden by merges. It also retains the
+five historically dropped library metadata columns for Parse only. Header
+mapping, descriptor conversion, exact IDs, customer/lab precedence, FASTQ grouping,
+PEP identities and the `samples`/`wells` sections retain their established meaning.
+No TSV materialization or workflow processing is implemented in tools.
