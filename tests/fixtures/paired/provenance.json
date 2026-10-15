@@ -1,0 +1,26 @@
+{
+  "generator": "tests/paired_fixture.py",
+  "geometry": [
+    75,
+    150
+  ],
+  "gzip": "mtime=0, no filename, compression level 9",
+  "optional_workflow_comparator": "42d37e302a2ff6c868844e6d33147460e0ec7ba3",
+  "origin": "Wholly synthetic; no facility data or upstream workflow files copied",
+  "pairs_per_sample": 24,
+  "sha256": {
+    "990101_SYNTHETIC_0001_ASYNTHETIC/GCF-2099-001/001A_R1.fastq.gz": "0d6374a93f80a2060402dd6777a53f1c495feded7680cab52d3ea4ee78dcccfb",
+    "990101_SYNTHETIC_0001_ASYNTHETIC/GCF-2099-001/001A_R2.fastq.gz": "ade29c6623fc0d950ba0c0af34a63b43283e28c007b2a58dca6bfff9fad55482",
+    "990101_SYNTHETIC_0001_ASYNTHETIC/GCF-2099-001/001_R1.fastq.gz": "1c19898cd8836e6df553996be8cce0194eabcd5382583f5cdd477cece515a34c",
+    "990101_SYNTHETIC_0001_ASYNTHETIC/GCF-2099-001/001_R2.fastq.gz": "841d2d26e1d58a67e4c6d215a058dfe1d52e4cd1c640714c8fd8d329ac4384be",
+    "990101_SYNTHETIC_0001_ASYNTHETIC/GCF-2099-001/CTRL_R1.fastq.gz": "f1106fbca3e795957be9af1d5b19135f96f4a7bfde6e13f98e4d70eb6654bbdf",
+    "990101_SYNTHETIC_0001_ASYNTHETIC/GCF-2099-001/CTRL_R2.fastq.gz": "cd2ee7e70a5cdce9381a2985de8e54b59313f53a4bf4c826226cc5191d77ffe1",
+    "990101_SYNTHETIC_0001_ASYNTHETIC/Sample-Submission-Form.xlsx": "e79b4dab50402ed009d876c0a192629cfd96a03f096de5b26e5fc27569c1dbb0",
+    "990101_SYNTHETIC_0001_ASYNTHETIC/SampleSheet.csv": "a4bfbfdf135ce0477c22637ea6bc3991e0894563c15a0268f8f9c580058c3111",
+    "990101_SYNTHETIC_0001_ASYNTHETIC/Stats/Stats.json": "05ad78035a8cbe7757e9f99fb36ace1f214fb40a25117783b190e4f462fcdf65",
+    "990101_SYNTHETIC_0001_ASYNTHETIC/md5sum_GCF-2099-001_fastq.txt": "746b7fd64df1a7b737600c385f652cff3a16ec255a311dfc157675e005335916",
+    "workflow/libprep.config": "21d0d7b757ca0fcacb6c30a3237a3c06adce57f5e2d72c641cca7bdc12458de8",
+    "workflow/rnaseq/rnaseq.smk": "ee8de4a690a29aac9be40262cde23747f0c990573fdb0b45b246772bb2a14f6f"
+  },
+  "workflow": "Local initialization-only stub: workflow/libprep.config and workflow/rnaseq/rnaseq.smk"
+}

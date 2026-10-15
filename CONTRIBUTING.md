@@ -55,6 +55,7 @@ disconnected setup, explicit overrides, failure identities and sdist testing.
 | Tier | Shared command | Evidence |
 | --- | --- | --- |
 | Fast API | `python3.11 scripts/dev.py check fast` | Validator/libprep/workflow assembly and offline/email guard |
+| Paired example | `python3.11 scripts/dev.py check example` | Installed default-PEP initialization with verified synthetic pairs; [guide](docs/testdata.md) |
 | Real CLI/files | `python3.11 scripts/dev.py check cli` | Existing assertions with installed subprocesses and private file inputs |
 | Both | `python3.11 scripts/dev.py check tests` | All current tests in the prepared editable environment |
 | Distribution | `python3.11 scripts/dev.py check wheel` or `check sdist` | Fresh non-editable wheel imports/scripts/resources/tests; sdist adds its own setup/tests |
@@ -64,8 +65,9 @@ disconnected setup, explicit overrides, failure identities and sdist testing.
 Both installed help commands and both module forms run outside the checkout in
 each profile. Tests never inject the source tree via PYTHONPATH. Historical
 inputs remain Git-only; the source archive includes a documented synthetic SE
-substitute retaining the existing libprep assertions. #62 owns representative
-paired-end/default-PEP coverage; it can add `tests/test_*_cli.py` without CI edits.
+substitute retaining the existing libprep assertions. The [synthetic paired fixture](docs/testdata.md) covers default PEP and paired
+content in CLI, wheel and sdist checks; new `tests/test_*_cli.py` files are selected
+automatically without CI edits.
 
 See [#61 verification](docs/verification-61.md) for actual results and limitations;
 [#60 verification](docs/verification-60.md) remains historical evidence. No local

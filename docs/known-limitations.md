@@ -73,8 +73,8 @@ reconfirmed (11 decompressed lines each):
 - `201020_M03942_0355_000000000-CVF55/GCF-2020-748/116_R1.fastq.gz`
 
 Both paths are relative to `.tests/configmaker`. Fixture presence must not be
-treated as content validation. The new #62
-synthetic paired fixture must be independent of the producer being repaired.
+treated as content validation. The [#62 synthetic paired fixture](testdata.md) is independent of the producer
+being repaired and verifies complete paired records.
 The historical RNA workbook's note at customer J48 is deliberately invalid under
 current rules; `tests/prepare_cli_fixtures.py` and the legacy CLI fixture repair
 only private copies. Do not weaken the validator or edit the source workbook.
@@ -89,8 +89,8 @@ behavior/dependency changes or foundation completion, obtain:
 - Active standalone/custom Python callers, descriptor usage, legacy `.xls` and
   Python requirements, and priority real FASTQ layouts. The parser supports
   workbook reading, but this PR did not verify legacy `.xls` operation.
-- Reusable paired/default-PEP/path/checksum profiles (#62), offline producer
-  evidence (#63/#64), and independent developer onboarding (#65).
+- Broader layouts beyond the [simple paired/default-PEP profile](testdata.md),
+  offline producer evidence (#63/#64), and independent developer onboarding (#65).
 - Deliberate facility suite/container integration with copied inputs and manual
   output/scientific review; no real services, mail, or deployment ran under #60.
 
