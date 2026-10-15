@@ -4,7 +4,8 @@ The committed `tests/fixtures/paired/` fixture is independent of the dormant
 `create_testdata.py` producer. Everything in this directory, including workbook
 properties and identifiers, is invented for testing and may be distributed with
 the source archive. No facility records, reads or infrastructure were copied.
-Producer inspection/restoration remains #63/#64; this example does not restore it.
+The producer now has the separate offline harness described below (#63).
+Safe restoration remains #64; this example does not restore it.
 
 ## Run and inspect the example
 
@@ -129,3 +130,81 @@ explicit candidate SHA, inspecting config, PEP paths, DAG inputs and relevant
 outputs before deliberately updating the reference. Scientific/container and BFQ
 server integration remain separate manual facility checks with isolated outputs
 and email protection; none is implied by successful CLI initialization.
+
+## Producer inspection and legacy smoke (#63)
+
+`create_testdata.py` and `testdata.create_testdata.BFQoutput` retain their names,
+existing options and callable surface. The additive `--libprep-config FILE`
+option (or `BFQoutput(path, libprep_config=FILE)`) loads that exact local YAML
+with `yaml.safe_load`. An absent, malformed or non-mapping explicit file fails;
+it never falls back to the network. With no option, inspection retains the
+historical moving workflow `main/libprep.config` download, now in memory with a
+30-second timeout, without overwriting/removing `.libprep.config` in cwd.
+Routine tests always choose a local file and prohibit network access.
+
+This intentionally retains case-sensitive **SE-before-PE** kit lookup. It is not
+configmaker's shared geometry-based selection. A YAML/import repair does not
+establish modern BFQ source support. Expected file/configuration/tool errors now
+produce a concise nonzero CLI diagnostic; the sampling caller still ignores
+external-command exit statuses, a tracked #64 defect.
+
+After setup, run the real installed producer smoke without downloads:
+
+```bash
+python3.11 scripts/dev.py check producer
+```
+
+Setup provisions SHA-256-verified Linux x86-64 binaries: **seqkit 2.10.1** from
+its upstream release archive and **gzip 1.12**, conda-forge build `h166bdaf_0`.
+Exact URLs, archive and executable hashes live in
+[`scripts/producer_tools.py`](../scripts/producer_tools.py). Acquisition occurs
+once during setup; binaries are copied only into private development venvs and
+are never shipped in gcf-tools distributions. GNU gzip requires the host's
+Linux C runtime; the checked binary links libc/librt, not a Conda environment.
+Missing producer executables report their name and this guide. Standalone
+producer callers supply these tools on PATH; development setup does not alter
+the user's global PATH or production tools.
+
+The source is an owned copy of the wholly synthetic paired fixture. It adds a
+generated project TSV, empty-of-metrics InterOp placeholder and clearly marked
+`bcl.done` placeholder solely to characterize the legacy dependency. The smoke
+selects exactly `CTRL` from `001`, `001A`, `CTRL`, requesting eight records from
+each of its 24-record FASTQs. It executes real gzip/seqkit binaries and
+independently checks eight complete records per mate, original sequence/quality
+content, order, matching read identities, exact output filenames, SampleSheet
+selection and unchanged source bytes. It does not execute BFQ or scientific
+workflows. Copied Stats/workbook bytes remain original-source provenance, not
+recomputed subset metrics.
+
+The command boundary uses direct argument vectors instead of a shell:
+`gzip -cd -- SOURCE` feeds `seqkit sample -n COUNT -s 123456`, followed by gzip
+compression. There is no dependency on `wget`, `zcat` or shell interpolation.
+The offline guard allows only the pinned private binaries with these operation
+shapes, verifying their hashes at execution; arbitrary shell/executable/network
+and SMTP operations remain blocked. Separate unit tests replace command execution
+and test inspection/parser/failure boundaries. Mock results are not FASTQ evidence.
+
+Six narrow strict expected-failure probes identify behavior reserved for #64:
+numeric TSV IDs lose leading zeros, prefix matching includes other samples,
+lane names collide, command failures are ignored, existing output is removed
+before selection validation, and reordered input mates are accepted. These are
+defects, not permanent compatibility requirements; their tests must become
+passing regression tests when repaired. Automatic sample choice remains unseeded
+with replacement; ordinary sampling still defaults to destructive overwrite and
+does not protect overlapping source/destination trees. Never use this #63
+producer on valuable inputs or destinations. Modern marker-free source support,
+atomic publication, safe paired sampling and Parse fixtures remain later work.
+
+The producer tests run in `check cli`, editable/wheel/sdist `check all` and CI.
+To provision a deliberately disconnected checkout, supply both prepared Python
+wheels and the two pinned tool archives:
+
+```bash
+python3.11 scripts/dev.py setup --wheelhouse /absolute/path/to/wheels \
+  --producer-tools /absolute/path/to/producer-tools
+```
+
+`<checkout>-local/setups/run-*/producer-tools/` retains the archives and their
+identity for this handoff. `check all` passes those archives to its private sdist
+setup, so repeat checks acquire nothing. Tool versions, source/dependency hashes,
+logs and test results stay beside the existing development evidence.

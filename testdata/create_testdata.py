@@ -12,11 +12,64 @@ import glob
 import re
 import random
 import shutil
-import logging
+from urllib.request import urlopen
 
 import pandas as pd
+import yaml
 
 libprepconf_url = "https://raw.githubusercontent.com/gcfntnu/gcf-workflows/main/libprep.config"
+
+
+def load_libprep_config(filename=None):
+    """Read an explicit local source, otherwise retain the historical remote source.
+
+    Explicit files never fall back to the network. Unlike the old wget boundary,
+    the implicit download does not create/remove a configuration file in cwd.
+    """
+    if filename is not None:
+        with open(filename, "rb") as handle:
+            config = yaml.safe_load(handle)
+    else:
+        with urlopen(libprepconf_url, timeout=30) as handle:
+            config = yaml.safe_load(handle)
+    if not isinstance(config, dict):
+        raise ValueError("Libprep configuration must be a YAML mapping")
+    return config
+
+
+def require_tool(name):
+    path = shutil.which(name)
+    if path is None:
+        raise RuntimeError("Required producer executable {!r} is missing from PATH; "
+                           "see docs/testdata.md for the tested tool baseline".format(name))
+    return path
+
+
+def sample_fastq(source, destination, n_reads):
+    """Run the historical per-file sampling pipeline without shell interpolation.
+
+    Return both exit statuses for inspection. The legacy caller still ignores
+    them; propagation and paired validation are explicitly deferred to #64.
+    """
+    gzip = require_tool("gzip")
+    seqkit = require_tool("seqkit")
+    with open(destination, "wb") as output:
+        with subprocess.Popen([gzip, "-cd", "--", source], stdout=subprocess.PIPE) as reader:
+            try:
+                result = subprocess.call([seqkit, "sample", "-n", str(n_reads), "-s", "123456"],
+                                         stdin=reader.stdout, stdout=output)
+            finally:
+                reader.stdout.close()
+            return reader.wait(), result
+
+
+def compress_fastqs(directory, nested=False):
+    """Retain the old one-level glob and gzip behavior, exposing its exit status."""
+    pattern = "*/*" if nested else "*"
+    filenames = sorted(glob.glob(os.path.join(directory, pattern)))
+    if not filenames:
+        return 0
+    return subprocess.call([require_tool("gzip"), "--", *filenames])
 
 def sample_samplesheet(input_fn, output_fn, samples, valid_samples):
     """Subset SampleSheet.csv 
@@ -69,8 +122,9 @@ class BFQoutput():
        samples to fastq file mapping
  
     """
-    def __init__(self, dirname=None):
+    def __init__(self, dirname=None, libprep_config=None):
         self.dirname = dirname
+        self.libprep_config = libprep_config
         self.pipeline = None
         self.fastq_files = None
         self._archive = None
@@ -93,11 +147,7 @@ class BFQoutput():
                     logging.info("identifed gcf number from samplesheet: {}".format(self._gcf_number))
                 if line.startswith('Libprep'):
                     libprep = line.split(',')[1]
-                    cmd = "wget -O .libprep.config {}".format(libprepconf_url)
-                    subprocess.check_call(cmd, shell=True)
-                    with open(".libprep.config","r") as libconf_f:
-                        libconf_d = yaml.load(libconf_f)
-                    subprocess.check_call("rm .libprep.config", shell=True)
+                    libconf_d = load_libprep_config(self.libprep_config)
                     if libprep + " SE" in libconf_d.keys():
                         self.pipeline = libconf_d[libprep + ' SE']['workflow']
                     elif libprep + " PE" in libconf_d.keys():
@@ -181,17 +231,10 @@ class BFQoutput():
                     read_num = 'R1' if fq_basename.endswith('_R1.fastq.gz') else 'R2'
                     new_basename = '{}_S1_{}_001.fastq'.format(sample, read_num)
                     dst = os.path.join(fastq_dir_output, new_basename)
-                cmd = 'zcat {} | seqkit sample -n {} -s 123456 > {}'.format(src, n_reads, dst)
-                logging.info(cmd)
-                subprocess.call(cmd, shell=True)
+                sample_fastq(src, dst, n_reads)
         # gzip fastq files        
-        if self.pipeline == 'singlecell':
-            cmd = 'gzip {}/*/*'.format(fastq_dir_output)
-        else:
-            cmd = 'gzip {}/*'.format(fastq_dir_output)
         logging.info('compressing fastq files ....')
-        logging.info(cmd)
-        subprocess.call(cmd, shell=True)
+        compress_fastqs(fastq_dir_output, nested=self.pipeline == 'singlecell')
 
         # subsample samplesheet
         logging.info('subsampling SampleSheet.csv ... ')
@@ -207,19 +250,25 @@ def create_argparser():
     parser.add_argument("--n-samples", default=3, type=int, help="number of samples (random subset)")
     parser.add_argument("--samples", help="comma separated list of sample ids to subset. This will overrride `--n-samples`")
     parser.add_argument("--no-fastq-rename", action='store_true', help="keep bfq fastq renaming scheme")
+    parser.add_argument("--libprep-config", help="explicit local libprep YAML; overrides the historical remote default")
     parser.add_argument("--verbose", action='store_true')
     
     return parser
 
 
-if __name__ == "__main__":
+def main(argv=None):
     parser = create_argparser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.verbose:
         logging.basicConfig(level='INFO', format='[%(levelname)s] %(message)s')
 
-    bfq =  BFQoutput(args.runfolder)
-    bfq.sample(args.output, n_reads=args.n_reads, n_samples=args.n_samples, samples=args.samples, no_fastq_rename=args.no_fastq_rename)
+    try:
+        bfq = BFQoutput(args.runfolder, libprep_config=args.libprep_config)
+        bfq.sample(args.output, n_reads=args.n_reads, n_samples=args.n_samples, samples=args.samples, no_fastq_rename=args.no_fastq_rename)
+    except (OSError, ValueError, RuntimeError, yaml.YAMLError) as error:
+        parser.exit(1, "Testdata producer failed: {}\n".format(error))
 
-    
+
+if __name__ == "__main__":
+    main()
