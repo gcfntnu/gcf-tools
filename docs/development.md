@@ -54,7 +54,7 @@ both script and module forms from an isolated cwd.
 | Profile | Scope |
 | --- | --- |
 | `example` | One installed default-PEP [paired example](testdata.md), with retained inputs and outputs |
-| `producer` | Installed paired producer, normal configmaker/PEP consumption, failures and concurrency |
+| `producer` | Installed paired and Parse cell producers, normal configmaker/PEP consumption, failures and concurrency |
 | `fast` | API tests and offline/email guard checks |
 | `cli` | Existing real CLI/file tests, including private copies of historical Git inputs |
 | `tests` | Fast plus CLI; no archive build |

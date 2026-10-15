@@ -232,6 +232,28 @@ def publish_noreplace(stage, destination):
         raise OSError(code, "Cannot publish without replacement: " + os.strerror(code), str(destination))
 
 
+def write_fastq_checksums(stage, project_id):
+    """Hash emitted compressed files in bounded memory; never copy source manifests."""
+    checksums, hashes = [], {}
+    for path in sorted((stage / project_id).glob("*_R[12].fastq.gz"), key=lambda path: (path.name.rsplit("_R", 1)[0], path.name)):
+        md5, sha256 = hashlib.md5(), hashlib.sha256()
+        with path.open("rb") as handle:
+            for block in iter(lambda: handle.read(1024 * 1024), b""):
+                md5.update(block)
+                sha256.update(block)
+        relative = str(path.relative_to(stage))
+        checksums.append("{}  {}\n".format(md5.hexdigest(), relative))
+        hashes[relative] = sha256.hexdigest()
+    (stage / "md5sum_{}_fastq.txt".format(project_id)).write_text("".join(checksums))
+    return hashes
+
+
+class _ExplicitOption(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser.explicit_options.add(self.dest)
+        setattr(namespace, self.dest, values)
+
+
 class BFQoutput:
     """Metadata plus flat paired FASTQs; no assertion of BFQ processing state."""
     def __init__(self, dirname=None, libprep_config=None, project_id=None):
@@ -306,6 +328,9 @@ class BFQoutput:
                     relative = str(path.relative_to(self._source))
                     if relative not in self._metadata:
                         self._metadata[relative] = self._capture(path).read()
+        runinfo = self._source / "RunInfo.xml"
+        if os.path.lexists(runinfo):
+            self._metadata["RunInfo.xml"] = self._capture(runinfo).read()
         self._verify_inputs()
 
     def _verify_inputs(self):
@@ -315,22 +340,9 @@ class BFQoutput:
             if path.is_symlink() or not path.is_dir() or _fingerprint(path.stat()) != identity:
                 raise ValueError("Input directory changed during generation: {}".format(path))
 
-    def sample(self, output_dir, overwrite=False, n_reads=10000, n_samples=3,
-               samples=None, no_fastq_rename=False, seed=123456):
-        """Write a new fixture; historical overwrite/automatic/rename paths refuse.
-
-        n_reads remains per mate file (one pair per selected sample). n_samples
-        is retained but unused with mandatory explicit samples. Even overwrite=True
-        never permits replacement. The complete selected FASTQs are validated.
-        """
-        if samples is None:
-            raise ValueError("Explicit --samples/samples is required; automatic --n-samples selection is unsupported")
-        if not no_fastq_rename:
-            raise ValueError("This flat paired profile requires --no-fastq-rename/no_fastq_rename=True")
-        if type(n_reads) is not int or n_reads <= 0:
-            raise ValueError("--n-reads/n_reads must be a positive integer")
-        if type(seed) is not int:
-            raise ValueError("--seed/seed must be an integer")
+    @contextmanager
+    def _generation(self, output_dir, samples):
+        """Shared snapshot/layout/staging/publication boundary for both profiles."""
         selected = samples.split(",") if isinstance(samples, str) else list(samples)
         if not selected or len(selected) != len(set(selected)):
             raise ValueError("Explicit sample selection must be nonempty without duplicate IDs")
@@ -373,10 +385,6 @@ class BFQoutput:
             if item.resolved == destination or destination in item.resolved.parents:
                 raise ValueError("Destination aliases an input file")
         self._verify_inputs()
-        retained = {}
-        for sid, pair in pairs.items():
-            retained[sid] = sample_pairs(*pair, n_reads=n_reads, seed=seed)
-        self._verify_inputs()
         stage = None
         try:
             stage = Path(tempfile.mkdtemp(prefix=".{}-stage-".format(destination.name), dir=parent))
@@ -391,34 +399,7 @@ class BFQoutput:
                 raise InputValidationError(result)
             project = stage / self._gcf_number
             project.mkdir()
-            checksums, counts, output_hashes = [], {}, {}
-            for sid, (records, total) in retained.items():
-                counts[sid] = {"available_pairs": total, "selected_pairs": len(records)}
-                for mate in (1, 2):
-                    path = project / (sid + "_R{}.fastq.gz".format(mate))
-                    with path.open("wb") as handle, gzip.GzipFile(filename="", mode="wb", fileobj=handle,
-                                                                  mtime=0, compresslevel=9) as compressed:
-                        for _, record in records:
-                            compressed.write(record[mate])
-                    data = path.read_bytes()
-                    relative = str(path.relative_to(stage))
-                    checksums.append("{}  {}\n".format(hashlib.md5(data).hexdigest(), relative))
-                    output_hashes[relative] = hashlib.sha256(data).hexdigest()
-            (stage / "md5sum_{}_fastq.txt".format(self._gcf_number)).write_text("".join(checksums))
-            manifest = {"schema_version": 1, "producer": "gcf-tools " + __version__,
-                        "profile": "flat-paired-metadata-source", "algorithm": ALGORITHM,
-                        "python": sys.version.split()[0], "zlib": zlib.ZLIB_RUNTIME_VERSION,
-                        "seed": seed, "requested_pairs_per_sample": n_reads,
-                        "project_id": self._gcf_number, "samples": counts,
-                        "source_name": self._source.name,
-                        "statistics": "Stats and InterOp are unchanged original-source metrics, not subset counts",
-                        "workbook": "Complete source workbook retained; extra metadata rows are intentional",
-                        "gzip": "mtime=0; no filename; level=9; LF record lines",
-                        "libprep": {key: value for key, value in self.selection.diagnostics().items() if key != "source"},
-                        "source_sha256": {str(item.path.relative_to(self._source)): item.sha256
-                                          for item in self._inputs if self._source in item.path.parents},
-                        "output_fastq_sha256": output_hashes}
-            (stage / "testdata.provenance.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+            yield stage, pairs, destination
             self._verify_inputs()
             if parent.resolve(strict=True) != parent or _fingerprint(parent.stat())[:3] != parent_identity:
                 raise ValueError("Destination parent changed during generation")
@@ -428,20 +409,67 @@ class BFQoutput:
             if stage is not None:
                 shutil.rmtree(stage)
         logging.info("Created paired fixture: %s", destination)
+
+    def _provenance(self):
+        return {"schema_version": 1, "producer": "gcf-tools " + __version__,
+                "python": sys.version.split()[0], "zlib": zlib.ZLIB_RUNTIME_VERSION,
+                "project_id": self._gcf_number, "source_name": self._source.name,
+                "statistics": "Stats and InterOp are unchanged original-source metrics, not subset counts",
+                "workbook": "Complete source workbook retained; extra metadata rows are intentional",
+                "gzip": "mtime=0; no filename; level=9; LF record lines",
+                "libprep": {key: value for key, value in self.selection.diagnostics().items() if key != "source"},
+                "source_sha256": {str(item.path.relative_to(self._source)): item.sha256
+                                  for item in self._inputs if self._source in item.path.parents}}
+
+    def sample(self, output_dir, overwrite=False, n_reads=10000, n_samples=3,
+               samples=None, no_fastq_rename=False, seed=123456):
+        """Write a new paired reservoir fixture; existing destinations always refuse."""
+        if samples is None:
+            raise ValueError("Explicit --samples/samples is required; automatic --n-samples selection is unsupported")
+        if not no_fastq_rename:
+            raise ValueError("This flat paired profile requires --no-fastq-rename/no_fastq_rename=True")
+        if type(n_reads) is not int or n_reads <= 0:
+            raise ValueError("--n-reads/n_reads must be a positive integer")
+        if type(seed) is not int:
+            raise ValueError("--seed/seed must be an integer")
+        with self._generation(output_dir, samples) as (stage, pairs, destination):
+            counts = {}
+            for sid, pair in pairs.items():
+                records, total = sample_pairs(*pair, n_reads=n_reads, seed=seed)
+                counts[sid] = {"available_pairs": total, "selected_pairs": len(records)}
+                for mate in (1, 2):
+                    path = stage / self._gcf_number / (sid + "_R{}.fastq.gz".format(mate))
+                    with path.open("wb") as handle, gzip.GzipFile(filename="", mode="wb", fileobj=handle,
+                                                                  mtime=0, compresslevel=9) as compressed:
+                        for _, record in records:
+                            compressed.write(record[mate])
+            manifest = self._provenance()
+            manifest.update(profile="flat-paired-metadata-source", algorithm=ALGORITHM,
+                            seed=seed, requested_pairs_per_sample=n_reads, samples=counts,
+                            output_fastq_sha256=write_fastq_checksums(stage, self._gcf_number))
+            (stage / "testdata.provenance.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
         return destination
+
+    def sample_parse_cells(self, output_dir, selection, overwrite=False):
+        """Retain all records for explicit WT v4 cell keys; no read subsampling."""
+        from testdata.parse_cells import generate_parse_cells
+        return generate_parse_cells(self, output_dir, selection)
 
 
 def create_argparser():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("runfolder", help="BFQ-style metadata and flat paired FASTQ source")
     parser.add_argument("--output", help="new output directory; existing parent required")
-    parser.add_argument("--n-reads", default=1000, type=int, help="maximum pairs per sample / reads per mate file")
-    parser.add_argument("--n-samples", default=3, type=int, help="legacy argument; explicit --samples is required")
-    parser.add_argument("--samples", help="comma-separated exact sample IDs, without whitespace normalization")
+    parser.explicit_options = set()
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--n-reads", default=1000, type=int, help="maximum pairs per sample / reads per mate file")
+    mode.add_argument("--parse-cells", help="strict WT v4 selection JSON; retain all selected-cell pairs")
+    parser.add_argument("--n-samples", default=3, type=int, action=_ExplicitOption, help="legacy argument; explicit --samples is required")
+    parser.add_argument("--samples", action=_ExplicitOption, help="comma-separated exact sample IDs, without whitespace normalization")
     parser.add_argument("--no-fastq-rename", action="store_true", help="required: preserve flat BFQ filenames")
     parser.add_argument("--libprep-config", help="required explicit local libprep configuration")
     parser.add_argument("--project-id", help="required exact project ID")
-    parser.add_argument("--seed", default=123456, type=int, help="paired reservoir seed")
+    parser.add_argument("--seed", default=123456, type=int, action=_ExplicitOption, help="paired reservoir seed")
     parser.add_argument("--verbose", action="store_true")
     return parser
 
@@ -449,12 +477,17 @@ def create_argparser():
 def main(argv=None):
     parser = create_argparser()
     args = parser.parse_args(argv)
+    if args.parse_cells is not None and parser.explicit_options:
+        parser.error("--parse-cells cannot be combined with --samples, --n-samples or --seed")
     if args.verbose:
         logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
     try:
         source = BFQoutput(args.runfolder, libprep_config=args.libprep_config, project_id=args.project_id)
-        source.sample(args.output, n_reads=args.n_reads, n_samples=args.n_samples,
-                      samples=args.samples, no_fastq_rename=args.no_fastq_rename, seed=args.seed)
+        if args.parse_cells is not None:
+            source.sample_parse_cells(args.output, args.parse_cells)
+        else:
+            source.sample(args.output, n_reads=args.n_reads, n_samples=args.n_samples,
+                          samples=args.samples, no_fastq_rename=args.no_fastq_rename, seed=args.seed)
     except (OSError, ValueError, RuntimeError) as error:
         parser.exit(1, "Testdata producer failed: {}\n".format(error))
 

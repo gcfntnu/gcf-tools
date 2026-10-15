@@ -5,8 +5,9 @@ The committed `tests/fixtures/paired/` fixture is independent of the
 properties and identifiers, is invented for testing and may be distributed with
 the source archive. No facility records, reads or infrastructure were copied.
 The producer has a separate supported flat-paired profile described below.
-The committed example remains independently generated; Parse cell selection and
-scientific integration fixtures are separate work (#83).
+The committed example remains independently generated; the separate Parse
+selected-cell profile is documented below, with scientific integration remaining
+an explicit operational gate.
 
 ## Run and inspect the example
 
@@ -265,8 +266,134 @@ Wheel and unpacked-sdist checks exercise the same implementation offline.
 The normal PEP test uses the committed initialization-only workflow stub, checks
 exact sample IDs/counts/checksums and resolves PEP-derived links to generated
 files. No scientific workflow, container, facility data or email is exercised.
-Parse cell selection and gene-expression integration fixtures belong to #83;
+The additive Parse cell-selection profile is documented below;
 full lane/chunk/index/automatic-selection profiles remain unsupported. A small
 format-valid random subset does not guarantee enough cells, genes or coverage for
 a scientific workflow. Manual representative BFQ/workflow integration remains a
 separate gate before treating a generated fixture as scientifically usable.
+
+## Parse WT v4 selected-cell producer (#83)
+
+`--parse-cells selection.json` adds a separate profile for **WT v4 gene expression,
+Split-Pipe, R1=64/R2=58**, with flat paired filenames. It retains every read pair
+whose native R2 barcode key occurs in the supplied selection. It does not call
+cells, correct barcodes, infer wells, subsample selected cells, or run a workflow.
+Other kits/chemistries, STARsolo execution, TCR, lanes and index reads are outside
+this profile. Ordinary paired reservoir sampling keeps its existing defaults.
+
+```bash
+create_testdata.py /private/source/990101_SYNTHETIC_0001_ASYNTHETIC \
+  --project-id GCF-2099-001 --libprep-config /private/config/libprep.config \
+  --parse-cells /private/selections/selection.json \
+  --output /private/fixtures/990101_SYNTHETIC_0001_ASYNTHETIC
+```
+
+The Python equivalent is `BFQoutput(...).sample_parse_cells(output_dir, selection)`;
+`selection` is a local JSON file path. Put this call under an
+`if __name__ == "__main__":` guard in Python scripts because workers use spawn.
+Existing destinations are refused even with
+`overwrite=True`. Flat names are always preserved; `--no-fastq-rename` is optional
+in this mode. Explicit `--n-reads`, `--samples`, `--n-samples` and `--seed` conflict
+with `--parse-cells` and fail. The manifest supplies exact library/cell selection;
+there is no implicit read limit or sampling seed.
+
+### Selection schema 1
+
+This deliberately tiny example has invented sequences, not vendor barcode data:
+
+```json
+{
+  "schema_version": 1,
+  "profile": "parse-wt-v4-cells",
+  "read_lengths": [64, 58],
+  "minimum_signal_pairs": 2000,
+  "biological_samples": {"sample_a": {"wells": "A1-A2"}},
+  "sublibraries": {
+    "library1": {
+      "cells": [
+        {
+          "cell_id": "cell001",
+          "biological_sample": "sample_a",
+          "role": "signal",
+          "r2_keys": ["AAAAAAAAAAAAAAAAAAAAAAAA", "CCCCCCCCCCCCCCCCCCCCCCCC"]
+        },
+        {
+          "cell_id": "background001",
+          "biological_sample": "sample_a",
+          "role": "background",
+          "r2_keys": ["ACGTACGTACGTACGTACGTACGT"]
+        }
+      ]
+    }
+  }
+}
+```
+
+All shown fields are required; unknown fields and duplicate JSON keys fail.
+Mappings/lists must be nonempty. IDs use the producer's exact printable ASCII
+component restriction. `minimum_signal_pairs` is a positive integer. Each library
+must contain signal cells for every declared biological sample. Cell IDs and raw
+keys must be unique within a library; the same keys may occur in a different
+library because those are distinct cells. Each key contains exactly 24 uppercase
+ACGT bases. Multiple keys for a cell combine its R/T primer aliases into one
+minimum-count check. Background barcodes may have zero matching reads.
+
+The manifest biological sample set and exact Wells text must match the prepared
+`Cell Multiplexing` sheet; missing or blank wells fail. Selected libraries must
+exist in shared validated SampleSheet/workbook metadata. The producer preserves
+workbook bytes and performs no metadata repair. Prepare a separately documented
+copy when restricting biological samples or removing prohibited biological-only
+annotations from pooled library rows. Materialize cached spreadsheet formula
+values before saving a prepared copy if recalculation is unavailable, then run
+shared validation and inspect all retained values.
+
+Build real keys from reviewed vendor tables and selected-cell evidence privately.
+For this geometry, concatenate zero-based R2 slices `[10:18] + [30:38] + [50:58]`
+(round 3, round 2, round 1). Keep both round-1 R/T primer aliases when retaining a
+biological cell. The producer checks declared metadata consistency; it cannot
+prove arbitrary supplied sequences encode the declared wells. Record the vendor
+version/table hash and selection procedure alongside the private manifest.
+
+### Execution and evidence
+
+The shared paired parser validates both complete streams, including discarded
+records. Every input pair must have exact 64/58 geometry. Matching records retain
+original identity, sequence, quality and source order; output lines are normalized
+to LF as in the ordinary profile. Each signal cell must meet its declared retained
+pair minimum before publication. A small low-count background selection can
+preserve a cell-calling tail without uniformly thinning all cells.
+
+At most two spawned processes scan separate libraries and own separate gzip
+files. Workers signal failure through a shared cancellation event; another scan
+checks it every 10,000 pairs. The parent collects outcomes, rechecks input
+identities and publishes only after every library succeeds. Progress reports
+scanned/retained totals every five million pairs and at completion, without read
+identifiers. Runtime and memory depend chiefly on source scanning and selected
+output size, rather than storing source reads in memory.
+
+The same source protection, private staging and no-replace publication used by
+#64 apply. Optional `RunInfo.xml` is copied byte-for-byte and hashed in **both**
+profiles; it is never a geometry fallback. `Stats/Stats.json` remains required.
+Fresh compressed FASTQ checksums are calculated with bounded-memory reads.
+Provenance includes profile/algorithm, selection SHA-256, declared biological
+relationships and cell keys, per-cell/per-key/per-library counts, source hashes
+and output hashes. Treat that provenance and all real selections/outputs as
+private; do not attach them to public issues, PRs or test fixtures.
+
+`check producer` now exercises installed script and module generation with two
+workers, exact all-record retention, both primer aliases, backgrounds, source
+preservation, failure cleanup and normal configmaker/PEP path resolution. Fast
+checks cover schema/profile errors, missing/blank wells, cancellation polling,
+full-stream corruption, minimum counts and source changes. All sequences and
+metadata in these tests are invented; the workflow configuration is an
+initialization-only stub. Wheel and sdist checks run the same coverage.
+
+The first operational fixture targets two biological samples across two libraries,
+starting around 600 adequately covered signal cells with a small background tail.
+Measure the recurring workflow against the 15–30 minute target separately from
+one-time extraction/build/deployment. Real integration must inspect expression,
+metadata, QC/preprocessing, reports, archives, finalization and checksums; successful
+producer/configmaker execution does not establish scientific viability. Fixture-only
+configuration may narrow preprocessing grids through the established setup script.
+Record every adaptation and coverage exclusion. The initial integration scope
+excludes velocity and TCR, with velocity tracking a separate workflow follow-up.
