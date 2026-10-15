@@ -1,0 +1,11 @@
+[Header]
+IEMFileVersion,4
+ExperimentName,Synthetic paired example
+[CustomOptions]
+Libprep,Synthetic
+Organism,Homo sapiens
+[Data]
+Sample_ID,Sample_Project
+001,GCF-2099-001
+001A,GCF-2099-001
+CTRL,GCF-2099-001

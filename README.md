@@ -18,6 +18,7 @@ execute the scientific workflows itself.
 | Interpret SampleSheets, workbooks, IDs and validation reports | [Input validation](docs/input-validation.md) |
 | Select library kits, read geometry and configuration snapshots | [Library-preparation configuration](docs/libprep-config.md) |
 | See commands actually exercised, source revisions and limits | [Current packaging verification](docs/verification-61.md), [earlier contract evidence](docs/verification-60.md) |
+| Run the synthetic paired example and inspect its limits | [Testdata guide](docs/testdata.md) |
 | Find defects and missing evidence before changing behavior | [Known limitations](docs/known-limitations.md) |
 | Start an agent task | [AGENTS.md](AGENTS.md), then the issue and contributor guide |
 
@@ -70,8 +71,7 @@ compatible, and describe observable changes even when correcting a defect.
 either developer start from a clean checkout, run a representative example and
 submit a bounded change with an agent without an undocumented setup handover.
 The initial contract and #61 setup/package checks are implemented; the milestone
-also needs [#62](https://github.com/gcfntnu/gcf-tools/issues/62) synthetic paired-end
-CLI coverage, [#63](https://github.com/gcfntnu/gcf-tools/issues/63) and
+includes the [synthetic paired-end CLI example](docs/testdata.md); remaining work is [#63](https://github.com/gcfntnu/gcf-tools/issues/63) and
 [#64](https://github.com/gcfntnu/gcf-tools/issues/64) testdata inspection/restoration,
 and [#65](https://github.com/gcfntnu/gcf-tools/issues/65) the completed guide and
 independent onboarding trial. These remaining issues do not block the documented local packaging/check loop.

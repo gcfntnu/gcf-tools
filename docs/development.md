@@ -52,6 +52,7 @@ both script and module forms from an isolated cwd.
 
 | Profile | Scope |
 | --- | --- |
+| `example` | One installed default-PEP [paired example](testdata.md), with retained inputs and outputs |
 | `fast` | API tests and offline/email guard checks |
 | `cli` | Existing real CLI/file tests, including private copies of historical Git inputs |
 | `tests` | Fast plus CLI; no archive build |
@@ -61,8 +62,8 @@ both script and module forms from an isolated cwd.
 | `legacy` | Git-only seven-case historical initialization matrix using installed script and local kit stubs |
 
 `tests/test_*_cli.py` belongs to the CLI tier; other `tests/test_*.py` files belong
-to the fast tier. #62 can add its paired-end/default-PEP CLI coverage there without
-rewiring CI. Existing CLI tests principally use single-end inputs and
+to the fast tier. `test_paired_cli.py` adds paired content and default-PEP coverage
+without rewiring CI. Earlier CLI tests principally use single-end inputs and
 `--skip-peppy`. The legacy profile checks initialization, including PEP emission,
 not valid paired read content, workflow execution or the #62 contract.
 
@@ -87,7 +88,8 @@ version comes from `configmaker.__version__`; `setup.py` is a compatibility shim
 `setup_requires` is gone. Runtime dependencies and public API remain unchanged.
 
 The sdist includes runtime source/resources, tests, the safe fixture generator,
-helpers, development baselines and documentation. It excludes `.tests/`, CI,
+helpers, the reviewed wholly synthetic `tests/fixtures/paired/` data, development
+baselines and documentation. It excludes `.tests/`, CI,
 environments, caches, bytecode and build products. Historical `.tests` files
 include facility-origin workbooks/metadata and are deliberately Git-only.
 No historical records, workbook properties or sequencing snippets are copied
@@ -99,7 +101,7 @@ historical RNA fixture, repairing only J48 in a private copy. A source archive
 SampleSheet, 86-cycle Stats and 86-base FASTQ. It deliberately has the same
 invalid-note precondition, so the existing repair assertion is retained. This
 substitute establishes packaging/test portability; it is **not** restored
-producer output or the representative paired-end fixture owned by #62.
+producer output or a substitute for the [representative paired fixture](testdata.md).
 `tests/prepare_cli_fixtures.py` remains shipped for documented Git-only legacy
 work; the historical matrix is unavailable from sdist by design.
 

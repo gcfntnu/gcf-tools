@@ -80,6 +80,8 @@ def source_files(root):
     ]:
         files.extend(p for p in (root / directory).rglob("*") if p.is_file()
                      and p.suffix in suffixes and "__pycache__" not in p.parts)
+    # Only the reviewed, wholly synthetic paired fixture is distributable data.
+    files.extend(p for p in (root / "tests/fixtures/paired").rglob("*") if p.is_file())
     return sorted(files)
 
 
@@ -194,6 +196,8 @@ def load_setup():
 
 def tests(python, env, work, root, profile):
     selection = FAST if profile == "fast" else CLI if profile == "cli" else FAST + CLI
+    if profile == "example":
+        selection = ("test_paired_cli.py::test_paired_example_installed_cli_default_pep",)
     run([python, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp", work / "pytest-tmp",
          "--junitxml", work / "tests.xml", *[root / "tests" / p for p in selection]],
         env, work, work / "tests.log")
@@ -290,7 +294,8 @@ def check(args):
     env = environment(work, python)
     report = {"source": identity(ROOT), "setup": state, "profile": args.profile,
               "python": sys.version, "platform": platform.platform(), "result": "failed",
-              "fixtures": "historical Git inputs" if (ROOT / ".tests").exists() else "synthetic sdist SE substitute"}
+              "fixtures": ["synthetic paired/default-PEP",
+                           "historical Git inputs" if (ROOT / ".tests").exists() else "synthetic sdist SE substitute"]}
     write_json(work / "identity.json", report)
     started = time.monotonic()
     try:
@@ -298,7 +303,7 @@ def check(args):
         freeze(python, env, work)
         run([python, "-m", "pip", "check"], env, work)
         smoke(python, env, work / "editable-smoke", "editable")
-        if args.profile in ("fast", "cli", "tests", "all"):
+        if args.profile in ("fast", "cli", "tests", "all", "example"):
             tests(python, env, work, ROOT, args.profile)
         if args.profile in ("wheel", "sdist", "all"):
             distribution_checks(state, work, args.profile in ("sdist", "all"))
@@ -318,7 +323,7 @@ def main():
     setup_parser.add_argument("--wheelhouse", help="Optional existing wheels for disconnected provisioning; copied privately")
     setup_parser.add_argument("--requirements", help="Explicit development baseline override; recorded, never a production policy")
     check_parser = sub.add_parser("check", help="Repeat offline checks using prepared dependencies")
-    check_parser.add_argument("profile", choices=("fast", "cli", "tests", "wheel", "sdist", "all", "legacy"), default="fast", nargs="?")
+    check_parser.add_argument("profile", choices=("fast", "cli", "tests", "wheel", "sdist", "all", "legacy", "example"), default="fast", nargs="?")
     args = parser.parse_args()
     if sys.platform != "linux" or sys.version_info[:2] != (3, 11):
         parser.error("Development reference is Linux/Python 3.11 with venv; this is not a runtime support floor")

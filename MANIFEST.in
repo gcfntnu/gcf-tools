@@ -6,6 +6,7 @@ recursive-include peppy_support *.py
 recursive-include descriptors *.py *.yaml *.pkl
 recursive-include scripts *.py
 recursive-include tests *.py
+recursive-include tests/fixtures/paired *
 recursive-include docs *.md
 # Historical facility fixtures are Git-only; sdist tests generate safe substitutes.
 prune .tests
