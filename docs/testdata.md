@@ -1,11 +1,12 @@
 # Synthetic paired example and testdata boundaries
 
-The committed `tests/fixtures/paired/` fixture is independent of the dormant
+The committed `tests/fixtures/paired/` fixture is independent of the
 `create_testdata.py` producer. Everything in this directory, including workbook
 properties and identifiers, is invented for testing and may be distributed with
 the source archive. No facility records, reads or infrastructure were copied.
-The producer now has the separate offline harness described below (#63).
-Safe restoration remains #64; this example does not restore it.
+The producer has a separate supported flat-paired profile described below.
+The committed example remains independently generated; Parse cell selection and
+scientific integration fixtures are separate work (#83).
 
 ## Run and inspect the example
 
@@ -131,80 +132,141 @@ outputs before deliberately updating the reference. Scientific/container and BFQ
 server integration remain separate manual facility checks with isolated outputs
 and email protection; none is implied by successful CLI initialization.
 
-## Producer inspection and legacy smoke (#63)
+## Safe flat-paired producer (#64)
 
-`create_testdata.py` and `testdata.create_testdata.BFQoutput` retain their names,
-existing options and callable surface. The additive `--libprep-config FILE`
-option (or `BFQoutput(path, libprep_config=FILE)`) loads that exact local YAML
-with `yaml.safe_load`. An absent, malformed or non-mapping explicit file fails;
-it never falls back to the network. With no option, inspection retains the
-historical moving workflow `main/libprep.config` download, now in memory with a
-30-second timeout, without overwriting/removing `.libprep.config` in cwd.
-Routine tests always choose a local file and prohibit network access.
-
-This intentionally retains case-sensitive **SE-before-PE** kit lookup. It is not
-configmaker's shared geometry-based selection. A YAML/import repair does not
-establish modern BFQ source support. Expected file/configuration/tool errors now
-produce a concise nonzero CLI diagnostic; the sampling caller still ignores
-external-command exit statuses, a tracked #64 defect.
-
-After setup, run the real installed producer smoke without downloads:
+The producer accepts a **metadata-plus-FASTQ source** with one explicitly selected
+project: `SampleSheet.csv`, `Sample-Submission-Form.xlsx`, `Stats/Stats.json` and
+`<project>/<sample>_R1.fastq.gz` / `<sample>_R2.fastq.gz`. This may be a finalized
+BFQ output or a privately assembled restored-FASTQ source. Its eligibility does
+not assert manager completion: no generated project TSV, `bcl.done`, state JSON
+or analysis output is required or copied. BFQ owns operational state initialization.
 
 ```bash
+create_testdata.py /private/source/SYNTHETIC_RUN \
+  --project-id GCF-2099-001 --samples 001,CTRL \
+  --libprep-config /private/config/libprep.config \
+  --n-reads 1000 --seed 123456 --no-fastq-rename \
+  --output /private/fixtures/990101_SYNTHETIC_0001_ASYNTHETIC
+```
+
+The destination parent must already exist. Choose a valid flowcell-style basename
+when the result will be consumed by configmaker/BFQ; the producer does not rename
+runs or rewrite instrument identity. The installed script and
+`python -m testdata.create_testdata` are equivalent. The Python surface remains
+`BFQoutput(dirname=None, libprep_config=None, project_id=None)` and
+`sample(output_dir, overwrite=False, n_reads=10000, n_samples=3, samples=None,
+no_fastq_rename=False, seed=123456)`. CLI `--n-reads` still defaults to 1000.
+
+### Explicit selection and configuration
+
+Project, sample IDs, local libprep configuration and `--no-fastq-rename` are
+required for this first profile. SampleSheet/workbook validation supplies project
+and sample authority. IDs are exact strings: `001`, `1` and `001A` are distinct;
+comma-separated CLI selection is not stripped or normalized. Duplicate/unknown
+IDs fail. For unambiguous paths and the existing whitespace-separated MD5 format,
+this producer profile rejects empty IDs, `.`/`..`, separators, commas, whitespace
+and non-printable/non-ASCII characters in project/sample path components. This is
+a producer restriction, not a new shared metadata rule.
+
+The existing `--n-samples` option remains recognizable but automatic selection is
+unsupported; explicit `--samples` takes precedence. The selected project must use
+known flat R1/R2 FASTQ names without nested directories, lanes, chunks or index
+reads. Extra unselected flat pairs are permitted. Preserve flat names with
+`--no-fastq-rename`; historical renaming is refused because it can disagree with
+normal PEP paths. No naming guess or multi-file merge is performed.
+
+Local libprep bytes are loaded using the shared `LibprepConfig` selector and
+paired geometry from `Stats/Stats.json`. This **deliberately replaces** historical
+SE-before-PE selection and unknown-kit fallback: geometry chooses the applicable
+entry, and unsupported/inconsistent kits fail. Missing local configuration never
+causes a download. All scientific kit parameters remain owned by gcf-workflows.
+
+### Paired selection and reproducibility
+
+Python reads both complete gzip streams and validates **every** record, including
+records not retained. Four-line records require a nonempty ASCII `@` header,
+nonempty IUPAC DNA sequence, `+` separator, equal sequence/quality lengths and
+printable Phred quality bytes. A populated separator must repeat its header.
+Mates must have matching IDs and order, with equal record counts. Accepted IDs
+use identical first tokens, `/1` and `/2` suffixes, or Illumina `1:N:...` /
+`2:N:...` (also `Y`) comments. Any explicit label must agree with its mate file;
+contradictory labels fail. Gzip truncation/checksum failures and empty pairs fail.
+This is format/pair validation, not biological or sequencing-metric validation.
+
+Algorithm `paired-reservoir-v1` uses a fresh `random.Random(seed)` per sample.
+For zero-based pair index `i`, retain the first N pairs; thereafter draw
+`randrange(i + 1)` and replace that reservoir slot when it is below N. Retained
+pairs are emitted in original source order. The count remains **per mate file**
+for this one-pair-per-sample layout. Fewer than N available pairs yields all
+available pairs; zero or negative N fails. Explicit sample ordering does not
+change the chosen records. Memory is bounded by the selected pairs, not source
+FASTQ size; all source FASTQs are still scanned to EOF.
+
+Output gzip uses compression level 9, `mtime=0`, no embedded filename and LF
+record lines. Repeated generation from the same source/seed produces identical
+gzip bytes in the recorded Python/zlib environment. Cross-version byte identity
+is not promised. `testdata.provenance.json` records algorithm, versions, seed,
+requested/available/selected counts, source compressed-file and metadata SHA-256,
+libprep selection/hash and output FASTQ SHA-256. A complete fresh
+`md5sum_<project>_fastq.txt` contains the actual emitted gzip checksums; source
+checksum manifests are not copied.
+
+### Source protection and publication
+
+Every existing destination is refused, including files, directories and dangling
+symlinks, even when an older Python caller passes `overwrite=True`. The destructive
+overwrite option is retired. Source/destination ancestor, descendant and resolved
+alias relationships fail before staging. Directory symlinks and nested project
+layouts are not traversed. Readable FASTQ file symlinks are accepted, including
+external targets, and outputs are self-contained regular files. Other metadata
+file symlinks and duplicate selected FASTQ target identities are refused.
+
+Input files, link targets, local configuration and source directories are checked
+for identity changes before reading and before publication. Metadata snapshots are
+checked against the shared validator's hashes; streamed compressed FASTQs are
+hashed during reading. Observed source changes abort generation. This detects
+ordinary concurrent modifications; it is not a filesystem snapshot against an
+actively adversarial writer.
+
+After successful input validation, an invocation-owned sibling directory receives
+the outputs. Linux `renameat2(RENAME_NOREPLACE)` publishes the directory atomically.
+Unsupported kernels/filesystems fail closed; a concurrently created destination
+is never replaced, even if empty. Failures remove only this invocation's staging
+directory and return a nonzero CLI diagnostic. The caller chooses a fresh path
+for retries. No runtime shell, seqkit, gzip executable, network or SMTP is used.
+
+### Metadata and source statistics
+
+SampleSheet data rows are filtered by exact project/sample identity using CSV
+parsing, retaining other sections, quoted values and `[BCLConvert_Data]` support.
+The full workbook is preserved byte-for-byte; extra metadata rows remain valid
+under the shared validator. Stats and optional InterOp files are copied unchanged.
+Their counts describe the original run, **not** the reduced FASTQs; the auxiliary
+provenance file states this explicitly. No instrument metrics are fabricated.
+
+### Checks and remaining scope
+
+```bash
+python3.11 scripts/dev.py setup
+python3.11 scripts/dev.py check fast
 python3.11 scripts/dev.py check producer
+python3.11 scripts/dev.py check all
 ```
 
-Setup provisions SHA-256-verified Linux x86-64 binaries: **seqkit 2.10.1** from
-its upstream release archive and **gzip 1.12**, conda-forge build `h166bdaf_0`.
-Exact URLs, archive and executable hashes live in
-[`scripts/producer_tools.py`](../scripts/producer_tools.py). Acquisition occurs
-once during setup; binaries are copied only into private development venvs and
-are never shipped in gcf-tools distributions. GNU gzip requires the host's
-Linux C runtime; the checked binary links libc/librt, not a Conda environment.
-Missing producer executables report their name and this guide. Standalone
-producer callers supply these tools on PATH; development setup does not alter
-the user's global PATH or production tools.
+The producer has no external executable dependencies. Setup needs only the pinned
+Python baseline; the historical #63 seqkit/gzip acquisition and offline-guard
+exceptions have been removed. `check producer` runs installed real generation,
+normal configmaker/PEP consumption, subprocess failure cases and concurrent
+invocations on wholly synthetic input. API tests add corruption, unchanged-source,
+symlink, destination-alias, input-change, injected-write and publication races.
+The six former #63 expected failures are replaced by passing regression coverage.
+Wheel and unpacked-sdist checks exercise the same implementation offline.
 
-The source is an owned copy of the wholly synthetic paired fixture. It adds a
-generated project TSV, empty-of-metrics InterOp placeholder and clearly marked
-`bcl.done` placeholder solely to characterize the legacy dependency. The smoke
-selects exactly `CTRL` from `001`, `001A`, `CTRL`, requesting eight records from
-each of its 24-record FASTQs. It executes real gzip/seqkit binaries and
-independently checks eight complete records per mate, original sequence/quality
-content, order, matching read identities, exact output filenames, SampleSheet
-selection and unchanged source bytes. It does not execute BFQ or scientific
-workflows. Copied Stats/workbook bytes remain original-source provenance, not
-recomputed subset metrics.
-
-The command boundary uses direct argument vectors instead of a shell:
-`gzip -cd -- SOURCE` feeds `seqkit sample -n COUNT -s 123456`, followed by gzip
-compression. There is no dependency on `wget`, `zcat` or shell interpolation.
-The offline guard allows only the pinned private binaries with these operation
-shapes, verifying their hashes at execution; arbitrary shell/executable/network
-and SMTP operations remain blocked. Separate unit tests replace command execution
-and test inspection/parser/failure boundaries. Mock results are not FASTQ evidence.
-
-Six narrow strict expected-failure probes identify behavior reserved for #64:
-numeric TSV IDs lose leading zeros, prefix matching includes other samples,
-lane names collide, command failures are ignored, existing output is removed
-before selection validation, and reordered input mates are accepted. These are
-defects, not permanent compatibility requirements; their tests must become
-passing regression tests when repaired. Automatic sample choice remains unseeded
-with replacement; ordinary sampling still defaults to destructive overwrite and
-does not protect overlapping source/destination trees. Never use this #63
-producer on valuable inputs or destinations. Modern marker-free source support,
-atomic publication, safe paired sampling and Parse fixtures remain later work.
-
-The producer tests run in `check cli`, editable/wheel/sdist `check all` and CI.
-To provision a deliberately disconnected checkout, supply both prepared Python
-wheels and the two pinned tool archives:
-
-```bash
-python3.11 scripts/dev.py setup --wheelhouse /absolute/path/to/wheels \
-  --producer-tools /absolute/path/to/producer-tools
-```
-
-`<checkout>-local/setups/run-*/producer-tools/` retains the archives and their
-identity for this handoff. `check all` passes those archives to its private sdist
-setup, so repeat checks acquire nothing. Tool versions, source/dependency hashes,
-logs and test results stay beside the existing development evidence.
+The normal PEP test uses the committed initialization-only workflow stub, checks
+exact sample IDs/counts/checksums and resolves PEP-derived links to generated
+files. No scientific workflow, container, facility data or email is exercised.
+Parse cell selection and gene-expression integration fixtures belong to #83;
+full lane/chunk/index/automatic-selection profiles remain unsupported. A small
+format-valid random subset does not guarantee enough cells, genes or coverage for
+a scientific workflow. Manual representative BFQ/workflow integration remains a
+separate gate before treating a generated fixture as scientifically usable.

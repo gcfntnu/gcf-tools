@@ -1,23 +1,15 @@
-"""Wholly synthetic legacy-shaped source; markers have no operational meaning."""
+"""Small, wholly synthetic modern metadata-plus-paired-FASTQ source."""
 from pathlib import Path
+import gzip
 import shutil
-
 
 RUN = "990101_SYNTHETIC_0001_ASYNTHETIC"
 PROJECT = "GCF-2099-001"
 
 
-def legacy_source(destination):
+def modern_source(destination):
     fixture = Path(__file__).parent / "fixtures/paired"
     shutil.copytree(fixture / RUN, destination)
-    sheet = destination / "SampleSheet.csv"
-    sheet.write_text(sheet.read_text().replace("ExperimentName,Synthetic paired example",
-                                              "ExperimentName," + PROJECT))
-    # Characterize the old producer's obsolete dependencies, not manager state.
-    (destination / "bcl.done").write_text("synthetic placeholder, never BFQ state\n")
-    (destination / "InterOp").mkdir()
-    (destination / "InterOp/placeholder.txt").write_text("synthetic; no instrument metrics\n")
-    (destination / (PROJECT + "_samplesheet.tsv")).write_text("Sample_ID\n001\n001A\nCTRL\n")
     config = destination.parent / "libprep.yaml"
     shutil.copy2(fixture / "workflow/libprep.config", config)
     return destination, config
@@ -25,3 +17,23 @@ def legacy_source(destination):
 
 def contents(root):
     return {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+
+
+def records(path):
+    """Independent record oracle; never imports producer parsing/sampling."""
+    lines = gzip.decompress(path.read_bytes()).decode("ascii").splitlines()
+    assert len(lines) % 4 == 0
+    result = []
+    for start in range(0, len(lines), 4):
+        header, sequence, plus, quality = lines[start:start + 4]
+        assert header.startswith("@")
+        assert plus == "+"
+        assert len(sequence) == len(quality) > 0
+        assert set(sequence) <= set("ACGTN")
+        assert all(33 <= ord(char) <= 126 for char in quality)
+        result.append((header, sequence, plus, quality))
+    return result
+
+
+def write_records(path, rows):
+    path.write_bytes(gzip.compress(("\n".join(line for row in rows for line in row) + "\n").encode(), mtime=0))

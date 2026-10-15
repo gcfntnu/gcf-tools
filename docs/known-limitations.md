@@ -43,42 +43,20 @@ No workflow changes belong in this PR.
 
 ## Testdata producer
 
-The #63 offline harness and real pinned-tool synthetic smoke now work;
-production execution is not endorsed. Source
-`testdata/create_testdata.py:BFQoutput._inspect`, `sample`, `sample_samplesheet`
-and [the harness guide](testdata.md#producer-inspection-and-legacy-smoke-63)
-identify what [#64](https://github.com/gcfntnu/gcf-tools/issues/64) must repair:
+[#64](https://github.com/gcfntnu/gcf-tools/issues/64) restores the
+[explicit flat-paired profile](testdata.md#safe-flat-paired-producer-64): exact
+metadata selection, full paired validation, deterministic generation, source
+identity checks and atomic no-replace publication. The #63 leading-zero/prefix,
+collision, ignored-command-failure, destructive-output and reordered-pair defects
+are covered by passing regressions. No legacy markers or generated TSV are needed.
 
-- Explicit local configuration now loads safely and without downloads. Without
-  it, inspection still downloads from moving workflow `main`, now in memory.
-  The missing YAML import/loader defect and cwd config mutation are repaired.
-  Historical SE-first kit precedence remains distinct from configmaker's selector.
-- It infers project identity from `ExperimentName`, expects a project sample TSV,
-  and copies obsolete `bcl.done` plus Stats/InterOp/workbook content. Current BFQ
-  state is not represented by that marker.
-- Sampling defaults to recursively deleting an existing destination. No overlap
-  guard protects source/ancestor destinations. Commands now use direct argv;
-  the caller still ignores sampling/compression exit statuses.
-- Sample selection uses unseeded `random.choices` (with replacement). Each file
-  uses `seqkit sample -s 123456`, which by itself does not prove paired-read
-  identity. Prefix globbing, filename-based R1/R2 inference and renaming multiple
-  files to the same destination create identity/overwrite risks.
-- The SampleSheet subsetter splits literal commas and only recognizes `[Data]`;
-  it does not reuse the current quoted CSV / `[BCLConvert_Data]` parser.
-
-The older `.tests/configmaker` data exercise input interpretation; they are not
-validated output of a safe producer. The assessment's malformed FASTQs were
-reconfirmed (11 decompressed lines each):
-
-- `201019_M03942_0354_000000000-CVF53/GCF-2020-747/116_R1.fastq.gz`
-- `201020_M03942_0355_000000000-CVF55/GCF-2020-748/116_R1.fastq.gz`
-
-Both paths are relative to `.tests/configmaker`. Fixture presence must not be
-treated as content validation. The [#62 synthetic paired fixture](testdata.md) is independent of the producer
-being repaired and verifies complete paired records.
-The historical RNA workbook's note at customer J48 is deliberately invalid under
-current rules; `tests/prepare_cli_fixtures.py` and the legacy CLI fixture repair
-only private copies. Do not weaken the validator or edit the source workbook.
+This remains a bounded metadata-plus-FASTQ producer, not a general import or
+operational simulator. It requires explicit selection/configuration/no-rename,
+rejects nested/lane/chunk/index layouts, and never replaces an existing output.
+Original workbook and Stats/InterOp content remain source provenance. It neither
+creates BFQ state nor validates scientific adequacy. Parse cell selection and
+representative gene-expression integration coverage belong to #83. Ordinary
+format-valid subsampling cannot establish those biological guarantees.
 
 ## Missing evidence and later work
 
@@ -91,7 +69,7 @@ behavior/dependency changes or foundation completion, obtain:
   Python requirements, and priority real FASTQ layouts. The parser supports
   workbook reading, but this PR did not verify legacy `.xls` operation.
 - Broader layouts beyond the [simple paired/default-PEP profile](testdata.md),
-  offline producer evidence (#63/#64), and independent developer onboarding (#65).
+  Parse integration evidence (#83), and independent developer onboarding (#65).
 - Deliberate facility suite/container integration with copied inputs and manual
   output/scientific review; no real services, mail, or deployment ran under #60.
 
