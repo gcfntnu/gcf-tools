@@ -48,6 +48,26 @@ def test_fuzzy_hits_are_reproducible_suggestions():
     assert resolve_organism('Homo sapens')==result
 
 
+@pytest.mark.parametrize('query,components',[
+    ('homo_sapiens__mus_musculus',('homo_sapiens','mus_musculus')),
+    (' Human __ Mouse ',('homo_sapiens','mus_musculus')),
+    ('Mus musculus c57bl6nj__Human',('mus_musculus_c57bl6nj','homo_sapiens'))])
+def test_explicit_mixed_species_keys_preserve_order_and_strains(query,components):
+    from descriptors import fuzzmatch_organism
+    result=resolve_organism(query)
+    assert result.status=='mixed'
+    assert result.components==components
+    assert result.canonical=='__'.join(components)==fuzzmatch_organism(query)
+
+
+@pytest.mark.parametrize('query,status',[
+    ('Human__Homo sapens','unresolved'),('Human__unlisted taxon','unresolved'),
+    ('Human__Human','unresolved'),('Human__','unresolved'),('Human__reference','ambiguous')])
+def test_mixed_species_never_erase_unknown_ambiguous_or_duplicate_members(query,status):
+    result=resolve_organism(query)
+    assert result.status==status and result.canonical is None
+
+
 @pytest.mark.parametrize('damage',['schema','version','empty','alias_type','undeclared_conflict','wrong_ambiguity','curated_target','canonical_collision'])
 def test_malformed_inventory_is_rejected(tmp_path,damage):
     data=document()

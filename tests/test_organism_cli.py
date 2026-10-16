@@ -36,6 +36,8 @@ def invoke(source,work,*options):
 @pytest.mark.parametrize('sheet,cli,expected', [('Human',None,'homo_sapiens'),('Mouse',' Human ','homo_sapiens'),
     ('hOmO SaPiEnS',None,'homo_sapiens'),('Human','Mus musculus','mus_musculus'),
     ('rangifer_tarandus',None,'rangifer_tarandus'),('Human',' Rangifer tarandus ','rangifer_tarandus'),
+    ('homo_sapiens__mus_musculus',None,'homo_sapiens__mus_musculus'),
+    ('Human',' Human __ Mouse ','homo_sapiens__mus_musculus'),
     ('N/A',None,None),('Human','N/A','N/A'),(None,None,None)])
 def test_effective_global_value_normalizes_without_cache(tmp_path,sheet,cli,expected):
     source,work=prepare(tmp_path,sheet)
@@ -47,7 +49,7 @@ def test_effective_global_value_normalizes_without_cache(tmp_path,sheet,cli,expe
     assert contents(source)==before
 
 
-@pytest.mark.parametrize('value',['Homo sapens','unlisted synthetic taxon','reference'])
+@pytest.mark.parametrize('value',['Homo sapens','unlisted synthetic taxon','reference','Human__Homo sapens','Human__reference'])
 def test_unresolved_required_global_preserves_every_output(tmp_path,value):
     source,work=prepare(tmp_path)
     (work/'config.yaml').write_text('retained: keep\n')
@@ -84,6 +86,16 @@ def test_uniform_unresolved_annotation_is_not_erased_by_global_setting(tmp_path)
     config=yaml.safe_load((work/'config.yaml').read_text())
     assert config['organism']=='homo_sapiens'
     assert [s['Organism'] for s in config['samples'].values()]==[unknown]*3
+
+
+@pytest.mark.parametrize('global_value',[None,'Human'])
+def test_uniform_mixed_annotation_is_not_collapsed_to_a_global_species(tmp_path,global_value):
+    source,work=prepare(tmp_path,global_value,['Human__Mouse']*3)
+    result=invoke(source,work)
+    assert result.returncode==0,result.stdout+result.stderr
+    config=yaml.safe_load((work/'config.yaml').read_text())
+    assert config.get('organism')==('homo_sapiens' if global_value else None)
+    assert [s['Organism'] for s in config['samples'].values()]==['homo_sapiens__mus_musculus']*3
 
 
 @pytest.mark.parametrize('workflow',['metagenome','rnaseq'])

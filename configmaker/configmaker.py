@@ -848,7 +848,7 @@ def main(argv=None):
             elif organism.status in ('unresolved', 'ambiguous'):
                 raise ValueError('Project organism: ' + organism.diagnostic(args.organism))
             else:
-                args.organism = organism.canonical if organism.status == 'resolved' else 'N/A'
+                args.organism = organism.canonical if organism.status in ('resolved', 'mixed') else 'N/A'
         if args.test:
             sample_dict = find_samples_test(samples_df, args)
         elif args.keep_batch:

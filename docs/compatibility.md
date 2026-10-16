@@ -202,6 +202,9 @@ not overwritten. New config/PEP `organism_inventory` identifies schema, version,
 SHA-256 and provenance. See [organisms.md](organisms.md) for aliases/strains,
 public API return behavior, missing values, explicit maintenance, packaging and
 offline provisioning. The reference/control-term matcher is unchanged.
+Explicit mixed reference keys (`Human__Mouse` → `homo_sapiens__mus_musculus`)
+resolve every member, preserve order/strains, and reject incomplete or ambiguous
+membership. Mixed sample annotations never collapse into a single global species.
 The established non-species project label `metagenome` is preserved only with a
 locally supplied libprep snapshot selecting the metagenome workflow; it does not
 resolve to a species or select a classifier database.

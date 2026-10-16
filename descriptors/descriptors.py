@@ -311,7 +311,7 @@ def infer_by_descriptor(df, desc):
                     result = resolve_organism(value)
                     if result.status in ('ambiguous', 'unresolved'):
                         logger.warning('Sample_ID %r column %s: %s; preserving annotation verbatim', sample_id, col_name, result.diagnostic(value))
-                    values.append(result.canonical if result.status == 'resolved' else value)
+                    values.append(result.canonical if result.status in ('resolved', 'mixed') else value)
                 col = pd.Series(values, index=col.index, name=col.name)
             else:
                 col = col.apply(_infer_dtype_string, subtype=subtype, col_name=col_name)

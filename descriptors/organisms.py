@@ -35,6 +35,7 @@ class Resolution:
     candidates: tuple = ()
     suggestions: tuple = ()
     inventory_sha256: str = ''
+    components: tuple = ()
 
     def diagnostic(self, query):
         choices = self.candidates or self.suggestions
@@ -58,7 +59,7 @@ class SpeciesInventory:
         self.species = species
         self.canonical, self.aliases = {}, defaultdict(set)
         for key, aliases in species.items():
-            if not isinstance(key, str) or not re.fullmatch(r'[a-z0-9][a-z0-9_.-]*', key):
+            if not isinstance(key, str) or '__' in key or not re.fullmatch(r'[a-z0-9][a-z0-9_.-]*', key):
                 raise OrganismInventoryError('Invalid canonical species key {!r}'.format(key))
             canonical = normalize(key)
             if canonical in self.canonical:
@@ -90,6 +91,19 @@ class SpeciesInventory:
     def resolve(self, query, min_score=80, min_letters=4):
         if is_missing(query):
             return self._resolution('missing')
+        if '__' in str(query):
+            # The workflow's explicit mixed-reference separator is not a taxon.
+            # Resolve every member independently; retain order and full strains.
+            members = [self.resolve(part, min_score, min_letters) for part in str(query).split('__')]
+            keys = tuple(member.canonical for member in members)
+            if all(member.status == 'resolved' for member in members) and len(set(keys)) == len(keys):
+                return self._resolution('mixed', '__'.join(keys), components=keys)
+            ambiguous = {key for member in members for key in member.candidates}
+            if ambiguous:
+                return self._resolution('ambiguous', candidates=tuple(sorted(ambiguous)))
+            suggestions = {key for member in members for key in member.suggestions}
+            suggestions.update(member.canonical for member in members if member.canonical)
+            return self._resolution('unresolved', suggestions=tuple(sorted(suggestions)))
         name = normalize(query)
         # Exact canonical keys also accept scientific-name spacing and case.
         if name in self.canonical:

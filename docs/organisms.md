@@ -18,6 +18,16 @@ olive, domesticated barley, panicgrass, potato, field mustard and cocoa similarl
 select their existing unqualified species key. These are explicit inventory
 decisions, not runtime tie-breaking or truncation of strain names.
 
+Explicit mixed-reference keys use the workflow's `__` separator. Each member
+must resolve exactly/unambiguously: `Human__Mouse` emits
+`homo_sapiens__mus_musculus`. Member order and full strain keys are preserved;
+missing, unresolved, ambiguous or duplicate members are rejected for project
+values. Mixed keys are analysis values, not fictitious inventory species.
+This recognition does not establish reference availability. Mixed descriptive
+annotations normalize without becoming a single species, and are never
+overwritten by a single-species global value. Unresolved mixed annotations
+remain verbatim like other descriptive unknowns.
+
 Other collisions remain ambiguous. For example, `reference`, `Chinese hamster`
 and `hybrid cattle` require an exact canonical key. Fuzzy similarities are
 diagnostic suggestions only: `Homo sapens` does **not** select a reference.
@@ -41,7 +51,7 @@ key absent. Explicit CLI `--organism N/A` emits the text `N/A`. Missing values
 case) are valid, not unresolved species.
 
 Per-sample mixed species remain separate; per-sample values are never promoted
-into the global setting. A uniform resolved/missing sample column retains the
+into the global setting. A uniform single-species resolved/missing column retains the
 existing global override/fill behavior. Unresolved or ambiguous descriptive
 annotations are preserved verbatim, including punctuation and whitespace, with
 sample-ID/column diagnostics; a global value never erases them. Missing
@@ -82,7 +92,9 @@ remains an iterable mapping of canonical keys and historical aliases (including
 instead of mutating an unrecorded global dictionary.
 
 `descriptors.organisms.resolve_organism()` exposes status, canonical value,
-candidates, suggestions and inventory SHA-256. `inventory_identity()` returns
+candidates, suggestions and inventory SHA-256. Explicit mixed keys return status
+`mixed`, their canonical analysis key and a `components` tuple; the compatibility
+matcher returns that complete key. `inventory_identity()` returns
 schema/version/hash/provenance, also recorded in new config and PEP as
 `organism_inventory`. Python callers may explicitly `load_inventory(local_path)`
 and pass that object as `inventory=` to the resolver; its returned hash identifies
