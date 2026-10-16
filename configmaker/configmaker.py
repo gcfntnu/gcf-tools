@@ -220,96 +220,51 @@ def match_fastq(sample_name, project_dir, rel_path=True):
     return r1_fastq_files, r2_fastq_files, i1_fastq_files
 
 
-def find_samples(df, args):
-    """
-    identify valid samples by existing fastq file names
-    """
+def _discover_samples(df, args, keep_batch=False):
+    """Keep each observed read associated with its selected run and source project."""
     sample_dict = {}
-    project_dirs = [os.path.join(run_folder, project_id) for run_folder, project_id in zip(args.runfolders, args.project_id)]
-    for index, row in df.iterrows():
-        s_r1, s_r2, s_i1 = [],[],[]
-        fc_name, fc_id = [],[]
-        for p_pth in project_dirs:
-            flowcell_name = os.path.basename(os.path.split(p_pth)[0])
-            flowcell_id = flowcell_name.split("_")[-1]
-            r1, r2, i1 = match_fastq(row.Sample_ID, p_pth)
-            if r1:
-                s_r1.extend(r1)
-                fc_name.extend([flowcell_name]*len(r1))
-                fc_id.extend([flowcell_id]*len(r1))
-            if r2:
-                s_r2.extend(r2)
+    validation = getattr(args, "_validation", None)
+    selected_rows = [record for sheet in validation.sheets for record in sheet["records"]] if validation else None
+    for row in df.itertuples(index=False):
+        for runfolder, project_id in zip(args.runfolders, args.project_id):
+            if project_id not in row.Project_ID:
+                continue
+            if selected_rows is not None and not getattr(args, "_samplesheet_override", False):
+                if not any(record["Sample_ID"] == row.Sample_ID and record["Sample_Project"] == project_id
+                           and Path(record["_file"]).parent == Path(runfolder) for record in selected_rows):
+                    continue
+            project_dir = os.path.join(runfolder, project_id)
+            r1, r2, i1 = match_fastq(row.Sample_ID, project_dir)
+            if not r1 and not r2:
+                continue
+            flowcell = Path(runfolder).name
+            batch = flowcell.split("_")[-1]
+            sample_id = "{}_{}".format(row.Sample_ID, batch) if keep_batch else row.Sample_ID
+            sample = sample_dict.setdefault(sample_id, {"R1": [], "R2": [], "Project_ID": [],
+                                                        "Sample_ID": sample_id, "Flowcell_Name": [], "Flowcell_ID": []})
+            if keep_batch:
+                sample["Src_Sample_ID"] = row.Sample_ID
+            sample["R1"].extend(r1 or [])
+            sample["R2"].extend(r2 or [])
             if i1:
-                s_i1.extend(i1)
-        if all([i is None for i in s_r1]) and all([i is None for i in s_r2]):
-            warn_str = "removing sample {} from SampleSheet due to missing fastq files!".format(row.Sample_ID)
-            logger.warning(warn_str)
-        else:
-            if len(s_i1) > 0:
-                sample = { "R1": ",".join(s_r1),
-                           "R2": ",".join(s_r2),
-                           "I1": ",".join(s_i1),
-                           "Project_ID": ",".join(row.Project_ID),
-                           "Sample_ID": row.Sample_ID,
-                           "Flowcell_Name" : ",".join(fc_name),
-                           "Flowcell_ID" : ",".join(fc_id)
-                          }
-            else:
-                sample = {"R1": ",".join(s_r1),
-                          "R2": ",".join(s_r2),
-                          "Project_ID": ",".join(row.Project_ID),
-                          "Sample_ID": row.Sample_ID,
-                          "Flowcell_Name" : ",".join(fc_name),
-                          "Flowcell_ID" : ",".join(fc_id)
-                          }
-            sample_dict[str(row.Sample_ID)] = sample
-            
+                sample.setdefault("I1", []).extend(i1)
+            count = len(r1 or r2)
+            sample["Project_ID"].extend([project_id] * count)
+            sample["Flowcell_Name"].extend([flowcell] * count)
+            sample["Flowcell_ID"].extend([batch] * count)
+    for sample in sample_dict.values():
+        for key, value in sample.items():
+            if isinstance(value, list):
+                sample[key] = ",".join(value)
     return sample_dict
+
+
+def find_samples(df, args):
+    return _discover_samples(df, args)
 
 
 def find_samples_batch(df, args):
-    """
-    `find_samples` function adding Flowcell_ID postfix to Sample_ID
-    """
-    sample_dict = {}
-    validation = getattr(args, "_validation", None)
-    planned = {item["sample_id"]: item for item in validation.summary["planned_samples"]} if validation else None
-    project_dirs = [os.path.join(run_folder, project_id) for run_folder, project_id in zip(args.runfolders, args.project_id)]
-    for index, row in df.iterrows():
-        for p_pth in project_dirs:
-            r1, r2, i1 = match_fastq(row.Sample_ID, p_pth)
-            if (not r1) and (not r2):
-                warn_str = "sample {} not found in {}".format(row.Sample_ID, p_pth)
-                logger.warning(warn_str)
-            else:
-                r2 = [] if not r2 else r2
-                Flowcell_ID = Path(p_pth).parent.name.split("_")[-1]
-                Sample_ID = "{}_{}".format(row.Sample_ID, Flowcell_ID)
-                if planned is not None and Sample_ID not in planned:
-                    continue
-                project_ids = planned[Sample_ID]["project_ids"] if planned is not None else row.Project_ID
-                if len(i1) > 0:
-                    sample_dict[Sample_ID] = {
-                        "R1": ",".join(r1),
-                        "R2": ",".join(r2),
-                        "I1": ",".join(i1),
-                        "Project_ID": ",".join(project_ids),
-                        "Sample_ID": Sample_ID,
-                        "Src_Sample_ID": row.Sample_ID,
-                        "Flowcell_Name": Path(p_pth).parent.name,
-                        "Flowcell_ID": Flowcell_ID,
-                    }
-                else:
-                    sample_dict[Sample_ID] = {
-                        "R1": ",".join(r1),
-                        "R2": ",".join(r2),
-                        "Project_ID": ",".join(project_ids),
-                        "Sample_ID": Sample_ID,
-                        "Src_Sample_ID": row.Sample_ID,
-                        "Flowcell_Name": Path(p_pth).parent.name,
-                        "Flowcell_ID": Flowcell_ID,
-                    }
-    return sample_dict
+    return _discover_samples(df, args, keep_batch=True)
 
 
 def find_samples_test(df, args):
@@ -408,7 +363,7 @@ def merge_samples_with_submission_form(sample_dict, args):
     desc = descriptors.descriptors.add_default_descriptors(sample_df, desc)
     # Descriptor inference sanitizes strings, including IDs; identity fields
     # must retain exactly the values already accepted by metadata preflight.
-    identities = sample_df[[c for c in ("Sample_ID", "Project_ID", "Src_Project_ID") if c in sample_df]].copy()
+    identities = sample_df[[c for c in ("Sample_ID", "Src_Sample_ID", "Project_ID", "Src_Project_ID") if c in sample_df]].copy()
     sample_df, desc = descriptors.descriptors.infer_by_descriptor(sample_df.drop(columns=identities.columns), desc)
     for column in identities:
         sample_df[column] = identities[column]
@@ -465,25 +420,28 @@ def find_machine(runfolders):
     return machine
 
 def find_fastq_md5sums(runfolders, project_id):
-    df_list = []
-    fn_list = []
-    for pth in runfolders:
-        for pid in project_id:
-            fn = os.path.join(pth, 'md5sum_{}_fastq.txt'.format(pid))
-            fn_list.append(fn)
-            if os.path.isfile(fn):
-                df = pd.read_table(fn, header=None, sep=r"\s+", names=['md5sum', 'filename'])
-                df['filename'] = df['filename'].apply(lambda x: os.path.split(x)[-1])
-                df = df.set_index('filename')
-                df_list.append(df)
-
-    if len(df_list) == 1:
-        return df_list[0].to_dict()['md5sum']
-    elif len(df_list) > 1:
-        return pd.concat(df_list).to_dict()['md5sum']
-    else:
-        logger.warning("None of {} was not found".format(', '.join(fn_list)))
+    """Key checksums by discovered run/project path, retaining unique basename lookup."""
+    checksums, basenames = {}, {}
+    sources = ((run, pid) for run in dict.fromkeys(runfolders) for pid in dict.fromkeys(project_id))
+    for runfolder, pid in sources:
+        manifest = Path(runfolder) / "md5sum_{}_fastq.txt".format(pid)
+        if not manifest.is_file():
+            continue
+        frame = pd.read_table(manifest, header=None, sep=r"\s+", names=["md5sum", "filename"])
+        for digest, filename in frame.itertuples(index=False, name=None):
+            path = Path(str(filename).lstrip("*"))
+            # Manifests may use absolute, project-relative or basename-only paths.
+            parts = path.parts
+            relative = Path(*parts[parts.index(pid) + 1:]) if pid in parts else Path(path.name)
+            key = str(Path(Path(runfolder).name) / pid / relative)
+            checksums[key] = digest
+            basenames.setdefault(path.name, set()).add(digest)
+    if not checksums:
+        logger.warning("No source FASTQ checksum manifests found")
         return None
+    checksums.update({name: next(iter(values)) for name, values in basenames.items() if len(values) == 1})
+    return checksums
+
 
 def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptors=None, write_yaml=False, md5sums=None):
     """
@@ -491,14 +449,13 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
     """
     samples = merged_samples.to_dict(orient="index")
     config = {}
-    if len(set(args.project_id)) == 1:
-        args.project_id = [args.project_id[0]]
+    project_ids = list(dict.fromkeys(args.project_id))
 
     if args.new_project_id:
-        config["project_id"] = args.new_project_id
-        config["src_project_id"] = args.project_id
+        config["project_id"] = [args.new_project_id]
+        config["src_project_id"] = project_ids
     else:
-        config["project_id"] = copy.deepcopy(args.project_id)
+        config["project_id"] = project_ids
 
     if args.organism is not None:
         if pd.isnull(args.organism) or args.organism in ["N/A", "NA", "<NA>", "", None]:
@@ -526,7 +483,7 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
     if args.title is not None:
         config["experiment_title"] = args.title
     else:
-        config["experiment_title"] = config["project_id"]
+        config["experiment_title"] = ", ".join(config["project_id"])
     if args.summary is not None:
         config["experiment_summary"] = args.summary
     batch = {}
@@ -570,9 +527,12 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
             config["samples"][sample_id][col_name] = val
 
             if col_name in ["R1", "R2", "I1"] and md5sums is not None:
-                md5 = [md5sums.get(os.path.basename(i)) for i in val.split(',')]
-                if md5 and val:
+                path_keys = any("/" in key for key in md5sums)
+                md5 = [md5sums.get(i if path_keys else os.path.basename(i)) for i in val.split(',')]
+                if md5 and val and all(md5):
                     config["samples"][sample_id][col_name+ "_md5sum"] = ','.join(md5) 
+                elif val:
+                    logger.warning("Incomplete source checksums for sample %s %s; omitting this checksum attribute", sample_id, col_name)
 
     if any(str(kit).startswith("Parse Biosciences")
            for kit in (opts.get("Libprep", ""), config.get("libprepkit", ""))):
@@ -605,34 +565,17 @@ def create_fastq_dir(sample_dict, args, output_dir=None, overwrite=True):
         shutil.rmtree(default_fastq_dir)
     os.makedirs(default_fastq_dir, exist_ok=True)
 
-    s_ids = sample_dict.keys()
-    if args.keep_batch:
-        # split out date addition postfix from sample_ids with support for sample_ids with underscore in name
-        s_ids = ["_".join(n[:-1]) if len(n) > 2 else n[0] for n in [e.split("_") for e in s_ids]]
-        s_ids = list(set(s_ids))  # unique sample_ids
-
-    project_dirs = [os.path.join(run_folder, project_id) for run_folder, project_id in zip(args.runfolders, args.project_id)]
-    for sample_id in s_ids:
-        for pid in project_dirs:
-            r1_src, r2_src, i1_src = match_fastq(sample_id, pid, rel_path=False)
-            r1_dst, r2_dst, i1_dst = match_fastq(sample_id, pid, rel_path=True)
-            if not any([r1_src, r1_dst, r2_src, r2_dst]):
-                continue
-            for src, dst in zip(r1_src, r1_dst):
-                if src is not None:
-                    dst = os.path.join(default_fastq_dir, dst)
-                    os.makedirs(os.path.dirname(dst), exist_ok=True)
-                    os.symlink(src, dst)
-            for src, dst in zip(r2_src, r2_dst):
-                if src is not None:
-                    dst = os.path.join(default_fastq_dir, dst)
-                    os.makedirs(os.path.dirname(dst), exist_ok=True)
-                    os.symlink(src, dst)
-            for src, dst in zip(i1_src, i1_dst):
-                if src is not None:
-                    dst = os.path.join(default_fastq_dir, dst)
-                    os.makedirs(os.path.dirname(dst), exist_ok=True)
-                    os.symlink(src, dst)    
+    if args.test:
+        return default_fastq_dir
+    roots = {Path(run).name: Path(run).parent for run in args.runfolders}
+    for sample in sample_dict.values():
+        for read in ("R1", "R2", "I1"):
+            for relative in filter(None, sample.get(read, "").split(",")):
+                src = roots[Path(relative).parts[0]] / relative
+                dst = Path(default_fastq_dir) / relative
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                if not dst.is_symlink():
+                    dst.symlink_to(src)
     return default_fastq_dir
 
 
@@ -703,19 +646,28 @@ def project_summary(config, output="config.yaml", validation=None):
 def check_input(args):
     logger.debug("running check_input ...")
     dirs, ids, samplesheets, submission_forms = [], [], [], []
-    for pth in args.runfolders:
-        project_dir, project_id = _match_project_dir(pth, project_id=args.project_id, test=args.test)
-        if project_id:
+    requested = list(dict.fromkeys(args.project_id or []))
+    args._requested_project_ids = requested
+    args._samplesheet_override = args.samplesheet is not None
+    for pth in dict.fromkeys(args.runfolders):
+        if requested:
+            matches = [(os.path.join(pth, pid), pid) for pid in requested if os.path.isdir(os.path.join(pth, pid))]
+        else:
+            matches = [_match_project_dir(pth, test=args.test)]
+        if not matches:
+            continue
+        for project_dir, project_id in matches:
             dirs.append(project_dir)
             ids.append(project_id)
-            samplesheet_fn = os.path.join(pth, "SampleSheet.csv")
-            ssub_fn = os.path.join(pth, "Sample-Submission-Form.xlsx")
-            if os.path.exists(samplesheet_fn) and args.samplesheet is None:
-                logger.debug("identified samplesheet: {}".format(samplesheet_fn))
-                samplesheets.append(samplesheet_fn)
-            if os.path.exists(ssub_fn) and args.ssub is None:
-                logger.debug("identified submission form: {}".format(ssub_fn))
-                submission_forms.append(ssub_fn)
+        samplesheet_fn = os.path.join(pth, "SampleSheet.csv")
+        ssub_fn = os.path.join(pth, "Sample-Submission-Form.xlsx")
+        if os.path.exists(samplesheet_fn) and args.samplesheet is None:
+            samplesheets.append(samplesheet_fn)
+        if os.path.exists(ssub_fn) and args.ssub is None:
+            submission_forms.append(ssub_fn)
+    missing = [pid for pid in requested if pid not in ids]
+    if missing:
+        raise ValueError("Requested source project(s) have no usable directory in the supplied runs: {}".format(", ".join(missing)))
 
     if args.samplesheet is not None:
         logger.debug("overriding samplesheet with command line arg: {}".format(args.samplesheet))
@@ -883,6 +835,10 @@ def main(argv=None):
             sample_dict = find_samples(samples_df, args)
         if not sample_dict:
             raise ValueError("FASTQ discovery failed: no matching FASTQs were found for {} planned sample(s). Check runfolders, project directories and Sample_ID spelling. Metadata preflight passed.".format(validation.summary["planned_sample_count"]))
+        observed = {pid for sample in sample_dict.values() for pid in sample["Project_ID"].split(",")}
+        missing = [pid for pid in args._requested_project_ids if pid not in observed]
+        if missing:
+            raise ValueError("Requested source project(s) have no usable selected FASTQs: {}. Check SampleSheet assignments and source files.".format(", ".join(missing)))
         merged_samples, desc = merge_samples_with_submission_form(sample_dict, args)
         fastq_dir = create_fastq_dir(sample_dict, args)
         md5sums = find_fastq_md5sums(args.runfolders, args.project_id)

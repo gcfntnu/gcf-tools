@@ -89,7 +89,7 @@ def cli(source, work):
 def assert_outputs(source, work, samples=SAMPLES):
     config = yaml.safe_load((work / "config.yaml").read_text())
     assert config["project_id"] == [PROJECT]
-    assert config["experiment_title"] == [PROJECT]
+    assert config["experiment_title"] == PROJECT
     assert config["organism"] == "Homo sapiens"
     assert config["read_geometry"] == [75, 150]
     assert all(type(length) is int for length in config["read_geometry"])
@@ -133,9 +133,9 @@ def assert_outputs(source, work, samples=SAMPLES):
             key = f"R{mate}"
             relative = f"{RUN}/{PROJECT}/{sample}_{key}.fastq.gz"
             assert entry[key] == relative
-            assert row[key] == key
+            assert row[key] in pep["sample_modifiers"]["derive"]["sources"]
             # Evaluate the published PEP source template independently of exporter.
-            assert pep["sample_modifiers"]["derive"]["sources"][key].format(**row) == relative
+            assert pep["sample_modifiers"]["derive"]["sources"][row[key]].format(**row) == relative
             link = work / config["fastq_dir"] / relative
             original = source / relative
             assert link.is_symlink() and link.is_file()
