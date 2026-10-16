@@ -13,13 +13,31 @@ execute the scientific workflows itself.
 | Need | Authoritative guide |
 | --- | --- |
 | Prepare an isolated environment; run available checks | [Contributing](CONTRIBUTING.md) |
+| Rehearse a complete task from a fresh checkout | [Onboarding walkthrough](docs/onboarding.md) |
 | Understand components, callers and public imports | [Architecture](docs/architecture.md) |
 | Find CLI options, generated values, paths and compatibility boundaries | [Compatibility](docs/compatibility.md) |
 | Interpret SampleSheets, workbooks, IDs and validation reports | [Input validation](docs/input-validation.md) |
 | Select library kits, read geometry and configuration snapshots | [Library-preparation configuration](docs/libprep-config.md) |
-| See commands actually exercised, source revisions and limits | [Verification record](docs/verification-60.md) |
+| See commands actually exercised, source revisions and limits | [Onboarding verification](docs/verification-65.md), [packaging evidence](docs/verification-61.md) |
+| Run the synthetic paired example and inspect its limits | [Testdata guide](docs/testdata.md) |
 | Find defects and missing evidence before changing behavior | [Known limitations](docs/known-limitations.md) |
 | Start an agent task | [AGENTS.md](AGENTS.md), then the issue and contributor guide |
+
+## Development quick start
+
+From a fresh Linux checkout with Python 3.11 and venv support:
+
+```bash
+python3.11 scripts/dev.py setup
+python3.11 scripts/dev.py check all
+```
+
+Setup acquires the exact development dependencies once. Checks then run offline,
+including editable installation, fresh-wheel validation and source-distribution
+testing. Mutable state stays in the sibling `<checkout-name>-local/` directory.
+See the [development guide](docs/development.md) for fast/CLI tiers, package
+boundaries, dependency overrides and evidence. Production requirements remain
+separate from the development baseline.
 
 ## Entry points and use
 
@@ -40,9 +58,11 @@ The [compatibility guide](docs/compatibility.md) explains input layouts and why
 repeatable, offline examples; their local workflow configuration stubs do not
 execute scientific analysis.
 
-`create_testdata.py` is installed but its producer is dormant and **not a
-supported working recipe for current BFQ outputs**. Help success is not producer
-validation. See [its limitations and repair scope](docs/known-limitations.md#testdata-producer).
+`create_testdata.py` supports explicit flat paired-read sampling and selected-cell
+Parse WT v4 gene-expression fixtures. It validates complete paired streams and
+publishes only to a new destination. Follow the [supported profiles and executable
+producer checks](docs/testdata.md#generate-and-verify-the-supported-profiles);
+other layouts and scientific adequacy require separate evidence.
 
 ## Development status
 
@@ -53,10 +73,9 @@ compatible, and describe observable changes even when correcting a defect.
 [Foundation tracker #66](https://github.com/gcfntnu/gcf-tools/issues/66) aims to let
 either developer start from a clean checkout, run a representative example and
 submit a bounded change with an agent without an undocumented setup handover.
-This documentation is the initial contract, not completion of that milestone:
-[#61](https://github.com/gcfntnu/gcf-tools/issues/61) owns reproducible setup and
-packaging, [#62](https://github.com/gcfntnu/gcf-tools/issues/62) synthetic paired-end
-CLI coverage, [#63](https://github.com/gcfntnu/gcf-tools/issues/63) and
-[#64](https://github.com/gcfntnu/gcf-tools/issues/64) testdata inspection/restoration,
-and [#65](https://github.com/gcfntnu/gcf-tools/issues/65) the completed guide and
-independent onboarding trial. None of those planned commands is assumed to exist.
+The contract, isolated packaging/checks, independent paired example and safe
+producer profiles are implemented. The [onboarding walkthrough](docs/onboarding.md)
+and [verification record](docs/verification-65.md) distinguish independent agent
+rehearsals from facility-developer confirmation. The tracker remains open until
+its agreed human acceptance is recorded. Routine local development needs no
+facility setup or running service.

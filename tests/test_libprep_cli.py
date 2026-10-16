@@ -16,7 +16,12 @@ CONTENT = b"Kit SE:\n  workflow: rnaseq\n  filter:\n    trim:\n      fastp:\n   
 @pytest.fixture
 def legacy_run(tmp_path):
     run = tmp_path / "run" / RUN.name
-    shutil.copytree(RUN, run)
+    if RUN.is_dir():
+        shutil.copytree(RUN, run)
+    else:
+        # The sdist deliberately excludes historical facility material.
+        from sdist_fixture import create_run
+        create_run(run)
     form = run / "Sample-Submission-Form.xlsx"
     workbook = load_workbook(form)
     customer = workbook["Sample-Submission-Form"]
@@ -100,7 +105,8 @@ def test_standalone_cli_actionable_config_error(tmp_path, legacy_run, problem):
 def test_legacy_script_wrapper_does_not_shadow_package(tmp_path):
     # Reproduce setup.py/egg installs: __file__ points inside the egg, while
     # argv[0] and sys.path[0] point at a separate bin/configmaker.py wrapper.
-    script = ROOT / "configmaker/configmaker.py"
+    import configmaker.configmaker
+    script = Path(configmaker.configmaker.__file__)
     wrapper = tmp_path / "configmaker.py"
     wrapper.write_text(
         "from pathlib import Path\n"

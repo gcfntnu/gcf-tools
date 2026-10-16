@@ -165,7 +165,8 @@ def get_data_from_samplesheet(fh):
 def get_project_samples_from_samplesheet(args):
     result = getattr(args, "_validation", None)
     if result is None:
-        result = validate_inputs(args.samplesheet, args.ssub, args.project_id, args.keep_batch)
+        result = validate_inputs(args.samplesheet, args.ssub, args.project_id, args.keep_batch,
+                                 libkit=getattr(args, "libkit", None))
     if not result.ok:
         raise InputValidationError(result)
     return result.samples.copy(), result.custom_options.copy(), result.header.copy()
@@ -385,7 +386,8 @@ def merge_samples_with_submission_form(sample_dict, args):
     """
     result = getattr(args, "_validation", None)
     if result is None:
-        result = validate_inputs(args.samplesheet, args.ssub, args.project_id, args.keep_batch)
+        result = validate_inputs(args.samplesheet, args.ssub, args.project_id, args.keep_batch,
+                                 libkit=getattr(args, "libkit", None))
     if not result.ok:
         raise InputValidationError(result)
     merge = result.metadata.copy()
@@ -572,7 +574,8 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
                 if md5 and val:
                     config["samples"][sample_id][col_name+ "_md5sum"] = ','.join(md5) 
 
-    if opts.get("Libprep",'').startswith("Parse Biosciences"):
+    if any(str(kit).startswith("Parse Biosciences")
+           for kit in (opts.get("Libprep", ""), config.get("libprepkit", ""))):
         validation = getattr(args, "_validation", None)
         if validation is not None:
             demux_df = validation.forms[0]["demux"]["data"].copy()
@@ -863,7 +866,8 @@ def main(argv=None):
         if args.expected_validation_version and args.expected_validation_version != VALIDATOR_VERSION:
             raise ValueError("Shared validator version mismatch: expected {}, installed {}. Install matching gcf-tools in the BFQ and configmaker environments.".format(args.expected_validation_version, VALIDATOR_VERSION))
         args = check_input(args)
-        validation = validate_inputs(args.samplesheet, args.ssub, args.project_id, args.keep_batch)
+        validation = validate_inputs(args.samplesheet, args.ssub, args.project_id, args.keep_batch,
+                                 libkit=getattr(args, "libkit", None))
         print(validation.render_text(), file=sys.stdout if validation.ok else sys.stderr)
         if not validation.ok:
             return 2

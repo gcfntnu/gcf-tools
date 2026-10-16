@@ -1,0 +1,19 @@
+{
+  "ReadInfosForLanes": [
+    {
+      "LaneNumber": 1,
+      "ReadInfos": [
+        {
+          "Number": 1,
+          "IsIndexedRead": false,
+          "NumCycles": 75
+        },
+        {
+          "Number": 2,
+          "IsIndexedRead": false,
+          "NumCycles": 150
+        }
+      ]
+    }
+  ]
+}

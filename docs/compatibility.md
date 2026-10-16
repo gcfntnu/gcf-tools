@@ -54,13 +54,32 @@ message suggestions into automation.
 
 ### create_testdata.py
 
-The existing parser accepts positional `runfolder`, `--output` (default `None`,
-although execution needs a destination), `--n-reads` (CLI default 1000),
-`--n-samples` (3), `--samples` (comma-separated explicit IDs, supersedes random
-sample selection), `--no-fastq-rename` (false) and `--verbose` (false).
-`BFQoutput.sample` has a different Python default, `n_reads=10000`, and
-`overwrite=True`. These are inventoried for compatibility review, **not a
-recommended execution recipe**. Producer repair belongs to #63/#64.
+The existing installed script, module and `BFQoutput` names remain. The bounded
+[#64 producer](testdata.md#safe-flat-paired-producer-64) requires positional
+`runfolder`, `--output`, explicit `--project-id`/`--samples`, local
+`--libprep-config` and the existing `--no-fastq-rename` route. `--seed` is additive
+(default 123456). `--n-reads` remains CLI 1000 / Python 10000, interpreted per mate
+file in one flat pair. `--n-samples` remains recognizable but automatic selection
+is refused. No source downloads or native sampling/compression commands remain.
+
+`BFQoutput(dirname=None, libprep_config=None, project_id=None)` adds project
+selection. Its `sample` argument order remains compatible, with additive trailing
+`seed`; `overwrite` now defaults false and even explicit true refuses an occupied
+destination. Flat names are preserved; historical rename/multi-file routes fail.
+Project/sample selection comes from shared metadata validation, not ExperimentName
+or generated TSV. Shared geometry-based libprep selection deliberately replaces
+legacy SE-first lookup. Every supported pair is validated and sampled together,
+then published without replacement; original workbook/Stats bytes retain their
+stated provenance. See the guide for exact source, identifier and filesystem
+restrictions and the auxiliary manifest; these do not change configmaker formats.
+
+The additive [#83 Parse profile](testdata.md#parse-wt-v4-selected-cell-producer-83)
+uses `--parse-cells` or `BFQoutput.sample_parse_cells(output_dir, selection, overwrite=False)`
+to retain all explicit WT v4 cell-key matches. It conflicts with explicit read-count,
+sample-selection and seed arguments; ordinary reservoir defaults remain unchanged.
+Both profiles now preserve optional `RunInfo.xml` bytes/hash, while Stats remains
+the geometry authority. The selection schema is auxiliary; configmaker formats
+and shared validation rules are unchanged.
 
 ## Metadata, selection and configuration authority
 
@@ -76,9 +95,13 @@ recommended execution recipe**. Producer repair belongs to #63/#64.
   use unambiguous inputs and inspect observed sample counts.
 - SampleSheet custom options are merged in input order; later values win with
   `samplesheet.option_override` warnings. `--libkit` and truthy `--organism`
-  then override their respective custom options. The metadata preflight requires
-  the Parse `Cell Multiplexing` sheet based on SampleSheet `Libprep`, before the
-  CLI kit override is applied. Broader override acceptance is not demonstrated.
+  then override their respective custom options. Metadata preflight requires
+  the Parse `Cell Multiplexing` sheet when either SampleSheet `Libprep` or the
+  explicit CLI kit override selects Parse. The original SampleSheet requirement
+  remains even when overriding away from Parse. The additive validator `libkit`
+  keyword carries this selection without mutating SampleSheet custom options.
+  Parse selected only by CLI now also emits validated `wells`. See the
+  [ASCII/override contract](input-validation.md#ascii-diagnostics-and-kit-overrides).
 - `Sample_ID`, `Project_ID` and `Src_Project_ID` bypass descriptor string
   sanitization during configmaker merge. SampleSheet projects replace submission
   projects in generated samples. Other metadata still goes through descriptors.
@@ -181,6 +204,15 @@ Experiment/library fields and descriptors are copied to PEP YAML. The current
 templates assume renamed flat files or a particular single-cell directory shape;
 do not infer that every discoverable FASTQ layout resolves through PEP correctly.
 
+## Deliberate input tightening (#71)
+
+Sample IDs in sequencing, customer, lab and required multiplexing tables, plus
+multiplexing Wells values, must be ASCII. Invalid original cells fail with stable
+`sample.non_ascii_id` / `workbook.non_ascii_wells` errors before merge/conversion
+or initialization. Descriptive Unicode metadata retains its existing treatment.
+Valid ASCII identities (including leading zeros), well syntax, joins, precedence,
+lanes and batch behavior remain unchanged. Report/API schema stays at version 1.
+
 ## Failure and mutation boundaries
 
 - CLI argument errors, expected-validator mismatch and failed metadata validation
@@ -201,3 +233,14 @@ do not infer that every discoverable FASTQ layout resolves through PEP correctly
 Failures and overwrite behavior are observable compatibility concerns. The early
 validation protections are intentional; incomplete rollback and inconsistent
 launchers are defects to fix under separately scoped, tested changes.
+
+
+## Multiplexed metadata tightening (#68)
+
+[The pooled-library contract](input-validation.md#pooled-library-metadata-parse)
+rejects populated biological-only fields before any Parse config/output work,
+including lab cells and values otherwise hidden by merges. It also retains the
+five historically dropped library metadata columns for Parse only. Header
+mapping, descriptor conversion, exact IDs, customer/lab precedence, FASTQ grouping,
+PEP identities and the `samples`/`wells` sections retain their established meaning.
+No TSV materialization or workflow processing is implemented in tools.
