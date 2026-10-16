@@ -25,6 +25,14 @@ An unresolved or ambiguous nonmissing project value exits 2 before links,
 config, PEP, Snakefile or analysis summaries change. Diagnostics include canonical
 choices/suggestions and the inventory hash.
 
+The established project label `metagenome` is a non-species community context.
+It remains `metagenome` only when the existing libprep selector selects the
+metagenome workflow from the supplied local snapshot; those same immutable bytes
+are used for initialization. Its classifier database is still chosen by workflow
+configuration. This label is rejected for species-reference workflows such as
+RNA-seq and is not added as a fictitious species or alias to the inventory.
+Descriptive per-sample annotations still follow the resolver rules below.
+
 A truthy CLI value still takes precedence over SampleSheet `Organism` options;
 later SampleSheets retain their existing option precedence. The shared validator
 still represents SampleSheet `N/A` as `None`: this leaves the global `organism`

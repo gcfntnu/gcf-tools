@@ -830,11 +830,25 @@ def main(argv=None):
         args.organism = args.organism or custom_opts.get("Organism")
         identity = inventory_identity()
         logger.info('Organism inventory %s sha256=%s', identity['inventory_version'], identity['sha256'])
+        selected_libprep = args.libprep_config
         if args.organism is not None:
             organism = resolve_organism(args.organism)
-            if organism.status in ('unresolved', 'ambiguous'):
+            if organism.status == 'unresolved' and str(args.organism).strip().casefold() == 'metagenome':
+                # This established community label is not a species reference.
+                # Consult the authoritative selector without writing any outputs,
+                # and reuse its immutable bytes when initializing the workflow.
+                snapshot = LibprepConfig.load(selected_libprep or Path('src/gcf-workflows/libprep.config'))
+                kit = args.libkit if args.libkit is not None else custom_opts.get('Libprep')
+                selection = snapshot.select(kit, find_read_geometry(args.runfolders))
+                if selection.workflow != 'metagenome':
+                    raise ValueError('Project organism: ' + organism.diagnostic(args.organism))
+                selected_libprep = snapshot
+                args.organism = 'metagenome'
+                logger.info('Preserving non-species project context metagenome for selected metagenome workflow')
+            elif organism.status in ('unresolved', 'ambiguous'):
                 raise ValueError('Project organism: ' + organism.diagnostic(args.organism))
-            args.organism = organism.canonical if organism.status == 'resolved' else 'N/A'
+            else:
+                args.organism = organism.canonical if organism.status == 'resolved' else 'N/A'
         if args.test:
             sample_dict = find_samples_test(samples_df, args)
         elif args.keep_batch:
@@ -851,7 +865,7 @@ def main(argv=None):
         fastq_dir = create_fastq_dir(sample_dict, args)
         md5sums = find_fastq_md5sums(args.runfolders, args.project_id)
         config = create_default_config(merged_samples, custom_opts, args, fastq_dir=fastq_dir, descriptors=desc, md5sums=md5sums)
-        config = add_workflow(config, libprep_config=args.libprep_config,
+        config = add_workflow(config, libprep_config=selected_libprep,
                               expected_sha256=args.libprep_sha256,
                               expected_entry=args.libprep_entry,
                               expected_read_geometry=args.expected_read_geometry)

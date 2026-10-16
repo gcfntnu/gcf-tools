@@ -89,10 +89,12 @@ under the [supported producer harness](testdata.md#generate-and-verify-the-suppo
 ## Distribution boundary and source testing
 
 The wheel contains the four existing packages, both unchanged script filenames,
-`descriptors/default_descriptors.yaml`, and `descriptors/ens_org.pkl` and the required `descriptors/organisms.json` inventory. Setuptools
+`descriptors/default_descriptors.yaml`, `descriptors/ens_org.pkl` and the required
+`descriptors/organisms.json` inventory. Setuptools
 `script-files` preserves the current script/package shadowing protection. The
 version comes from `configmaker.__version__`; `setup.py` is a compatibility shim.
-`setup_requires` is gone. Runtime dependencies and public API remain unchanged.
+`setup_requires` is gone. Runtime dependencies remain unchanged; intentional
+organism API behavior changes are described in [organisms.md](organisms.md).
 
 The sdist includes runtime source/resources, tests, the safe fixture generator,
 helpers, the reviewed wholly synthetic `tests/fixtures/paired/` data, development

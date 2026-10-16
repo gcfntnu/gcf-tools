@@ -202,6 +202,9 @@ not overwritten. New config/PEP `organism_inventory` identifies schema, version,
 SHA-256 and provenance. See [organisms.md](organisms.md) for aliases/strains,
 public API return behavior, missing values, explicit maintenance, packaging and
 offline provisioning. The reference/control-term matcher is unchanged.
+The established non-species project label `metagenome` is preserved only with a
+locally supplied libprep snapshot selecting the metagenome workflow; it does not
+resolve to a species or select a classifier database.
 
 PEP output declares `pep_version: 2.0.0` and uses CSV column `sample_name`.
 Read attributes use `R1`/`R2`/`I1` derivation tokens. Private CSV columns

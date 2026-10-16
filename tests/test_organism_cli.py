@@ -82,3 +82,27 @@ def test_uniform_unresolved_annotation_is_not_erased_by_global_setting(tmp_path)
     config=yaml.safe_load((work/'config.yaml').read_text())
     assert config['organism']=='homo_sapiens'
     assert [s['Organism'] for s in config['samples'].values()]==[unknown]*3
+
+
+@pytest.mark.parametrize('workflow',['metagenome','rnaseq'])
+@pytest.mark.parametrize('explicit_snapshot',[False,True])
+def test_established_community_label_is_not_a_species_reference(tmp_path,workflow,explicit_snapshot):
+    source,work=prepare(tmp_path,' MeTaGeNoMe ')
+    path=work/'src/gcf-workflows/libprep.config'
+    selected=path.read_text().replace('workflow: rnaseq','workflow: '+workflow)
+    if explicit_snapshot:
+        path=tmp_path/'selected-libprep.config'
+    path.write_text(selected)
+    before=contents(work),contents(source)
+    result=invoke(source,work,*(['--libprep-config',str(path)] if explicit_snapshot else []))
+    assert path.read_text()==selected
+    if workflow=='rnaseq':
+        assert result.returncode==2 and 'Project organism' in result.stderr
+        assert (contents(work),contents(source))==before
+    else:
+        assert result.returncode==0,result.stdout+result.stderr
+        config=yaml.safe_load((work/'config.yaml').read_text())
+        pep=yaml.safe_load((work/'pep/pep_config.yaml').read_text())
+        assert config['organism']==pep['organism']=='metagenome'
+        assert config['workflow']=='metagenome'
+        assert config['libprep_selection']['sha256']
