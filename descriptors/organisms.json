@@ -1,0 +1,2274 @@
+{
+  "ambiguous_aliases": {
+    "anas platyrhynchos": [
+      "anas_platyrhynchos",
+      "anas_platyrhynchos_platyrhynchos"
+    ],
+    "astyanax mexicanus": [
+      "astyanax_mexicanus",
+      "astyanax_mexicanus_pachon"
+    ],
+    "bos taurus": [
+      "bos_taurus",
+      "bos_taurus_hybrid"
+    ],
+    "chinese hamster": [
+      "cricetulus_griseus_chok1gshd",
+      "cricetulus_griseus_crigri",
+      "cricetulus_griseus_picr"
+    ],
+    "cricetulus griseus": [
+      "cricetulus_griseus_chok1gshd",
+      "cricetulus_griseus_crigri",
+      "cricetulus_griseus_picr"
+    ],
+    "cyprinus carpio": [
+      "cyprinus_carpio_carpio",
+      "cyprinus_carpio_germanmirror",
+      "cyprinus_carpio_hebaored",
+      "cyprinus_carpio_huanghe"
+    ],
+    "heterocephalus glaber": [
+      "heterocephalus_glaber_female",
+      "heterocephalus_glaber_male"
+    ],
+    "hybrid cattle": [
+      "bos_indicus_hybrid",
+      "bos_taurus_hybrid"
+    ],
+    "naked mole-rat": [
+      "heterocephalus_glaber_female",
+      "heterocephalus_glaber_male"
+    ],
+    "olea europaea": [
+      "olea_europaea",
+      "olea_europaea_sylvestris"
+    ],
+    "oryzias latipes": [
+      "oryzias_latipes",
+      "oryzias_latipes_hni",
+      "oryzias_latipes_hsok"
+    ],
+    "red algae": [
+      "cyanidioschyzon_merolae",
+      "galdieria_sulphuraria"
+    ],
+    "reference": [
+      "ailuropoda_melanoleuca",
+      "anolis_carolinensis",
+      "capra_hircus",
+      "meleagris_gallopavo",
+      "ovis_aries_rambouillet",
+      "sus_scrofa"
+    ],
+    "theobroma cacao": [
+      "theobroma_cacao",
+      "theobroma_cacao_criollo"
+    ]
+  },
+  "curated_aliases": {
+    "bread wheat": "triticum_aestivum",
+    "cocoa": "theobroma_cacao",
+    "dog": "canis_lupus_familiaris",
+    "domesticated barley": "hordeum_vulgare",
+    "field mustard": "brassica_rapa",
+    "goat": "capra_hircus",
+    "mouse": "mus_musculus",
+    "olive": "olea_europaea",
+    "panicgrass": "panicum_hallii",
+    "pig": "sus_scrofa",
+    "potato": "solanum_tuberosum",
+    "sheep": "ovis_aries"
+  },
+  "inventory_version": "legacy-433-curation-1",
+  "provenance": {
+    "curation": "Explicit generic species aliases select the existing unqualified species key; canonical keys and qualified strain aliases retain their full identity. All other alias collisions are declared ambiguous. Canonical scientific names take precedence over legacy aliases.",
+    "legacy_resource_git_revision": "42282d9a1e3d736dcfd77f70a2db02cef0e38cbd",
+    "legacy_resource_sha256": "4e087b7d992f84ad0fe5161b67ae298baaced05e654dc1d68031d75c27eb76aa",
+    "repository_recorded_date": "2022-05-18",
+    "source_description": "Historical packaged ens_org.pkl, migrated without dropping canonical keys or aliases",
+    "upstream_provenance": "Not recorded in the legacy artifact; historical acquisition helper uses Ensembl REST",
+    "upstream_release": null,
+    "upstream_retrieval_date": null
+  },
+  "schema_version": 1,
+  "species": {
+    "acanthochromis_polyacanthus": [
+      "spiny chromis"
+    ],
+    "accipiter_nisus": [
+      "Eurasian sparrowhawk"
+    ],
+    "actinidia_chinensis": [
+      "actinidia chinensis var. chinensis",
+      "actinidia_chinensis_var_chinensis",
+      "Red5"
+    ],
+    "aegilops_tauschii": [
+      "aegilops tauschii subsp. strangulata",
+      "aegilops_tauschii_subsp_strangulata",
+      "AL8/78",
+      "Tausch's goatgrass"
+    ],
+    "ailuropoda_melanoleuca": [
+      "giant panda",
+      "reference"
+    ],
+    "amazona_collaria": [
+      "yellow-billed parrot"
+    ],
+    "amborella_trichopoda": [
+      "Amborella",
+      "amborella trichopoda",
+      "amborella trichopoda baill."
+    ],
+    "amphilophus_citrinellus": [
+      "Midas cichlid"
+    ],
+    "amphiprion_ocellaris": [
+      "clown anemonefish"
+    ],
+    "amphiprion_percula": [
+      "orange clownfish"
+    ],
+    "anabas_testudineus": [
+      "climbing perch"
+    ],
+    "ananas_comosus": [
+      "ananas comosus",
+      "F153"
+    ],
+    "anas_platyrhynchos": [
+      "mallard"
+    ],
+    "anas_platyrhynchos_platyrhynchos": [
+      "anas_platyrhynchos",
+      "common mallard"
+    ],
+    "anas_zonorhyncha": [
+      "Eastern spot-billed duck"
+    ],
+    "anolis_carolinensis": [
+      "green anole",
+      "reference"
+    ],
+    "anser_brachyrhynchus": [
+      "pink-footed goose"
+    ],
+    "anser_cygnoides": [
+      "swan goose"
+    ],
+    "aotus_nancymaae": [
+      "Ma's night monkey"
+    ],
+    "apteryx_haastii": [
+      "Great spotted kiwi"
+    ],
+    "apteryx_owenii": [
+      "little spotted kiwi"
+    ],
+    "apteryx_rowi": [
+      "Okarito brown kiwi"
+    ],
+    "aquila_chrysaetos_chrysaetos": [
+      "aquila_chrysaetos",
+      "golden eagle"
+    ],
+    "arabidopsis_halleri": [
+      "arabidopsis halleri subsp. gemmifera",
+      "arabidopsis_halleri_subsp_gemmifera",
+      "W302"
+    ],
+    "arabidopsis_lyrata": [
+      "al",
+      "alyrata",
+      "arabidopsis lyrata",
+      "arabidopsis lyrata subsp. lyrata",
+      "lyrate rockcress",
+      "MN47"
+    ],
+    "arabidopsis_thaliana": [
+      "arabidopsis",
+      "arabidopsis thaliana",
+      "at",
+      "athaliana",
+      "Columbia",
+      "thale cress",
+      "thale-cress"
+    ],
+    "arabis_alpina": [
+      "arabis alpina"
+    ],
+    "asparagus_officinalis": [
+      "asparagus",
+      "DH00/086",
+      "garden asparagus"
+    ],
+    "astatotilapia_calliptera": [
+      "eastern happy"
+    ],
+    "astyanax_mexicanus": [
+      "7994",
+      "amex",
+      "amexicanus",
+      "astmex",
+      "astyanax mexicanus",
+      "cave fish",
+      "Mexican tetra"
+    ],
+    "astyanax_mexicanus_pachon": [
+      "astyanax_mexicanus",
+      "Pachon cavefish"
+    ],
+    "athene_cunicularia": [
+      "burrowing owl"
+    ],
+    "balaenoptera_musculus": [
+      "Blue whale"
+    ],
+    "beta_vulgaris": [
+      "161933",
+      "3556",
+      "beta vulgaris cv. saccharifera",
+      "beta vulgaris cv. saccharifera alef.",
+      "beta vulgaris subsp. vulgaris",
+      "beta vulgaris subsp. vulgaris var. altissima",
+      "beta vulgaris sugar beet group",
+      "beta vulgaris var. altissima",
+      "beta vulgaris var. altissima doell.",
+      "beta vulgaris var. saccharifera",
+      "field beet",
+      "garden beet",
+      "KWS2320 DH",
+      "spinach chard",
+      "sugar beet",
+      "swiss chard",
+      "table beet"
+    ],
+    "betta_splendens": [
+      "Siamese fighting fish"
+    ],
+    "bison_bison_bison": [
+      "American bison",
+      "bison_bison"
+    ],
+    "bos_grunniens": [
+      "domestic yak"
+    ],
+    "bos_indicus_hybrid": [
+      "bos_indicus",
+      "hybrid cattle"
+    ],
+    "bos_mutus": [
+      "wild yak"
+    ],
+    "bos_taurus": [
+      "9913",
+      "bos taurus",
+      "bostau",
+      "bovine",
+      "btau",
+      "btaurus",
+      "cattle",
+      "cow",
+      "domestic cattle",
+      "domestic cow"
+    ],
+    "bos_taurus_hybrid": [
+      "bos_taurus",
+      "hybrid cattle"
+    ],
+    "brachypodium_distachyon": [
+      "Bd21",
+      "brachypodium distachyon",
+      "brachypodium distachyon str. bd21",
+      "brachypodium_distachyon_str_bd21",
+      "false brome"
+    ],
+    "brassica_napus": [
+      "36503",
+      "brassica napus",
+      "brassica napus l.",
+      "Darmor-bzh",
+      "oilseed rape",
+      "rape",
+      "rapeseeds"
+    ],
+    "brassica_oleracea": [
+      "TO1000",
+      "wild cabbage"
+    ],
+    "brassica_rapa": [
+      "51351",
+      "br",
+      "brassica rapa",
+      "Chiifu-401-42",
+      "chinese cabbage",
+      "field mustard"
+    ],
+    "brassica_rapa_ro18": [
+      "field mustard",
+      "R-o-18"
+    ],
+    "bubo_bubo": [
+      "Eurasian eagle-owl"
+    ],
+    "buteo_japonicus": [
+      "eastern buzzard"
+    ],
+    "caenorhabditis_elegans": [
+      "6239",
+      "C.elegans",
+      "c.elegans",
+      "caeele",
+      "caenorhabditis elegans",
+      "caenorhabditis_elegans_prjna13758",
+      "cele",
+      "celegans",
+      "elegans",
+      "N2",
+      "worm"
+    ],
+    "cairina_moschata_domestica": [
+      "cairina_moschata",
+      "muscovy Duck (domestic type)"
+    ],
+    "calidris_pugnax": [
+      "ruff"
+    ],
+    "calidris_pygmaea": [
+      "Spoon-billed sandpiper"
+    ],
+    "callithrix_jacchus": [
+      "callithrix jacchus",
+      "marmoset",
+      "white-tufted-ear marmoset"
+    ],
+    "callorhinchus_milii": [
+      "elephant shark"
+    ],
+    "camarhynchus_parvulus": [
+      "small tree finch"
+    ],
+    "camelina_sativa": [
+      "camelina sativa",
+      "camelina_sativa_str_dh55",
+      "dh55"
+    ],
+    "camelus_dromedarius": [
+      "Arabian camel"
+    ],
+    "canis_lupus_dingo": [
+      "canis_lupus",
+      "dingo"
+    ],
+    "canis_lupus_familiaris": [
+      "canis familiaris",
+      "canis lupus familiaris",
+      "dog",
+      "Labrador retriever"
+    ],
+    "canis_lupus_familiarisbasenji": [
+      "basenji",
+      "dog"
+    ],
+    "canis_lupus_familiarisboxer": [
+      "boxer",
+      "dog"
+    ],
+    "canis_lupus_familiarisgreatdane": [
+      "dog",
+      "great_dane"
+    ],
+    "cannabis_sativa_female": [
+      "cannabis sativa",
+      "cannabis_sativa"
+    ],
+    "capra_hircus": [
+      "Goat",
+      "reference"
+    ],
+    "capra_hircus_blackbengal": [
+      "black_bengal",
+      "Goat"
+    ],
+    "capsicum_annuum": [
+      "capsicum annuum",
+      "Criollo de Morelos 334"
+    ],
+    "carassius_auratus": [
+      "goldfish"
+    ],
+    "carlito_syrichta": [
+      "9478",
+      "carlito",
+      "carlito syrichta",
+      "carlitosyrichta",
+      "carsyr",
+      "csyr",
+      "csyrichta",
+      "Philippine tarsier",
+      "philippine tarsier",
+      "tarsier",
+      "tarsius syrichta",
+      "tarsius_syrichta",
+      "tarsiussyrichta",
+      "tarsyr",
+      "tsyr",
+      "tsyrichta"
+    ],
+    "castor_canadensis": [
+      "American beaver"
+    ],
+    "catagonus_wagneri": [
+      "Chacoan peccary"
+    ],
+    "catharus_ustulatus": [
+      "Swainson's thrush"
+    ],
+    "cavia_aperea": [
+      "37548",
+      "Brazilian guinea pig",
+      "brazilian guinea pig",
+      "cape",
+      "caperea",
+      "cavape",
+      "cavia aperea"
+    ],
+    "cavia_porcellus": [
+      "10141",
+      "cavia porcellus",
+      "cavpor",
+      "cpor",
+      "cporcellus",
+      "domestic guinea pig",
+      "guinea pig",
+      "guinea_pig"
+    ],
+    "cebus_capucinus": [
+      "White-headed capuchin"
+    ],
+    "cercocebus_atys": [
+      "Sooty mangabey"
+    ],
+    "cervus_hanglu_yarkandensis": [
+      "cervus_hanglu",
+      "Yarkand deer"
+    ],
+    "chara_braunii": [
+      "chara braunii",
+      "S276"
+    ],
+    "chelonoidis_abingdonii": [
+      "Abingdon island giant tortoise"
+    ],
+    "chelydra_serpentina": [
+      "Common snapping turtle"
+    ],
+    "chenopodium_quinoa": [
+      "chenopodium quinoa",
+      "PI614886"
+    ],
+    "chinchilla_lanigera": [
+      "34839",
+      "chilan",
+      "chinchilla lanigera",
+      "clan",
+      "clanigera",
+      "Long-tailed chinchilla",
+      "long-tailed chinchilla"
+    ],
+    "chlamydomonas_reinhardtii": [
+      "CC-503 cw92 mt+",
+      "chlamy",
+      "chlamydomonas reinhardtii str. cc-503 cw92 mt+",
+      "chlamydomonas_reinhardtii_str_cc_503_cw92_mt_"
+    ],
+    "chlorocebus_sabaeus": [
+      "60711",
+      "African green monkey",
+      "african green monkey",
+      "agm",
+      "chlorocebus sabaeus",
+      "chlorocebus sabeus",
+      "chlorocebus_sabeus",
+      "chlsab",
+      "csab",
+      "csabaeus",
+      "vervet monkey",
+      "vervet-agm"
+    ],
+    "choloepus_hoffmanni": [
+      "9358",
+      "chof",
+      "choffmanni",
+      "chohof",
+      "choloepus",
+      "choloepus hoffmanni",
+      "choloepushoffmanni",
+      "Hoffmann's two-fingered sloth",
+      "hoffmann's two-fingered sloth",
+      "sloth",
+      "two-toed sloth"
+    ],
+    "chondrus_crispus": [
+      "carageen",
+      "carrageen",
+      "carragheen",
+      "chondrus crispus",
+      "chondrus crispus str. stackhouse str. pcg",
+      "Irish moss",
+      "irish moss",
+      "Stackhouse"
+    ],
+    "chrysemys_picta_bellii": [
+      "chrysemys_picta",
+      "Western painted turtle"
+    ],
+    "chrysolophus_pictus": [
+      "golden pheasant"
+    ],
+    "ciona_intestinalis": [
+      "7719",
+      "c.intestinalis",
+      "cint",
+      "cintestinalis",
+      "cioint",
+      "ciona",
+      "ciona intestinalis",
+      "Sea squirt Ciona intestinalis",
+      "sea squirt ciona intestinalis"
+    ],
+    "ciona_savignyi": [
+      "51511",
+      "c.savignyi",
+      "ciona savignyi",
+      "ciosav",
+      "csav",
+      "csavignyi",
+      "Sea squirt Ciona savignyi",
+      "sea squirt ciona savignyi"
+    ],
+    "citrullus_lanatus": [
+      "97103",
+      "citrullus lanatus"
+    ],
+    "citrus_clementina": [
+      "citrus clementina",
+      "Clemenules"
+    ],
+    "clupea_harengus": [
+      "Atlantic herring"
+    ],
+    "coffea_canephora": [
+      "coffea canephora str. dh200-94",
+      "coffea_canephora_str_dh200_94",
+      "DH200-94"
+    ],
+    "colobus_angolensis_palliatus": [
+      "Angola colobus",
+      "colobus_angolensis"
+    ],
+    "corchorus_capsularis": [
+      "corchorus capsularis",
+      "corchorus capsularis l.",
+      "CVL-1",
+      "jute"
+    ],
+    "corvus_moneduloides": [
+      "New Caledonian crow"
+    ],
+    "corylus_avellana": [
+      "European hazelnut",
+      "Tombul"
+    ],
+    "corymbia_citriodora": [
+      "CCV2-018",
+      "lemon-scented gum"
+    ],
+    "cottoperca_gobio": [
+      "channel bull blenny"
+    ],
+    "coturnix_japonica": [
+      "Japanese quail"
+    ],
+    "cricetulus_griseus_chok1gshd": [
+      "cgri",
+      "cgriseus_chok1gshd",
+      "Chinese hamster",
+      "chinese hamster chok1gs",
+      "cricetulus griseus chok1gshd",
+      "cricetulus_griseus",
+      "crigri"
+    ],
+    "cricetulus_griseus_crigri": [
+      "cgriseus_crigri",
+      "Chinese hamster",
+      "chinese hamster crigri",
+      "cricetulus griseus crigri",
+      "cricetulus_griseus"
+    ],
+    "cricetulus_griseus_picr": [
+      "Chinese hamster",
+      "cricetulus_griseus"
+    ],
+    "crocodylus_porosus": [
+      "Australian saltwater crocodile"
+    ],
+    "cucumis_melo": [
+      "cucumis melo"
+    ],
+    "cucumis_sativus": [
+      "9930",
+      "cucumber",
+      "cucumbers",
+      "cucumis sativu",
+      "cucumis sativus",
+      "cucumis sativus l."
+    ],
+    "cyanidioschyzon_merolae": [
+      "10D",
+      "45157",
+      "cyanidioschyzon merolae",
+      "cyanidioschyzon merolae strain 10d",
+      "haploid red algae",
+      "red algae"
+    ],
+    "cyanistes_caeruleus": [
+      "blue tit"
+    ],
+    "cyclopterus_lumpus": [
+      "lumpfish"
+    ],
+    "cynara_cardunculus": [
+      "cynara cardunculus var. scolymus",
+      "cynara_cardunculus_var_scolymus"
+    ],
+    "cynoglossus_semilaevis": [
+      "tongue sole"
+    ],
+    "cyprinodon_variegatus": [
+      "sheepshead minnow"
+    ],
+    "cyprinus_carpio_carpio": [
+      "common carp",
+      "cyprinus_carpio"
+    ],
+    "cyprinus_carpio_germanmirror": [
+      "common carp german mirror",
+      "cyprinus_carpio"
+    ],
+    "cyprinus_carpio_hebaored": [
+      "common carp hebao red",
+      "cyprinus_carpio"
+    ],
+    "cyprinus_carpio_huanghe": [
+      "common carp huanghe",
+      "cyprinus_carpio"
+    ],
+    "danio_rerio": [
+      "7955",
+      "d_rerio",
+      "danio",
+      "danio rerio",
+      "danrer",
+      "drer",
+      "drerio",
+      "zebrafish",
+      "zfish"
+    ],
+    "dasypus_novemcinctus": [
+      "9361",
+      "arma",
+      "armadillo",
+      "dasnov",
+      "dasypus novemcinctu",
+      "dasypus novemcinctus",
+      "dnov",
+      "dnovemcinctus",
+      "nine-banded armadillo"
+    ],
+    "daucus_carota": [
+      "carrots",
+      "daucus carota subsp. sativus",
+      "daucus_carota_subsp_sativus",
+      "DH1"
+    ],
+    "delphinapterus_leucas": [
+      "beluga whale"
+    ],
+    "denticeps_clupeoides": [
+      "denticle herring"
+    ],
+    "dicentrarchus_labrax": [
+      "European seabass"
+    ],
+    "dioscorea_rotundata": [
+      "dioscorea rotundata"
+    ],
+    "dipodomys_ordii": [
+      "10020",
+      "dipodomys ordii",
+      "dipodomysordii",
+      "dipord",
+      "dord",
+      "dordii",
+      "kangaroo rat",
+      "kangaroo_rat",
+      "Ord's kangaroo rat",
+      "ord's kangaroo rat",
+      "ords kangaroo rat"
+    ],
+    "dromaius_novaehollandiae": [
+      "emu"
+    ],
+    "drosophila_melanogaster": [
+      "d. melanogaster",
+      "d.mel",
+      "dmel",
+      "fruit fly"
+    ],
+    "echeneis_naucrates": [
+      "live sharksucker"
+    ],
+    "echinops_telfairi": [
+      "9371",
+      "echinops telfairi",
+      "echtel",
+      "etel",
+      "etelfairi",
+      "lesser hedgehog tenrec",
+      "lesser_hedgehog",
+      "madagascar_hedgehog",
+      "small Madagascar hedgehog",
+      "small madagascar hedgehog",
+      "tenrec"
+    ],
+    "electrophorus_electricus": [
+      "electric eel"
+    ],
+    "eptatretus_burgeri": [
+      "hagfish",
+      "Inshore hagfish"
+    ],
+    "equus_asinus_asinus": [
+      "donkey",
+      "equus_asinus"
+    ],
+    "equus_caballus": [
+      "9796",
+      "ecab",
+      "ecaballus",
+      "equcab",
+      "equus caballus",
+      "equuscaballus",
+      "horse"
+    ],
+    "eragrostis_curvula": [
+      "eragrostis curvula",
+      "Tanganyika"
+    ],
+    "eragrostis_tef": [
+      "eragrostis tef",
+      "Tsedey"
+    ],
+    "erinaceus_europaeus": [
+      "9365",
+      "eeur",
+      "eeuropaeus",
+      "erieur",
+      "erinaceus europaeus",
+      "hedgehog",
+      "western European hedgehog",
+      "western european hedgehog",
+      "western_european_hedgehog"
+    ],
+    "erpetoichthys_calabaricus": [
+      "reedfish"
+    ],
+    "erythrura_gouldiae": [
+      "Gouldian finch"
+    ],
+    "esox_lucius": [
+      "northern pike"
+    ],
+    "eucalyptus_grandis": [
+      "BRASUZ1",
+      "eucalyptus grandis str. brasuz1",
+      "eucalyptus_grandis_str_brasuz1"
+    ],
+    "eutrema_salsugineum": [
+      "eutrema salsugineum"
+    ],
+    "falco_tinnunculus": [
+      "common kestrel"
+    ],
+    "felis_catus": [
+      "9685",
+      "cat",
+      "domestic cat",
+      "fcat",
+      "fcatus",
+      "felcat",
+      "felis catus"
+    ],
+    "ficedula_albicollis": [
+      "Collared flycatcher"
+    ],
+    "ficus_carica": [
+      "common fig",
+      "Dottato"
+    ],
+    "fukomys_damarensis": [
+      "885580",
+      "Damara mole rat",
+      "damara mole rat",
+      "fdam",
+      "fdamarensi",
+      "fukdam",
+      "fukomys damarensi",
+      "fukomys_damarensi"
+    ],
+    "fundulus_heteroclitus": [
+      "mummichog"
+    ],
+    "gadus_morhua": [
+      "Atlantic cod"
+    ],
+    "galdieria_sulphuraria": [
+      "074W",
+      "galdieria sulphuraria",
+      "galdieria sulphuraria str. 074w",
+      "red algae",
+      "sag 17.91"
+    ],
+    "gallus_gallus": [
+      "9031",
+      "chicken",
+      "g_gallus",
+      "galgal",
+      "gallus gallus",
+      "ggal",
+      "ggallus"
+    ],
+    "gambusia_affinis": [
+      "western mosquitofish"
+    ],
+    "gasterosteus_aculeatus": [
+      "69293",
+      "gacu",
+      "gaculeatus",
+      "gasacu",
+      "gasterosteus aculeatus",
+      "stickleback",
+      "three spined stickleback",
+      "three-spined stickleback"
+    ],
+    "geospiza_fortis": [
+      "medium ground-finch"
+    ],
+    "glycine_max": [
+      "glycine max",
+      "soybeans",
+      "Williams 82"
+    ],
+    "gopherus_agassizii": [
+      "Agassiz's desert tortoise"
+    ],
+    "gopherus_evgoodei": [
+      "Goodes thornscrub tortoise"
+    ],
+    "gorilla_gorilla": [
+      "9593",
+      "9595",
+      "ggor",
+      "ggorilla",
+      "gorgor",
+      "gorilla",
+      "gorilla gorilla",
+      "gorilla gorilla gorilla",
+      "gorilla_gorilla_gorilla",
+      "western gorilla",
+      "Western Lowland Gorilla"
+    ],
+    "gossypium_raimondii": [
+      "gossypium raimondii"
+    ],
+    "gouania_willdenowi": [
+      "blunt-snouted clingfish"
+    ],
+    "haplochromis_burtoni": [
+      "Burton's mouthbrooder"
+    ],
+    "helianthus_annuus": [
+      "common sunflower",
+      "XRQ/B"
+    ],
+    "heterocephalus_glaber_female": [
+      "heterocephalus glaber female",
+      "heterocephalus_glaber",
+      "hglaber_female",
+      "naked mole-rat",
+      "naked mole-rat female"
+    ],
+    "heterocephalus_glaber_male": [
+      "10181",
+      "heterocephalus glaber male",
+      "heterocephalus_glaber",
+      "hetgla",
+      "hgla",
+      "hglaber_male",
+      "naked mole-rat",
+      "naked mole-rat male"
+    ],
+    "hippocampus_comes": [
+      "tiger tail seahorse"
+    ],
+    "homo_sapiens": [
+      "9606",
+      "enshs",
+      "h_sapiens",
+      "homo",
+      "homo sapiens",
+      "homsap",
+      "hsap",
+      "hsapiens",
+      "human"
+    ],
+    "hordeum_vulgare": [
+      "domesticated barley",
+      "Morex"
+    ],
+    "hordeum_vulgare_goldenpromise": [
+      "domesticated barley",
+      "GoldenPromise",
+      "hordeum vulgare subsp. vulgare"
+    ],
+    "hordeum_vulgare_tritex": [
+      "domesticated barley",
+      "Morex (TRITEX)"
+    ],
+    "hucho_hucho": [
+      "huchen"
+    ],
+    "ictalurus_punctatus": [
+      "channel catfish"
+    ],
+    "ictidomys_tridecemlineatus": [
+      "43179",
+      "ictidomys tridecemlineatus",
+      "spermophilus_tridecemlineatus",
+      "spetri",
+      "squirrel",
+      "stri",
+      "stridecemlineatus",
+      "thirteen-lined ground squirrel"
+    ],
+    "ipomoea_triloba": [
+      "ipomoea triloba",
+      "NCNSP0323"
+    ],
+    "jaculus_jaculus": [
+      "51337",
+      "jacjac",
+      "jaculus jaculus",
+      "jjac",
+      "jjaculus",
+      "Lesser Egyptian jerboa",
+      "lesser egyptian jerboa"
+    ],
+    "juglans_regia": [
+      "Chandler",
+      "English walnut"
+    ],
+    "junco_hyemalis": [
+      "dark-eyed junco"
+    ],
+    "kalanchoe_fedtschenkoi": [
+      "kalanchoe fedtschenkoi"
+    ],
+    "kryptolebias_marmoratus": [
+      "mangrove rivulus"
+    ],
+    "labrus_bergylta": [
+      "ballan wrasse"
+    ],
+    "lactuca_sativa": [
+      "eudicots",
+      "Salinas"
+    ],
+    "larimichthys_crocea": [
+      "large yellow croaker"
+    ],
+    "lates_calcarifer": [
+      "barramundi perch"
+    ],
+    "laticauda_laticaudata": [
+      "blue-ringed sea krait"
+    ],
+    "latimeria_chalumnae": [
+      "7897",
+      "coelacanth",
+      "lamineria",
+      "latcha",
+      "latimeria chalumnae",
+      "lcha",
+      "lchalumnae",
+      "living fossil"
+    ],
+    "leersia_perrieri": [
+      "IRGC:105164",
+      "Leersia",
+      "leersia perrieri"
+    ],
+    "lepidothrix_coronata": [
+      "blue-crowned manakin"
+    ],
+    "lepisosteus_oculatus": [
+      "7918",
+      "lepisosteus oculatus",
+      "lepocu",
+      "locu",
+      "loculatus",
+      "Spotted gar",
+      "spotted gar"
+    ],
+    "leptobrachium_leishanense": [
+      "Leishan spiny toad"
+    ],
+    "lonchura_striata_domestica": [
+      "Bengalese finch",
+      "lonchura_striata"
+    ],
+    "loxodonta_africana": [
+      "9785",
+      "African savanna elephant",
+      "african savanna elephant",
+      "african_elephant",
+      "elephant",
+      "lafr",
+      "lafricana",
+      "loxafr",
+      "loxodonta africana"
+    ],
+    "lupinus_angustifolius": [
+      "blue lupin",
+      "lupinus angustifolius",
+      "Tanjil"
+    ],
+    "lynx_canadensis": [
+      "Canada lynx"
+    ],
+    "macaca_fascicularis": [
+      "Crab-eating macaque"
+    ],
+    "macaca_mulatta": [
+      "Macaque"
+    ],
+    "macaca_nemestrina": [
+      "Pig-tailed macaque"
+    ],
+    "malurus_cyaneus_samueli": [
+      "malurus_cyaneus",
+      "superb fairywren"
+    ],
+    "malus_domestica_golden": [
+      "Golden Delicious",
+      "malus domestica",
+      "malus_domestica"
+    ],
+    "manacus_vitellinus": [
+      "golden-collared manakin"
+    ],
+    "mandrillus_leucophaeus": [
+      "Drill"
+    ],
+    "manihot_esculenta": [
+      "109657",
+      "AM560-2",
+      "cassava",
+      "manihot esculenta",
+      "manihot esculenta crantz",
+      "manihot esculenta0",
+      "manihot utilissima",
+      "manioc",
+      "tapioca",
+      "yuca"
+    ],
+    "marchantia_polymorpha": [
+      "marchantia polymorpha str. tak-1",
+      "marchantia_polymorpha_str_tak_1",
+      "Tak-1"
+    ],
+    "marmota_marmota_marmota": [
+      "Alpine marmot",
+      "marmota_marmota"
+    ],
+    "mastacembelus_armatus": [
+      "zig-zag eel"
+    ],
+    "maylandia_zebra": [
+      "zebra mbuna"
+    ],
+    "medicago_truncatula": [
+      "A17",
+      "barrel medic",
+      "medicago truncatula",
+      "medicago truncatula gaertn.",
+      "medicago truncatula str. a17"
+    ],
+    "meleagris_gallopavo": [
+      "reference",
+      "turkey"
+    ],
+    "melopsittacus_undulatus": [
+      "Budgie"
+    ],
+    "meriones_unguiculatus": [
+      "Mongolian gerbil"
+    ],
+    "mesocricetus_auratus": [
+      "10036",
+      "Golden Hamster",
+      "golden hamster",
+      "maur",
+      "mauratus",
+      "mesaur",
+      "mesocricetus auratus"
+    ],
+    "microcebus_murinus": [
+      "30608",
+      "gray mouse lemur",
+      "grey mouse lemur",
+      "micmur",
+      "microcebus murinus",
+      "mmur",
+      "mmurinus",
+      "mouse lemur",
+      "mouse_lemur"
+    ],
+    "microtus_ochrogaster": [
+      "79684",
+      "m_ochrogaster",
+      "micoch",
+      "microtus ochrogaster",
+      "moch",
+      "mochrogaster",
+      "prairie vole",
+      "pvole",
+      "vole"
+    ],
+    "mola_mola": [
+      "ocean sunfish"
+    ],
+    "monodelphis_domestica": [
+      "13616",
+      "broado5",
+      "gray short-tailed opossum",
+      "mdom",
+      "mdomestica",
+      "mondom",
+      "monodelphis domestica",
+      "opossum"
+    ],
+    "monodon_monoceros": [
+      "narwhal"
+    ],
+    "monopterus_albus": [
+      "swamp eel"
+    ],
+    "moschus_moschiferus": [
+      "Siberian musk deer"
+    ],
+    "mus_caroli": [
+      "10089",
+      "CAROLI_EIJ",
+      "mcar",
+      "mcaroli",
+      "mus caroli",
+      "muscar",
+      "Ryukyu mouse",
+      "ryukyu mouse"
+    ],
+    "mus_musculus": [
+      "10090",
+      "ensmm",
+      "house mouse",
+      "m_musculus",
+      "mmus",
+      "mmusculus",
+      "mouse",
+      "mus",
+      "mus musculus",
+      "musmus",
+      "reference (CL57BL6)"
+    ],
+    "mus_musculus_129s1svimj": [
+      "129S1/SvImJ",
+      "mouse"
+    ],
+    "mus_musculus_aj": [
+      "A/J",
+      "mouse"
+    ],
+    "mus_musculus_akrj": [
+      "AKR/J",
+      "mouse"
+    ],
+    "mus_musculus_balbcj": [
+      "BALB/cJ",
+      "mouse"
+    ],
+    "mus_musculus_c3hhej": [
+      "C3H/HeJ",
+      "mouse"
+    ],
+    "mus_musculus_c57bl6nj": [
+      "C57BL/6NJ",
+      "mouse"
+    ],
+    "mus_musculus_casteij": [
+      "10091",
+      "CAST/EiJ",
+      "mmusculus_castaneus_casteij",
+      "mouse",
+      "mouse casteij",
+      "mus musculus castaneus casteij",
+      "mus_musculus_castaneus_casteij",
+      "south eastern house mouse"
+    ],
+    "mus_musculus_cbaj": [
+      "CBA/J",
+      "mouse"
+    ],
+    "mus_musculus_dba2j": [
+      "DBA/2J",
+      "mouse"
+    ],
+    "mus_musculus_fvbnj": [
+      "FVB/NJ",
+      "mouse"
+    ],
+    "mus_musculus_lpj": [
+      "LP/J",
+      "mouse"
+    ],
+    "mus_musculus_nodshiltj": [
+      "mouse",
+      "NOD/ShiLtJ"
+    ],
+    "mus_musculus_nzohlltj": [
+      "mouse",
+      "NZO/HlLtJ"
+    ],
+    "mus_musculus_pwkphj": [
+      "39442",
+      "eastern european house mouse",
+      "mmusculus_musculus_pwkphj",
+      "mouse",
+      "mouse pwkphj",
+      "mus musculus musculus pwkphj",
+      "mus_musculus_musculus_pwkphj",
+      "PWK/PhJ"
+    ],
+    "mus_musculus_wsbeij": [
+      "10092",
+      "mmusculus_domesticus_wsbeij",
+      "mouse",
+      "mouse wsbeij",
+      "mus musculus domesticus wsbeij",
+      "mus_musculus_domesticus_wsbeij",
+      "western european house mouse",
+      "WSB/EiJ"
+    ],
+    "mus_pahari": [
+      "10093",
+      "mpah",
+      "mpahari",
+      "mus pahari",
+      "muspah",
+      "PAHARI_EIJ",
+      "Shrew mouse",
+      "shrew mouse"
+    ],
+    "mus_spicilegus": [
+      "steppe mouse"
+    ],
+    "mus_spretus": [
+      "algerian mouse",
+      "mspretus",
+      "mus_spretus_spret_eij",
+      "SPRET/EiJ",
+      "spreteij",
+      "western mediterranean mouse"
+    ],
+    "musa_acuminata": [
+      "banana",
+      "Doubled-haploid Pahang (DH-Pahang)",
+      "wild Malaysian banana"
+    ],
+    "mustela_putorius_furo": [
+      "9669",
+      "Domestic ferret",
+      "domestic ferret",
+      "ferret",
+      "mput",
+      "mputorius_furo",
+      "musput",
+      "mustela putorius furo",
+      "mustela_putorius"
+    ],
+    "myotis_lucifugus": [
+      "59463",
+      "little brown bat",
+      "little_brown_bat",
+      "microbat",
+      "mluc",
+      "mlucifugus",
+      "myoluc",
+      "myotis lucifugus"
+    ],
+    "myripristis_murdjan": [
+      "pinecone soldierfish"
+    ],
+    "naja_naja": [
+      "Indian cobra"
+    ],
+    "nannospalax_galili": [
+      "1026970",
+      "nangal",
+      "nannospalax galili",
+      "ngal",
+      "ngalili",
+      "Upper Galilee mountains blind mole rat",
+      "upper galilee mountains blind mole rat"
+    ],
+    "neogobius_melanostomus": [
+      "round goby"
+    ],
+    "neolamprologus_brichardi": [
+      "lyretail cichlid"
+    ],
+    "neovison_vison": [
+      "American mink"
+    ],
+    "nicotiana_attenuata": [
+      "coyote tobacco",
+      "nicotiana attenuata str. ut",
+      "UT"
+    ],
+    "nomascus_leucogenys": [
+      "61853",
+      "gibbon",
+      "nleu",
+      "nleucogenys",
+      "nomascus leucogenys",
+      "nomleu",
+      "Northern white-cheeked gibbon",
+      "northern white-cheeked gibbon"
+    ],
+    "notamacropus_eugenii": [
+      "9315",
+      "maceug",
+      "macropus",
+      "macropus eugenii",
+      "macropus_eugenii",
+      "macropuseugenii",
+      "meug",
+      "meugenii",
+      "neug",
+      "neugenii",
+      "notamacropus",
+      "notamacropus eugenii",
+      "notamacropuseugenii",
+      "noteug",
+      "tammar wallaby",
+      "wallaby"
+    ],
+    "notechis_scutatus": [
+      "mainland tiger snake"
+    ],
+    "nothobranchius_furzeri": [
+      "turquoise killifish"
+    ],
+    "nothoprocta_perdicaria": [
+      "Chilean tinamou"
+    ],
+    "numida_meleagris": [
+      "helmeted guineafowl"
+    ],
+    "nymphaea_colorata": [
+      "Beijing-Zhang1983",
+      "nymphaea colorata"
+    ],
+    "ochotona_princeps": [
+      "9978",
+      "American pika",
+      "american pika",
+      "ochotona princeps",
+      "ochpri",
+      "opri",
+      "oprinceps",
+      "pika"
+    ],
+    "octodon_degus": [
+      "10160",
+      "Degu",
+      "degu",
+      "octdeg",
+      "octodon degus",
+      "odeg",
+      "odegus"
+    ],
+    "olea_europaea": [
+      "Farga",
+      "olive"
+    ],
+    "olea_europaea_sylvestris": [
+      "olea europaea var. sylvestris",
+      "olea_europaea",
+      "olea_europaea_var_sylvestris",
+      "olive"
+    ],
+    "oncorhynchus_kisutch": [
+      "coho salmon"
+    ],
+    "oncorhynchus_mykiss": [
+      "rainbow trout"
+    ],
+    "oncorhynchus_tshawytscha": [
+      "Chinook salmon"
+    ],
+    "oreochromis_aureus": [
+      "blue tilapia"
+    ],
+    "oreochromis_niloticus": [
+      "Nile tilapia"
+    ],
+    "ornithorhynchus_anatinus": [
+      "platypus"
+    ],
+    "oryctolagus_cuniculus": [
+      "9986",
+      "ocun",
+      "ocuniculus",
+      "oryctolagus cuniculus",
+      "orycun",
+      "rabbit"
+    ],
+    "oryza_barthii": [
+      "African wild rice",
+      "IRGC:105608",
+      "oryza barthii"
+    ],
+    "oryza_brachyantha": [
+      "IRGC:101232",
+      "malo sina",
+      "oryza brachyantha"
+    ],
+    "oryza_glaberrima": [
+      "African rice",
+      "CG14",
+      "oryza glaberrima",
+      "oryza glaberrima steud."
+    ],
+    "oryza_glumipatula": [
+      "oryza glumipatula",
+      "South American wild rice"
+    ],
+    "oryza_indica": [
+      "93-11",
+      "Indian rice",
+      "indica",
+      "oi",
+      "oryza indica",
+      "oryza sativa indica",
+      "oryza sativa indica group",
+      "oryza_sativa_indica",
+      "oryza_sativa_indica_group"
+    ],
+    "oryza_longistaminata": [
+      "long-staminate rice"
+    ],
+    "oryza_meridionalis": [
+      "Australian wild rice",
+      "OR44 (W2112)",
+      "oryza meridionalis"
+    ],
+    "oryza_nivara": [
+      "IRGC:100897",
+      "oryza nivara",
+      "weedy rice"
+    ],
+    "oryza_punctata": [
+      "IRGC:105690",
+      "oryza punctata",
+      "red rice"
+    ],
+    "oryza_rufipogon": [
+      "common wild rice",
+      "oryza rufipogon",
+      "W1943"
+    ],
+    "oryza_sativa": [
+      "Japanese rice",
+      "Nipponbare",
+      "oryza sativa",
+      "oryza sativa japonica (rice)",
+      "oryza_sativa_japonica_group"
+    ],
+    "oryzias_javanicus": [
+      "javanese ricefish"
+    ],
+    "oryzias_latipes": [
+      "8090",
+      "japanese medaka",
+      "Japanese medaka HdrR",
+      "medaka",
+      "olat",
+      "olatipes",
+      "orylat",
+      "oryzias latipes"
+    ],
+    "oryzias_latipes_hni": [
+      "Japanese medaka HNI",
+      "oryzias_latipes"
+    ],
+    "oryzias_latipes_hsok": [
+      "Japanese medaka HSOK",
+      "oryzias_latipes"
+    ],
+    "oryzias_melastigma": [
+      "Indian medaka"
+    ],
+    "oryzias_sinensis": [
+      "Chinese medaka"
+    ],
+    "ostreococcus_lucimarinus": [
+      "CCE9901",
+      "green algae",
+      "ostreococcus lucimarinus cce9901"
+    ],
+    "otolemur_garnettii": [
+      "30611",
+      "bushbaby",
+      "galago",
+      "ogar",
+      "ogarnettii",
+      "otogar",
+      "otolemur garnettii",
+      "small-eared galago"
+    ],
+    "otus_sunia": [
+      "Oriental scops-owl"
+    ],
+    "ovis_aries": [
+      "9940",
+      "domestic sheep",
+      "oar",
+      "oari",
+      "oaries",
+      "oviari",
+      "ovis aries",
+      "ovisaries",
+      "sheep",
+      "texel"
+    ],
+    "ovis_aries_rambouillet": [
+      "reference",
+      "sheep"
+    ],
+    "pan_paniscus": [
+      "bonobo"
+    ],
+    "pan_troglodytes": [
+      "9598",
+      "chimp",
+      "chimpanzee",
+      "common chimpanzee",
+      "pan troglodytes",
+      "pantro",
+      "ptro",
+      "ptroglodytes"
+    ],
+    "panicum_hallii": [
+      "Panicgrass",
+      "panicum hallii var. hallii str. hal2",
+      "panicum_hallii_var_hallii_str_hal2",
+      "reference (HAL2)"
+    ],
+    "panicum_hallii_fil2": [
+      "FIL2",
+      "Panicgrass",
+      "panicum hallii str. fil2",
+      "panicum_hallii_str_fil2"
+    ],
+    "panthera_leo": [
+      "lion"
+    ],
+    "panthera_pardus": [
+      "leopard"
+    ],
+    "panthera_tigris_altaica": [
+      "panthera_tigris",
+      "Tiger",
+      "tiger"
+    ],
+    "papaver_somniferum": [
+      "High Noscapine 1 (HN1)",
+      "papaver somniferum"
+    ],
+    "papio_anubis": [
+      "doguera baboon",
+      "kenya baboon",
+      "olive baboon",
+      "papio anubis"
+    ],
+    "parambassis_ranga": [
+      "Indian glassy fish"
+    ],
+    "paramormyrops_kingsleyae": [
+      "Paramormyrops kingsleyae"
+    ],
+    "parus_major": [
+      "Great Tit"
+    ],
+    "pavo_cristatus": [
+      "Indian peafowl"
+    ],
+    "pelodiscus_sinensis": [
+      "13735",
+      "chinese soft shell turtle",
+      "Chinese softshell turtle",
+      "chinese softshell turtle",
+      "p_sinensis",
+      "pelodiscus sinensis",
+      "psinensis",
+      "softshell turtle"
+    ],
+    "pelusios_castaneus": [
+      "West African mud turtle"
+    ],
+    "periophthalmus_magnuspinnatus": [
+      "Periophthalmus magnuspinnatus"
+    ],
+    "peromyscus_maniculatus_bairdii": [
+      "230844",
+      "Northern American deer mouse",
+      "northern american deer mouse",
+      "perman",
+      "peromyscus maniculatus bairdii",
+      "peromyscus_maniculatus",
+      "pman",
+      "pmaniculatus_bairdii"
+    ],
+    "petromyzon_marinus": [
+      "7757",
+      "lamprey",
+      "petmar",
+      "petromyzon marinus",
+      "pmar",
+      "pmarinus",
+      "sea lamprey"
+    ],
+    "phascolarctos_cinereus": [
+      "koala"
+    ],
+    "phaseolus_vulgaris": [
+      "French bean",
+      "french bean",
+      "G19833",
+      "kidney bean",
+      "phaseolus vulgaris",
+      "phaseolus vulgaris l.",
+      "string bean"
+    ],
+    "phasianus_colchicus": [
+      "Ring-necked pheasant"
+    ],
+    "phocoena_sinus": [
+      "vaquita"
+    ],
+    "physcomitrium_patens": [
+      "Gransden 2004",
+      "moss",
+      "physcomitrella patens",
+      "physcomitrella_patens"
+    ],
+    "physeter_catodon": [
+      "sperm whale"
+    ],
+    "piliocolobus_tephrosceles": [
+      "Ugandan red Colobus"
+    ],
+    "pistacia_vera": [
+      "Batoury",
+      "pistacia vera"
+    ],
+    "pisum_sativum": [
+      "Cameor",
+      "pea"
+    ],
+    "podarcis_muralis": [
+      "common wall lizard"
+    ],
+    "poecilia_formosa": [
+      "48698",
+      "Amazon molly",
+      "amazon molly",
+      "pfor",
+      "pformosa",
+      "poecilia formosa",
+      "poefor"
+    ],
+    "poecilia_latipinna": [
+      "sailfin molly"
+    ],
+    "poecilia_mexicana": [
+      "shortfin molly"
+    ],
+    "poecilia_reticulata": [
+      "guppy"
+    ],
+    "pogona_vitticeps": [
+      "central bearded dragon"
+    ],
+    "pongo_abelii": [
+      "bornean orangutan",
+      "orangutan",
+      "pongo abelii",
+      "Sumatran orangutan",
+      "sumatran orangutan"
+    ],
+    "populus_trichocarpa": [
+      "Nisqually 1",
+      "poplar",
+      "populus trichocarpa"
+    ],
+    "procavia_capensis": [
+      "9813",
+      "cape rock hyrax",
+      "hyrax",
+      "pcap",
+      "pcapensis",
+      "procap",
+      "procavia capensis",
+      "procaviacapensis",
+      "rock_hyrax"
+    ],
+    "prolemur_simus": [
+      "greater bamboo lemur"
+    ],
+    "propithecus_coquereli": [
+      "Coquerel's sifaka"
+    ],
+    "prunus_avium": [
+      "prunus avium",
+      "Satonishiki"
+    ],
+    "prunus_dulcis": [
+      "almond",
+      "Texas"
+    ],
+    "prunus_persica": [
+      "203801",
+      "amygdalus persica",
+      "Lovell",
+      "peach",
+      "persica vulgaris",
+      "persica vulgaris mill.",
+      "prunus persica",
+      "prunus persica (l.) batsch",
+      "prunus persica var densa",
+      "prunus persica var. densa",
+      "prunus persica var. densa makino"
+    ],
+    "pseudonaja_textilis": [
+      "eastern brown snake"
+    ],
+    "pteropus_vampyrus": [
+      "132908",
+      "large flying fox",
+      "megabat",
+      "pteropus vampyrus",
+      "pteropusvampyrus",
+      "ptevam",
+      "pvam",
+      "pvampyrus"
+    ],
+    "pundamilia_nyererei": [
+      "Makobe Island cichlid"
+    ],
+    "pygocentrus_nattereri": [
+      "red-bellied piranha"
+    ],
+    "quercus_lobata": [
+      "quercus lobata"
+    ],
+    "rattus_norvegicus": [
+      "BN/NHsdMcwi",
+      "Norway rat",
+      "rat",
+      "rattus norvegicus"
+    ],
+    "rhinolophus_ferrumequinum": [
+      "greater horseshoe bat"
+    ],
+    "rhinopithecus_bieti": [
+      "Black snub-nosed monkey"
+    ],
+    "rhinopithecus_roxellana": [
+      "Golden snub-nosed monkey"
+    ],
+    "rosa_chinensis": [
+      "rosa chinensis"
+    ],
+    "saccharomyces_cerevisiae": [
+      "4932",
+      "baker's yeast",
+      "S288C",
+      "s_cerevisiae",
+      "saccharomyces cerevisiae",
+      "saccharomyces cerevisiae (baker's yeast)",
+      "saccharomyces cerevisiae s288c",
+      "scer",
+      "scerevisiae"
+    ],
+    "saccharum_spontaneum": [
+      "AP85-441"
+    ],
+    "saimiri_boliviensis_boliviensis": [
+      "Bolivian squirrel monkey",
+      "saimiri_boliviensis"
+    ],
+    "salarias_fasciatus": [
+      "jewelled blenny"
+    ],
+    "salmo_salar": [
+      "Atlantic salmon"
+    ],
+    "salmo_trutta": [
+      "brown trout"
+    ],
+    "salvator_merianae": [
+      "Argentine black and white tegu"
+    ],
+    "sander_lucioperca": [
+      "pike-perch"
+    ],
+    "sarcophilus_harrisii": [
+      "Tasmanian devil"
+    ],
+    "sciurus_vulgaris": [
+      "Eurasian red squirrel"
+    ],
+    "scleropages_formosus": [
+      "Asian bonytongue"
+    ],
+    "scophthalmus_maximus": [
+      "turbot"
+    ],
+    "secale_cereale": [
+      "rye"
+    ],
+    "selaginella_moellendorffii": [
+      "selaginella moellendorffii",
+      "selaginella moellendorffii hieron.",
+      "selaginella moellendorfii",
+      "spikemoss"
+    ],
+    "serinus_canaria": [
+      "common canary"
+    ],
+    "seriola_dumerili": [
+      "greater amberjack"
+    ],
+    "seriola_lalandi_dorsalis": [
+      "seriola_lalandi",
+      "yellowtail amberjack"
+    ],
+    "sesamum_indicum": [
+      "sesamum indicum",
+      "Zhongzhi No. 13"
+    ],
+    "setaria_italica": [
+      "foxtail millet",
+      "setaria italica str. yugu1",
+      "setaria_italica_str_yugu1",
+      "Yugu1"
+    ],
+    "setaria_viridis": [
+      "A10",
+      "setaria viridis"
+    ],
+    "sinocyclocheilus_anshuiensis": [
+      "blind barbel"
+    ],
+    "sinocyclocheilus_grahami": [
+      "golden-line barbel"
+    ],
+    "sinocyclocheilus_rhinocerous": [
+      "horned golden-line barbel"
+    ],
+    "solanum_lycopersicum": [
+      "Heinz 1706",
+      "solanum lycopersicum",
+      "tomato"
+    ],
+    "solanum_tuberosum": [
+      "DM 1-3 516 R44",
+      "potato",
+      "s_tuberosum",
+      "solanum tuberosum"
+    ],
+    "solanum_tuberosum_rh8903916": [
+      "potato",
+      "RH89-039-16"
+    ],
+    "sorex_araneus": [
+      "42254",
+      "European shrew",
+      "european shrew",
+      "european_shrew",
+      "ground_shrew",
+      "sara",
+      "saraneus",
+      "shrew",
+      "sorara",
+      "sorex araneus"
+    ],
+    "sorghum_bicolor": [
+      "andropogon sorghum",
+      "andropogon sorghum (l.) brot.",
+      "broomcorn",
+      "BTx623",
+      "milo",
+      "sorghum",
+      "sorghum bicolor",
+      "sorghum bicolor (l.) moench",
+      "sorghum bicolor milo",
+      "sorghum bicolor subsp. bicolor",
+      "sorghum nervosum",
+      "sorghum nervosum besser ex schult.",
+      "sorghum saccharatum",
+      "sorghum saccharatum (l.) moench",
+      "sorghum vulgare",
+      "sorghum vulgare pers."
+    ],
+    "sparus_aurata": [
+      "gilthead seabream"
+    ],
+    "spermophilus_dauricus": [
+      "Daurian ground squirrel"
+    ],
+    "sphaeramia_orbicularis": [
+      "orbiculate cardinalfish"
+    ],
+    "sphenodon_punctatus": [
+      "tuatara"
+    ],
+    "stachyris_ruficeps": [
+      "rufous-capped babbler"
+    ],
+    "stegastes_partitus": [
+      "bicolor damselfish"
+    ],
+    "strigops_habroptila": [
+      "Kakapo"
+    ],
+    "strix_occidentalis_caurina": [
+      "northern spotted owl",
+      "strix_occidentalis"
+    ],
+    "struthio_camelus_australis": [
+      "African ostrich",
+      "struthio_camelus"
+    ],
+    "suricata_suricatta": [
+      "meerkat"
+    ],
+    "sus_scrofa": [
+      "9823",
+      "pig",
+      "pigs",
+      "reference",
+      "sscr",
+      "sscrofa",
+      "sus scrofa",
+      "swine",
+      "wild boar"
+    ],
+    "sus_scrofa_bamei": [
+      "bamei",
+      "pig"
+    ],
+    "sus_scrofa_berkshire": [
+      "berkshire",
+      "pig"
+    ],
+    "sus_scrofa_hampshire": [
+      "hampshire",
+      "pig"
+    ],
+    "sus_scrofa_jinhua": [
+      "jinhua",
+      "pig"
+    ],
+    "sus_scrofa_landrace": [
+      "landrace",
+      "pig"
+    ],
+    "sus_scrofa_largewhite": [
+      "largewhite",
+      "pig"
+    ],
+    "sus_scrofa_meishan": [
+      "meishan",
+      "pig"
+    ],
+    "sus_scrofa_pietrain": [
+      "pietrain",
+      "pig"
+    ],
+    "sus_scrofa_rongchang": [
+      "pig",
+      "rongchang"
+    ],
+    "sus_scrofa_tibetan": [
+      "pig",
+      "tibetan"
+    ],
+    "sus_scrofa_usmarc": [
+      "pig",
+      "usmarc"
+    ],
+    "sus_scrofa_wuzhishan": [
+      "pig",
+      "wuzhishan"
+    ],
+    "taeniopygia_guttata": [
+      "zebra finch"
+    ],
+    "takifugu_rubripes": [
+      "fugu"
+    ],
+    "terrapene_carolina_triunguis": [
+      "terrapene_carolina",
+      "Three-toed box turtle"
+    ],
+    "tetraodon_nigroviridis": [
+      "99883",
+      "fresh water pufferfish",
+      "spotted green pufferfish",
+      "tetnig",
+      "tetraodon",
+      "tetraodon nigroviridis",
+      "tnig",
+      "tnigroviridis"
+    ],
+    "theobroma_cacao": [
+      "cacao",
+      "chocolate",
+      "cocoa",
+      "reference (Matina)",
+      "theobroma cacao cv matina 1-6"
+    ],
+    "theobroma_cacao_criollo": [
+      "cocoa",
+      "Criollo B97-61/B2",
+      "theobroma cacao",
+      "theobroma_cacao cv belizian criollo b97-61/b2"
+    ],
+    "theropithecus_gelada": [
+      "gelada"
+    ],
+    "trifolium_pratense": [
+      "Milvus B",
+      "peavine clover",
+      "purple clover",
+      "red clover",
+      "rotklee",
+      "triflorum pratense",
+      "trifolium pratense",
+      "trifolium pratense l."
+    ],
+    "triticum_aestivum": [
+      "bread wheat",
+      "common wheat",
+      "reference (Chinese spring)",
+      "wheat"
+    ],
+    "triticum_aestivum_arinalrfor": [
+      "Arinalrfor",
+      "bread wheat"
+    ],
+    "triticum_aestivum_cadenza": [
+      "bread wheat",
+      "Cadenza"
+    ],
+    "triticum_aestivum_claire": [
+      "bread wheat",
+      "Claire"
+    ],
+    "triticum_aestivum_jagger": [
+      "bread wheat",
+      "Jagger"
+    ],
+    "triticum_aestivum_julius": [
+      "bread wheat",
+      "Julius"
+    ],
+    "triticum_aestivum_lancer": [
+      "bread wheat",
+      "Lancer"
+    ],
+    "triticum_aestivum_landmark": [
+      "bread wheat",
+      "Landmark"
+    ],
+    "triticum_aestivum_mace": [
+      "bread wheat",
+      "Mace"
+    ],
+    "triticum_aestivum_mattis": [
+      "bread wheat",
+      "Mattis"
+    ],
+    "triticum_aestivum_norin61": [
+      "bread wheat",
+      "Norin61"
+    ],
+    "triticum_aestivum_paragon": [
+      "bread wheat",
+      "Paragon"
+    ],
+    "triticum_aestivum_robigus": [
+      "bread wheat",
+      "Robigus"
+    ],
+    "triticum_aestivum_stanley": [
+      "bread wheat",
+      "Stanley"
+    ],
+    "triticum_aestivum_weebil": [
+      "bread wheat",
+      "Weebil"
+    ],
+    "triticum_dicoccoides": [
+      "wild emmer wheat",
+      "Zavitan (Atlit2015)"
+    ],
+    "triticum_spelta": [
+      "Spelta"
+    ],
+    "triticum_turgidum": [
+      "durum wheat",
+      "svevo"
+    ],
+    "triticum_urartu": [
+      "G1812 (PI428198)",
+      "red wild einkorn wheat",
+      "triticum urartu",
+      "triticum urartu tumanian ex gandilyan"
+    ],
+    "tupaia_belangeri": [
+      "37347",
+      "northern tree shrew",
+      "tbel",
+      "tbelangeri",
+      "tree shrew",
+      "tree_shrew",
+      "tupaia belangeri",
+      "tupbel"
+    ],
+    "tursiops_truncatus": [
+      "9739",
+      "bottlenose dolphin",
+      "bottlenosed dolphin",
+      "dolphin",
+      "ttru",
+      "ttruncatus",
+      "tursiops truncatus",
+      "tursiopstruncatus",
+      "turtru"
+    ],
+    "urocitellus_parryii": [
+      "Arctic ground squirrel"
+    ],
+    "ursus_americanus": [
+      "American black bear"
+    ],
+    "ursus_maritimus": [
+      "Polar bear"
+    ],
+    "ursus_thibetanus_thibetanus": [
+      "Asiatic black bear",
+      "ursus_thibetanus"
+    ],
+    "varanus_komodoensis": [
+      "Komodo dragon"
+    ],
+    "vicugna_pacos": [
+      "30538",
+      "alpaca",
+      "vicpac",
+      "vicugna pacos",
+      "vicugnapacos",
+      "vpac",
+      "vpacos"
+    ],
+    "vigna_angularis": [
+      "adzuki bean",
+      "Jingnong 6",
+      "vigna angularis"
+    ],
+    "vigna_radiata": [
+      "mung bean",
+      "VC1973A",
+      "vigna radiata var. radiata",
+      "vigna_radiata_var_radiata"
+    ],
+    "vitis_vinifera": [
+      "grape",
+      "PN40024",
+      "wine grape"
+    ],
+    "vombatus_ursinus": [
+      "common wombat"
+    ],
+    "vulpes_vulpes": [
+      "fox",
+      "red fox",
+      "silver fox"
+    ],
+    "xenopus_tropicalis": [
+      "tropical clawed frog"
+    ],
+    "xiphophorus_couchianus": [
+      "Monterrey platyfish"
+    ],
+    "xiphophorus_maculatus": [
+      "8083",
+      "platyfish",
+      "southern platyfish",
+      "xiphophorus maculatus",
+      "xipmac",
+      "xmac",
+      "xmaculatus"
+    ],
+    "zalophus_californianus": [
+      "california sea lion"
+    ],
+    "zea_mays": [
+      "B73",
+      "maize"
+    ],
+    "zonotrichia_albicollis": [
+      "white-throated sparrow"
+    ],
+    "zosterops_lateralis_melanops": [
+      "silver-eye",
+      "zosterops_lateralis"
+    ]
+  }
+}

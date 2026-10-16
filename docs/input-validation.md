@@ -219,6 +219,14 @@ experiment titles are text joined with `, `. PEP read tokens resolve to the same
 source paths and ordered checksums as config, including repeated cross-run
 samples and `--keep-batch`; input files and manifests are never renamed.
 
+Effective CLI/SampleSheet organisms and organism descriptors use the shared
+[offline resolver](organisms.md). Canonical names/curated aliases normalize;
+unresolved or ambiguous nonmissing project values fail before output mutation.
+Descriptive per-sample unknowns remain verbatim with contextual warnings; mixed
+species do not become a global organism. SampleSheet `N/A` remains `None` in the
+validator API, preserving its existing missing-global route. Validator schema,
+findings, input fingerprints, joins, precedence and libprep authority do not change.
+
 A successful initialization writes, beside the output config:
 
 - `configmaker.analysis-summary.json`: `schema_version: 1`,

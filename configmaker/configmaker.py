@@ -26,6 +26,7 @@ import oyaml as yaml
 # sys.path.append(str(path_root))
 
 import descriptors
+from descriptors.organisms import resolve_organism, inventory_identity
 if __name__ == "__main__":
     # Legacy setup.py installs execute an egg script through a bin wrapper;
     # remove both locations so configmaker.py cannot shadow the package.
@@ -371,9 +372,9 @@ def merge_samples_with_submission_form(sample_dict, args):
     sample_df = descriptors.descriptors.order_columns_by_descriptors(sample_df, desc)
     if "Organism" in sample_df.columns:
         if len(set(sample_df.Organism.values)) == 1:  # single customer org
-            if args.organism is not None:
+            if args.organism is not None and resolve_organism(sample_df.Organism.iloc[0]).status in ('resolved', 'missing'):
                 sample_df["Organism"] = args.organism
-            else:
+            elif args.organism is None:
                 # if org is N/A in samplesheet but single org in sample_df
                 #args.organism = list(sample_df.Organism)[0]
                 customer_org = list(sample_df.Organism)[0]
@@ -473,6 +474,7 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
     if args.libkit is not None:
         config["libprepkit"] = args.libkit
 
+    config["organism_inventory"] = inventory_identity()
     config["read_geometry"] = find_read_geometry(args.runfolders)
     config["machine"] = args.machine or find_machine(args.runfolders)
 
@@ -826,7 +828,13 @@ def main(argv=None):
         args._validation = validation
         samples_df, custom_opts, header = get_project_samples_from_samplesheet(args)
         args.organism = args.organism or custom_opts.get("Organism")
-        args.organism = args.organism or descriptors.fuzzmatch.fuzzmatch_organism(args.organism)
+        identity = inventory_identity()
+        logger.info('Organism inventory %s sha256=%s', identity['inventory_version'], identity['sha256'])
+        if args.organism is not None:
+            organism = resolve_organism(args.organism)
+            if organism.status in ('unresolved', 'ambiguous'):
+                raise ValueError('Project organism: ' + organism.diagnostic(args.organism))
+            args.organism = organism.canonical if organism.status == 'resolved' else 'N/A'
         if args.test:
             sample_dict = find_samples_test(samples_df, args)
         elif args.keep_batch:

@@ -40,6 +40,7 @@ import oyaml as yaml
 import pandas as pd
 
 from descriptors import fuzzmatch
+from descriptors.organisms import resolve_organism
 
 logger = logging.getLogger('GCF-configmaker')
 
@@ -304,17 +305,18 @@ def infer_by_descriptor(df, desc):
                     subtype = 'float'
                     col = pd.to_numeric(col, downcast='float', errors='coerce')
         elif dtype == 'string':
-            col = col.apply(_infer_dtype_string, subtype=subtype, col_name=col_name)
+            if subtype == 'organism':
+                values = []
+                for sample_id, value in col.items():
+                    result = resolve_organism(value)
+                    if result.status in ('ambiguous', 'unresolved'):
+                        logger.warning('Sample_ID %r column %s: %s; preserving annotation verbatim', sample_id, col_name, result.diagnostic(value))
+                    values.append(result.canonical if result.status == 'resolved' else value)
+                col = pd.Series(values, index=col.index, name=col.name)
+            else:
+                col = col.apply(_infer_dtype_string, subtype=subtype, col_name=col_name)
             if subtype == 'unique':
                 assert(len(set(col)) == len(col))
-            elif subtype == 'organism':
-                org_map = {}
-                for org in set(col):
-                    fm = fuzzmatch.fuzzmatch_organism(org)
-                    if fm:
-                        org_map[org] = fm
-                for i, c in enumerate(col):
-                    col[i] = org_map.get(c) or pd.NA
             elif subtype is None:
                 if len(set(col)) == 1:
                     subtype = 'constant'
