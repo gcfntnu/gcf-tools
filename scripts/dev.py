@@ -75,7 +75,7 @@ def source_files(root):
     files = []
     for name in ("pyproject.toml", "setup.py", "MANIFEST.in", "README.md", "CONTRIBUTING.md", "AGENTS.md", "requirements-dev.txt", "requirements-python38.txt"):
         files.append(root / name)
-    for directory, suffixes in [(p, {".py", ".yaml", ".pkl"}) for p in PACKAGES] + [
+    for directory, suffixes in [(p, {".py", ".yaml", ".pkl", ".json"}) for p in PACKAGES] + [
         ("scripts", {".py"}), ("tests", {".py"}), ("docs", {".md"})
     ]:
         files.extend(p for p in (root / directory).rglob("*") if p.is_file()
@@ -210,7 +210,7 @@ def smoke(python, env, work, mode, root=ROOT):
     probe = work / "installed_check.py"
     shutil.copy2(ROOT / "scripts/installed_check.py", probe)
     hashes = work / "resource-hashes.json"
-    write_json(hashes, {p.name: sha(p) for p in (ROOT / "descriptors").iterdir() if p.suffix in {".yaml", ".pkl"}})
+    write_json(hashes, {p.name: sha(p) for p in (ROOT / "descriptors").iterdir() if p.suffix in {".yaml", ".pkl", ".json"}})
     run([python, probe, mode, root, hashes], env, work)
     for script, module, option in (("configmaker.py", "configmaker.configmaker", "--libprep-config"),
                                    ("create_testdata.py", "testdata.create_testdata", "--libprep-config")):
@@ -228,7 +228,7 @@ def inspect_dist(dist, source):
         wheel_files = set(archive.namelist())
         for package in PACKAGES:
             for file in (source / package).rglob("*"):
-                if file.is_file() and file.suffix in {".py", ".yaml", ".pkl"}:
+                if file.is_file() and file.suffix in {".py", ".yaml", ".pkl", ".json"}:
                     relative = str(file.relative_to(source))
                     assert archive.read(relative) == file.read_bytes(), relative
         for script in ("configmaker.py", "create_testdata.py"):
