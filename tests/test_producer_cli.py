@@ -50,7 +50,7 @@ def test_real_installed_producer_and_normal_pep(tmp_path):
             key = f"R{mate}"
             relative = f"{RUN}/{PROJECT}/{sample}_{key}.fastq.gz"
             assert generated["samples"][sample][key] == relative
-            assert pep["sample_modifiers"]["derive"]["sources"][key].format(**rows[sample]) == relative
+            assert pep["sample_modifiers"]["derive"]["sources"][rows[sample][key]].format(**rows[sample]) == relative
             link = work / generated["fastq_dir"] / relative
             produced = output / PROJECT / f"{sample}_{key}.fastq.gz"
             assert link.resolve() == produced

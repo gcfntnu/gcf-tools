@@ -207,6 +207,18 @@ longer creates `.configmaker.debug`.
 After metadata passes, FASTQ discovery is separate. No matched samples produces
 an explicit nonzero error. A partly discovered project retains the existing
 behavior of initializing the available samples, with warnings for absent FASTQs.
+With explicit `-p` selection, every requested source project must have a usable
+contribution across the supplied runs. Several projects in one run are all
+searched, without requiring each project in every run. A wholly absent/unusable
+requested project fails before links/config/PEP are changed. Partial discovery
+within a contributing source still warns; metadata counts remain planned counts.
+
+`--new-project-id` assigns samples to the analysis while retaining observed
+source assignments in `Src_Project_ID`. Top-level project IDs are lists; default
+experiment titles are text joined with `, `. PEP read tokens resolve to the same
+source paths and ordered checksums as config, including repeated cross-run
+samples and `--keep-batch`; input files and manifests are never renamed.
+
 A successful initialization writes, beside the output config:
 
 - `configmaker.analysis-summary.json`: `schema_version: 1`,
