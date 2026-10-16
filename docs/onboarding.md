@@ -60,7 +60,8 @@ comparison. Scientific processing is outside these initialization checks.
 
 Keep the printed artifact directory from every command. Its `identity.json`
 records the source revision/dirty state and file hashes; `packages.txt` records
-installed versions. The setup's identity also records acquired wheel hashes.
+installed versions. The setup's `state.json` records acquired wheel hashes and
+is mirrored in the sibling directory's `current.json` after successful setup.
 Report failures and any extra step you needed. Failed setup retains evidence and
 does not replace the last successful environment. The runner already places
 temporary files and caches in task-owned storage; check free space there before

@@ -152,7 +152,7 @@ for pattern in ('**/testdata.provenance.json', '**/analysis/config.yaml',
 PY
 ```
 
-The successful paired case is under `test_real_installed_producer_an*/` and the
+The successful paired case is under `test_real_installed_producer_*/` and the
 Parse case under `test_parse_installed_workers_t*/`. Their `analysis/` directories
 contain config, PEP and live FASTQ links. Alongside the paired output are producer
 and configmaker transcripts. Parse has separate `script/` and `module/` outputs
