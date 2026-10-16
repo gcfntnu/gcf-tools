@@ -1,6 +1,6 @@
 # Known limitations and evidence gaps
 
-These are source-verified observations at
+The configmaker/descriptor observations below were source-verified at
 `059d7d94b818be79dca53a48bdf9d4b905d02ea2`, not behavior to enshrine. Do not silently
 fix them in packaging, documentation or fixture refactoring. Schedule a bounded
 correction with input/output evidence and affected consumers; the
@@ -15,7 +15,7 @@ executed probes from source inspection.
 | Project prefix truncation | `configmaker.py:is_valid_gcf_id` matches `GCF-\d{4}-\d{3}` without an end anchor: `GCF-2026-1000` → `GCF-2026-100`. Descriptor `gcf_number` conversion has the same prefix regex. CLI selection/paths can change; protected merge identity fields do not repair the CLI parser | Dedicated correctness issue; bring forward if four-digit project IDs are imminent |
 | Scalar/list project override | `create_default_config` uses a list normally, a scalar with `--new-project-id`; default experiment title inherits this type | Existing [#41](https://github.com/gcfntnu/gcf-tools/issues/41); preserve its owner/scope |
 | Directory-order project choice | `_match_project_dir` logs multiple automatic matches but returns the last; with several explicit IDs it returns the first matching directory per run. `os.listdir` order is not a selection policy | Explicit selection/acceptance decision; fixtures should avoid ambiguity |
-| Independently matched mates | `match_fastq` sorts R1/R2 independently, without matching lanes or counts. A sample can initialize with unmatched mates; per-sample-directory prefix glob is also broader than flat-file matching | Add coverage under #62 as scoped, then separate acceptance/correction work |
+| Independently matched mates | `match_fastq` sorts R1/R2 independently, without matching lanes or counts. A sample can initialize with unmatched mates; per-sample-directory prefix glob is also broader than flat-file matching | #62 verifies its independently constructed paired fixture; producer validation does not change configmaker discovery. Broader acceptance needs separate correction work |
 | PEP derivation narrower than discovery | `peppy_utils.py:peppy_project_dict` derives renamed flat paths for non-single-cell data even when discovery accepted flat lane-style filenames. Batch IDs and single-cell layouts also need dedicated path coverage | Default fixture uses renamed flat files; future lane/batch profiles must assert resolved paths |
 | Launcher ignores output/PEP/source choices | `SNAKEFILE_TEMPLATE` always loads `config.yaml`, `pep/pep_config.yaml` and `src/gcf-workflows`; `main` neither changes those names for `--output` nor sets workflow `skip_peppy` for `--skip-peppy`. API `add_workflow(src_dir=...)` changes materialization location but not the include path | CLI/API success alone cannot establish downstream usability; dedicated launcher compatibility task |
 | Late failures and overwrites | `main` calls `create_fastq_dir` before geometry/kit checks; `create_fastq_dir` recursively replaces the existing link root. Later errors can leave links, snapshots, Snakefile, YAML or PEP partly updated | Separate transactional/output decision, using private output directories meanwhile |
@@ -51,11 +51,14 @@ collision, ignored-command-failure, destructive-output and reordered-pair defect
 are covered by passing regressions. No legacy markers or generated TSV are needed.
 
 This remains a bounded metadata-plus-FASTQ producer, not a general import or
-operational simulator. It requires explicit selection/configuration/no-rename,
+operational simulator. It requires explicit selection and local configuration,
 rejects nested/lane/chunk/index layouts, and never replaces an existing output.
 Original workbook and Stats/InterOp content remain source provenance. It neither
-creates BFQ state nor validates scientific adequacy. Parse cell selection and
-representative gene-expression integration coverage belong to #83. Ordinary
+creates BFQ state nor validates scientific adequacy. Flat reservoir mode requires
+`--no-fastq-rename`; the merged [#83 Parse profile](testdata.md#parse-wt-v4-selected-cell-producer-83)
+preserves names automatically and retains explicit cell keys. Its separate
+[gene-expression integration evidence and exclusions](testdata.md#operational-evidence-and-exclusions)
+do not establish other kits or layouts. Ordinary
 format-valid subsampling cannot establish those biological guarantees.
 
 ## Missing evidence and later work
@@ -68,8 +71,10 @@ behavior/dependency changes or foundation completion, obtain:
 - Active standalone/custom Python callers, descriptor usage, legacy `.xls` and
   Python requirements, and priority real FASTQ layouts. The parser supports
   workbook reading, but this PR did not verify legacy `.xls` operation.
-- Broader layouts beyond the [simple paired/default-PEP profile](testdata.md),
-  Parse integration evidence (#83), and independent developer onboarding (#65).
+- Broader layouts beyond the [supported profiles](testdata.md), and remaining
+  scientific coverage listed there; #83's initial Parse integration is complete.
+- Facility-developer onboarding acceptance. [#65 agent rehearsals](verification-65.md)
+  document repeatable local checks, not sign-off by either facility developer.
 - Deliberate facility suite/container integration with copied inputs and manual
   output/scientific review; no real services, mail, or deployment ran under #60.
 
