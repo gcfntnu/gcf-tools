@@ -34,7 +34,9 @@ def invoke(source,work,*options):
 
 
 @pytest.mark.parametrize('sheet,cli,expected', [('Human',None,'homo_sapiens'),('Mouse',' Human ','homo_sapiens'),
-    ('hOmO SaPiEnS',None,'homo_sapiens'),('Human','Mus musculus','mus_musculus'),('N/A',None,None),('Human','N/A','N/A'),(None,None,None)])
+    ('hOmO SaPiEnS',None,'homo_sapiens'),('Human','Mus musculus','mus_musculus'),
+    ('rangifer_tarandus',None,'rangifer_tarandus'),('Human',' Rangifer tarandus ','rangifer_tarandus'),
+    ('N/A',None,None),('Human','N/A','N/A'),(None,None,None)])
 def test_effective_global_value_normalizes_without_cache(tmp_path,sheet,cli,expected):
     source,work=prepare(tmp_path,sheet)
     before=contents(source)

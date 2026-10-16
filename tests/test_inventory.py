@@ -20,7 +20,8 @@ def document():
     ('homo_sapiens','homo_sapiens'),(' HoMo   SaPiEnS ','homo_sapiens'),('h_sapiens','homo_sapiens'),
     ('rat','rattus_norvegicus'),('C57BL/6NJ','mus_musculus_c57bl6nj'),
     ('Mus musculus c57bl6nj','mus_musculus_c57bl6nj'),('129S1/SvImJ','mus_musculus_129s1svimj'),
-    ('pig','sus_scrofa'),('berkshire','sus_scrofa_berkshire')])
+    ('pig','sus_scrofa'),('berkshire','sus_scrofa_berkshire'),
+    ('rangifer_tarandus','rangifer_tarandus'),('Rangifer tarandus','rangifer_tarandus')])
 def test_canonical_scientific_curated_and_strain_identities(query,expected):
     result=resolve_organism(query)
     assert result.status=='resolved' and result.canonical==expected
@@ -86,10 +87,12 @@ def test_legacy_names_and_aliases_are_retained():
     legacy=RESOURCE.with_name('ens_org.pkl')
     historical=pickle.loads(legacy.read_bytes())
     data=document()
-    assert set(historical)==set(data['species'])
+    assert set(historical) <= set(data['species'])
+    assert set(data['species']) - set(historical) == {'rangifer_tarandus'}
     assert all(set(values)==set(data['species'][key]) for key,values in historical.items())
     assert data['provenance']['legacy_resource_sha256']==hashlib.sha256(legacy.read_bytes()).hexdigest()
     assert data['provenance']['upstream_release'] is None
+    assert data['provenance']['additional_species_sources'][0]['taxonomy_id'] == 9870
 
 
 def test_identity_is_detached_from_callers():

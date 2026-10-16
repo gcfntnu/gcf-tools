@@ -80,8 +80,20 @@
     "potato": "solanum_tuberosum",
     "sheep": "ovis_aries"
   },
-  "inventory_version": "legacy-433-curation-1",
+  "inventory_version": "legacy-433-curation-2",
   "provenance": {
+    "additional_species_sources": [
+      {
+        "canonical_key": "rangifer_tarandus",
+        "reviewed_date": "2026-10-16",
+        "scientific_name": "Rangifer tarandus",
+        "scope": "Exact canonical/scientific name only; no assembly or reference selection",
+        "source": "NCBI Taxonomy",
+        "source_release": null,
+        "source_url": "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=9870&mode=info",
+        "taxonomy_id": 9870
+      }
+    ],
     "curation": "Explicit generic species aliases select the existing unqualified species key; canonical keys and qualified strain aliases retain their full identity. All other alias collisions are declared ambiguous. Canonical scientific names take precedence over legacy aliases.",
     "legacy_resource_git_revision": "42282d9a1e3d736dcfd77f70a2db02cef0e38cbd",
     "legacy_resource_sha256": "4e087b7d992f84ad0fe5161b67ae298baaced05e654dc1d68031d75c27eb76aa",
@@ -1805,6 +1817,7 @@
     "quercus_lobata": [
       "quercus lobata"
     ],
+    "rangifer_tarandus": [],
     "rattus_norvegicus": [
       "BN/NHsdMcwi",
       "Norway rat",

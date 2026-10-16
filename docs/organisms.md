@@ -65,6 +65,12 @@ The upstream release and retrieval date were not recorded and remain unknown;
 the version does not claim a newly acquired taxonomy release. The old
 `ens_org.pkl` is retained unchanged for historical/custom readers, and is not a
 runtime fallback. Inventory updates require deliberate review and packaging.
+Version `legacy-433-curation-2` additionally recognizes the exact canonical and
+scientific name `rangifer_tarandus` / `Rangifer tarandus`, reviewed against
+[NCBI Taxonomy record 9870](https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=9870&mode=info).
+Its separate source/review date are recorded in the inventory; no upstream
+release is claimed. The resulting inventory has 434 keys. This addition does
+not provide or choose an assembly, index or other scientific reference.
 
 `fuzzmatch_organism(query, min_score=80, min_letters=4)` and its package import
 remain available. It returns a canonical string for exact/curated resolution,
