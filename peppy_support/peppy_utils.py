@@ -92,7 +92,10 @@ def conifg2sampletable(config, info, drop_empty_cols=True):
 def config2subsampletable(config, info):
     """Keep read ordering, checksums and varying source metadata together."""
     if not info["subsamples"]:
-        return None
+        # Preserve this exported helper's single-read return for direct callers;
+        # create_peppy writes this table only when subsamples are present.
+        rows = [{"sample_name": sid, "subsample_name": "{}_1".format(sid)} for sid in config["samples"]]
+        return pd.DataFrame(rows) if rows else None
     rows = []
     metadata = [column for column in ("Flowcell_Name", "Flowcell_ID", "Project_ID", "Src_Project_ID") if _varying(config, column)]
     for sample_id, sample in config["samples"].items():
