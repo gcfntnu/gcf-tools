@@ -107,7 +107,68 @@ stub lives at `workflow/libprep.config` and `workflow/rnaseq/rnaseq.smk`. It is
 independently authored, not copied from a workflow revision. Its Snakefile raises
 an explicit error if executed: it provides no scientific processing.
 
-## Verification tiers and later profiles
+## Generate and verify the supported profiles
+
+After setup, this command creates fresh tiny sources, runs the installed producer,
+and consumes its output through installed configmaker with normal PEP enabled:
+
+```bash
+python3.11 scripts/dev.py check producer
+```
+
+| Profile | Synthetic input and expected output | Contract |
+| --- | --- | --- |
+| Flat paired reservoir | Three samples with 24 pairs each; select `001,CTRL`, retain 8 pairs each with seed 123456 | [Selection, pairing and publication](#safe-flat-paired-producer-64) |
+| Parse WT v4 selected cells | Two libraries with 24 pairs each; retain 18 pairs each, representing two biological samples and explicit barcode aliases | [Selection schema and all-match retention](#parse-wt-v4-selected-cell-producer-83) |
+
+These checks invoke the real installed commands. The paired source comes from the
+independent fixture generator; the Parse source is separately constructed by
+`tests/parse_fixture.py`. Both use invented metadata and sequences. They assert
+retained identities/order/counts, original source bytes, complete MD5 propagation,
+config values and PEP-derived paths that resolve to the produced files. Script
+and module coverage also checks equivalent results. The copied workflow trees
+are initialization-only stubs; no scientific workflow is executed.
+
+To locate the retained producer outputs after a successful run, execute this from
+the same checkout. It selects the latest successful `producer` check, not a
+different worktree's output or a failed run:
+
+```bash
+python3.11 - <<'PY'
+import json
+from pathlib import Path
+runs = Path.cwd().parent / (Path.cwd().name + '-local') / 'runs'
+checks = [p for p in runs.glob('*/identity.json')
+          if (r := json.loads(p.read_text())).get('profile') == 'producer'
+          and r.get('result') == 'passed']
+if not checks:
+    raise SystemExit('Run python3.11 scripts/dev.py check producer first')
+work = max(checks, key=lambda p: p.stat().st_mtime_ns).parent
+print('Check evidence:', work)
+for pattern in ('**/testdata.provenance.json', '**/analysis/config.yaml',
+                '**/analysis/pep/sample_table.csv', '**/*transcript.txt'):
+    for path in sorted((work / 'pytest-tmp').glob(pattern)):
+        print(path.relative_to(work))
+PY
+```
+
+The successful paired case is under `test_real_installed_producer_an*/` and the
+Parse case under `test_parse_installed_workers_t*/`. Their `analysis/` directories
+contain config, PEP and live FASTQ links. Alongside the paired output are producer
+and configmaker transcripts. Parse has separate `script/` and `module/` outputs
+with byte-identical manifests and FASTQs; its stdout/stderr are checked by the
+test rather than retained as separate transcript files. The producer provenance
+records source/output hashes, selection and counts; it is distinct from the
+independent committed fixture's `provenance.json`. The check's `identity.json`,
+`packages.txt`, `tests.log` and `tests.xml` identify the environment and assertions.
+
+For a different source, adapt the command templates in the profile contracts
+below, providing your own validated metadata, local configuration and new output
+path. Those templates do not provision their placeholder paths. Keep real source
+data and provenance private. The installed check above is the self-contained
+generation and verification procedure for onboarding.
+
+## Verification tiers and historical limits
 
 `check fast` exercises shared API and isolation checks. `check example` runs the
 single installed paired example; `check cli` additionally runs regeneration,
@@ -119,9 +180,20 @@ runtime wheel; wheel checks use a separate test bundle.
 
 Later profiles should be added by need: lanes/chunks; repeated runs and
 `--keep-batch`; multiple projects; SE; nested single-cell and index reads; source
-symlinks; and malformed/reordered input pairs. Parse kits and biological/well
-relationships need their own profile. This ordinary paired fixture does not prove
-Parse support, real subsampling, scientific correctness or deployed compatibility.
+directory layouts. Producer API tests already cover FASTQ file symlinks and
+malformed/reordered pairs. The separate Parse profile covers its declared
+biological/well relationships, not every Parse kit. This ordinary paired fixture
+alone does not prove Parse support, real subsampling, scientific correctness or
+deployed compatibility.
+
+Historical `.tests/configmaker/` inputs exercise older initialization paths,
+principally single-end and `--skip-peppy`; their filenames or successful CLI exit
+do not establish valid paired contents or normal PEP path resolution. They are
+Git-only inputs, excluded from source archives. The sdist's synthetic SE substitute
+preserves specific legacy assertions, while the independently generated paired
+fixture and supported producer checks provide the current content/PEP evidence.
+Do not publish historical metadata as new examples or regenerate expected output
+through the implementation being tested. See [distribution boundaries](development.md#distribution-boundary-and-source-testing).
 
 Optional real-workflow comparison starts with immutable gcf-workflows revision
 `42d37e302a2ff6c868844e6d33147460e0ec7ba3`. Pre-stage a private tree at that revision
@@ -388,12 +460,24 @@ full-stream corruption, minimum counts and source changes. All sequences and
 metadata in these tests are invented; the workflow configuration is an
 initialization-only stub. Wheel and sdist checks run the same coverage.
 
-The first operational fixture targets two biological samples across two libraries,
-starting around 600 adequately covered signal cells with a small background tail.
-Measure the recurring workflow against the 15–30 minute target separately from
-one-time extraction/build/deployment. Real integration must inspect expression,
+## Operational evidence and exclusions
+
+The first facility Parse gene-expression fixture and integration were completed
+under [#83](https://github.com/gcfntnu/gcf-tools/issues/83), with workflow corrections
+in [gcf-workflows #205](https://github.com/gcfntnu/gcf-workflows/pull/205). This is
+separate evidence from the synthetic local checks; operational manifests, inputs,
+outputs and detailed measurements remain private. Successful producer/configmaker
+execution alone does not establish scientific viability.
+
+For future fixture changes, measure the recurring workflow against the **15–30
+minute target**, separately from one-time extraction, image builds and deployment.
+Real integration must inspect expression,
 metadata, QC/preprocessing, reports, archives, finalization and checksums; successful
-producer/configmaker execution does not establish scientific viability. Fixture-only
+generation is only the first step. Fixture-only
 configuration may narrow preprocessing grids through the established setup script.
 Record every adaptation and coverage exclusion. The initial integration scope
-excludes velocity and TCR, with velocity tracking a separate workflow follow-up.
+excludes TCR, [velocity](https://github.com/gcfntnu/gcf-workflows/issues/203) and
+[pseudobulk](https://github.com/gcfntnu/gcf-workflows/issues/206). A fresh run of the
+complete BFQ fixture suite against one final candidate image remains a separate
+release gate; do not combine earlier runs at different workflow revisions into
+that claim. #65 does not regenerate or deploy facility fixtures.

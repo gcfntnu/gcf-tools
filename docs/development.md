@@ -2,6 +2,9 @@
 
 ## Setup once, check offline
 
+For the complete task sequence and two-workspace rehearsal, start with
+[onboarding](onboarding.md). This page owns environment and check semantics.
+
 Use Linux, Git, Python **3.11** with `venv`/`ensurepip`, and symlink support.
 From a fresh checkout (or an unpacked source distribution):
 
@@ -80,7 +83,7 @@ SMTP, SMTP_SSL, reloads/custom ports and ordinary Python subprocess inheritance.
 This is an accidental-side-effect guard, not a security sandbox for hostile code
 or arbitrary non-Python children. Do not remove it or add unreviewed exemptions.
 No current check sends mail. The producer executes only on tiny synthetic copies
-under the [paired producer harness](testdata.md#safe-flat-paired-producer-64).
+under the [supported producer harness](testdata.md#generate-and-verify-the-supported-profiles).
 `BFQ_ENV=test` is not a replacement for this protection.
 
 ## Distribution boundary and source testing
@@ -138,8 +141,9 @@ identity is explicitly reported without an invented Git SHA. No index
 credentials or shell environment dumps are recorded in these identity files.
 
 Two developers use different issue branches/worktrees and their separate sibling
-state directories. The verification record documents simultaneous checks in two
-worktrees; this is isolation evidence, not the facility onboarding trial (#65).
+state directories. [Onboarding verification](verification-65.md) records independent
+agent rehearsals, overlapping checks and outstanding facility-developer sign-off.
+An agent rehearsal does not establish that either facility developer completed it.
 
 Python 3.11 is a **development reference**, not a new runtime floor. There is no
 new `Requires-Python` restriction. Historical Python 3.8.18 CI passed the legacy
@@ -159,3 +163,35 @@ evidence; dropping Python 3.8 or `.xls` requires a separate explicit decision.
 Optional BFQ/container/scientific integration remains manual, using fixed source
 revisions, copied inputs and private output roots as described in
 [CONTRIBUTING](../CONTRIBUTING.md#optional-suitecontainer-integration).
+
+## Intentional companion checkouts
+
+Routine gcf-tools checks use the committed initialization-only workflow stub.
+They do not install BFQ or gcf-workflows. `requirements-dev.txt` pins Python
+dependencies; it is not a moving companion checkout. The optional workflow
+comparator is an immutable revision recorded in [architecture.md](architecture.md)
+and fixture provenance. Keep that default unchanged during an experiment.
+
+To inspect a local gcf-workflows candidate, create a separate disposable analysis
+directory and copy that candidate's complete tree to its `src/gcf-workflows`
+before running configmaker. Record the workflow commit, dirty diff (if any),
+effective `libprep.config` SHA-256 and chosen kit. Use the same copied inputs,
+gcf-tools candidate and dependency environment in a second independent analysis
+directory for the fixed comparator. Configmaker writes workflow configuration;
+never point both analyses at one mutable workflow tree. Its `--libprep-config`
+selects configuration bytes, not a different Snakefile include location. A
+different config filename via `--output` is not a second analysis directory.
+The synthetic `Synthetic PE` kit is a stub, not a kit to inject into real workflows.
+
+For the reverse direction—testing this tools checkout as a BFQ dependency—use
+BFQ's documented `scripts/dev.py setup --gcf-tools <tools-checkout>` in a separate
+BFQ task checkout. BFQ copies/builds that explicit source snapshot; later tools
+edits require BFQ setup again. Omit the override on a subsequent setup to return
+to BFQ's immutable requirements baseline. That command belongs to BFQ, not this
+repository's runner. Read the selected BFQ revision's development guide first.
+
+These are optional comparison procedures, not part of local onboarding. They
+require suitable reviewed inputs and named companion revisions; no scientific,
+container or server result follows from initialization alone. Record differences
+before proposing a deliberate baseline update, and keep facility data/evidence
+private. Neither procedure changes production branch selection.

@@ -1,11 +1,14 @@
 # Architecture and interface ownership
 
-This map was checked against gcf-tools
+The original consumer map was checked against gcf-tools
 `059d7d94b818be79dca53a48bdf9d4b905d02ea2`, the starting `bfq-dev` for #60.
 Consumer references use [BFQ `e1042837`](https://github.com/gcfntnu/gcf-bfq/tree/e1042837a2cb5270ffa49fcf03675287569914c1)
 and [gcf-workflows `42d37e3`](https://github.com/gcfntnu/gcf-workflows/tree/42d37e302a2ff6c868844e6d33147460e0ec7ba3).
 These identify inspected source, not the installed facility environment. Do not
 substitute current workflow `main` for that comparator without recording a new SHA.
+The producer entries below describe the merged #64/#83 implementation. Later
+operational evidence is linked from the [testdata guide](testdata.md#operational-evidence-and-exclusions);
+it does not silently replace the original comparator or the synthetic local stub.
 
 ## Components
 
@@ -16,7 +19,7 @@ substitute current workflow `main` for that comparator without recording a new S
 | `configmaker/libprep.py` | Immutable source bytes, kit/read-layout selection and Stats.json geometry; [libprep contract](libprep-config.md) |
 | `descriptors/` | Header descriptors, defaults, metadata conversion and fuzzy organism/reference matching; packaged `default_descriptors.yaml` and `ens_org.pkl` influence generated values |
 | `peppy_support/peppy_utils.py` | Translates config into PEP 2.0.0 YAML, sample and optional subsample CSVs; it writes PEP without requiring the `peppy` package |
-| `testdata/create_testdata.py` | Historical BFQ-output subset producer, separately installed; [not yet restored](known-limitations.md#testdata-producer) |
+| `testdata/create_testdata.py`, `_generation.py`, `parse_cells.py` | Installed producer CLI, shared paired validation/safe publication, and explicit Parse cell selection; [supported profiles](testdata.md#generate-and-verify-the-supported-profiles) |
 | `tests/`, `.tests/configmaker/` | API/subprocess tests and older fixture inputs; not interchangeable with the testdata producer or proof of valid paired read content |
 
 Standalone flow is: enforce the expected validator version, resolve local

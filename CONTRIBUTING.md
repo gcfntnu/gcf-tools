@@ -12,15 +12,14 @@ open PRs, then record the exact starting commit. Create an issue-specific branch
 in a separate checkout or worktree. Feature PRs target `bfq-dev`; this does not
 change production branch selection or promotion policy.
 
-For example, the #60 task used `git worktree add -b
-issue-60-contributor-contract ../gcf-tools-issue-60 origin/bfq-dev` after fetching
-the remote, and recorded `git rev-parse origin/bfq-dev`. Substitute your own issue
-and an unused directory. Git authentication is personal provisioning, never
-committed configuration. Do not clean up other branches as part of a task.
+The [onboarding walkthrough](docs/onboarding.md) gives the executable branch,
+setup, example and handoff sequence. Substitute your issue and unused paths.
+Git authentication is personal provisioning, never committed configuration.
+Do not clean up other branches as part of a task.
 
 | Concurrent task | Exclusive mutable ownership |
 | --- | --- |
-| Developer/agent A, issue 60 | Its branch/worktree, sibling `gcf-tools-issue-60-local`, environment, temporary inputs, outputs and logs |
+| Developer/agent A | Its branch/worktree, uniquely named sibling `<checkout-name>-local`, environment, temporary inputs, outputs and logs |
 | Developer/agent B, another issue | A different branch/worktree and differently named sibling directory; no shared editable installation or output tree |
 
 Record task ownership and planned files/interfaces in the issue or PR. When
@@ -56,9 +55,9 @@ disconnected setup, explicit overrides, failure identities and sdist testing.
 | --- | --- | --- |
 | Fast API | `python3.11 scripts/dev.py check fast` | Validator/libprep/workflow assembly and offline/email guard |
 | Paired example | `python3.11 scripts/dev.py check example` | Installed default-PEP initialization with verified synthetic pairs; [guide](docs/testdata.md) |
-| Paired producer | `python3.11 scripts/dev.py check producer` | Installed generation, normal PEP consumption, failures and concurrency; [profile](docs/testdata.md#safe-flat-paired-producer-64) |
+| Producer profiles | `python3.11 scripts/dev.py check producer` | Installed paired and Parse generation, normal PEP consumption, failures and concurrency; [walkthrough](docs/testdata.md#generate-and-verify-the-supported-profiles) |
 | Real CLI/files | `python3.11 scripts/dev.py check cli` | Existing assertions with installed subprocesses and private file inputs |
-| Both | `python3.11 scripts/dev.py check tests` | All current tests in the prepared editable environment |
+| All source tests | `python3.11 scripts/dev.py check tests` | Fast and CLI tests in the prepared editable environment |
 | Distribution | `python3.11 scripts/dev.py check wheel` or `check sdist` | Fresh non-editable wheel imports/scripts/resources/tests; sdist adds its own setup/tests |
 | Full local gate | `python3.11 scripts/dev.py check all` | Editable plus wheel plus sdist; same command as CI |
 | Historical initialization | `python3.11 scripts/dev.py check legacy` | Git-only seven-case legacy matrix, with local workflow configuration stubs |
@@ -70,10 +69,11 @@ substitute retaining the existing libprep assertions. The [synthetic paired fixt
 content in CLI, wheel and sdist checks; new `tests/test_*_cli.py` files are selected
 automatically without CI edits.
 
-See [#61 verification](docs/verification-61.md) for actual results and limitations;
-[#60 verification](docs/verification-60.md) remains historical evidence. No local
+See [onboarding verification](docs/verification-65.md) for current results and
+limitations; [#61 verification](docs/verification-61.md) and
+[#60 verification](docs/verification-60.md) remain historical evidence. No local
 check executes scientific workflows. The producer smoke executes only tiny
-synthetic paired sources under the documented bounded profile. Routine
+synthetic paired and Parse sources under the documented bounded profiles. Routine
 Python/subprocess checks block network and SMTP; never use BFQ_ENV as a substitute
 for mail isolation. No passing test establishes scientific compatibility.
 
@@ -94,6 +94,8 @@ never change golden output simply to follow a moving branch. Keep email mocked
 in development; actual delivery checks belong to deliberately run facility
 integration. See the existing [metadata](docs/input-validation.md#coordinated-deployment-and-integration-tests)
 and [libprep](docs/libprep-config.md#coordinated-bfq-deployment) integration notes.
+The [companion-checkout instructions](docs/development.md#intentional-companion-checkouts)
+explain explicit local overrides without silently changing those baselines.
 
 The merged [BFQ PR #141](https://github.com/gcfntnu/gcf-bfq/pull/141) supplied useful
 setup/check, worktree-isolation and evidence conventions. Each repository remains
