@@ -91,6 +91,36 @@ def test_explicit_pair_and_effective_geometry_preserve_physical_assertions(flowc
     assert config["libprep_selection"]["entry"] == "Alpha SE"
 
 
+def test_native_reports_and_run_info_without_legacy_stats_initialize_project(flowcell, tmp_path):
+    run, (sa, fa, sb, fb) = flowcell
+    (run / "Stats/Stats.json").unlink()
+    (run / "Stats").rmdir()
+    (run / "Reports").mkdir()
+    (run / "Reports/Demultiplex_Stats.csv").write_text("Lane,SampleID,Reads\n1,ALPHA,1\n")
+    work = workdir(tmp_path / "native-reports")
+    result = invoke(run, work, A, ["--sample-sheet", sa, "--sample-submission-form", fa,
+                                  "--effective-read-geometry", "75", "--expected-read-geometry", "75"])
+    assert result.returncode == 0, result.stdout + result.stderr
+    config = yaml.safe_load((work / "config.yaml").read_text())
+    pep = yaml.safe_load((work / "pep/pep_config.yaml").read_text())
+    assert config["read_geometry"] == pep["read_geometry"] == [75]
+    assert config["run_read_geometry"] == pep["run_read_geometry"] == [75, 150]
+    assert config["workflow"] == "rnaseq"
+    assert config["libprep_selection"]["entry"] == "Alpha SE"
+    assert list(config["samples"]) == ["ALPHA"]
+
+
+def test_invalid_present_stats_is_not_hidden_by_valid_run_info(flowcell, tmp_path):
+    run, (sa, fa, sb, fb) = flowcell
+    (run / "Stats/Stats.json").write_text("{invalid")
+    work = workdir(tmp_path / "invalid-legacy-stats")
+    result = invoke(run, work, A, ["--sample-sheet", sa, "--sample-submission-form", fa,
+                                  "--effective-read-geometry", "75"])
+    assert result.returncode == 2
+    assert "Stats.json" in result.stderr
+    assert not (work / "config.yaml").exists()
+
+
 def test_invalid_unselected_pair_blocks_automatic_initialization(flowcell, tmp_path):
     run, (sa, fa, sb, fb) = flowcell
     submission_form(fb, [customer_row("OTHER", project=B)])

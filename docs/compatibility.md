@@ -110,7 +110,11 @@ and shared validation rules are unchanged.
 - Geometry comes from `Stats/Stats.json` in every selected run. Within
   `ReadInfosForLanes[*].ReadInfos`, `IsIndexedRead` must be a boolean and non-index
   `NumCycles` values must be one or two positive integers, consistent across lanes
-  and runs. `Number` does not reorder that list. This is geometry validation, not
+  and runs. `Number` does not reorder that list. If legacy Stats is absent,
+  physical `RunInfo.xml` supplies the ordered read definitions instead, including
+  for native v2 output with `Reports/`. Present malformed/unreadable Stats is an
+  error and never triggers fallback. XML flags must be Y/N and all cycle counts
+  positive. This is geometry validation, not
   a FASTQ content/read-length check. [Libprep policy](libprep-config.md#kit-and-read-geometry-policy)
   defines matching, layout checks and explicit errors.
 - Standalone callers choose the local or explicit libprep source; the library has
@@ -289,7 +293,7 @@ fail rather than receiving filesystem-order selection. The explicit shared
 `resolve_project_pairs` input-list API always checks every supplied candidate.
 
 `--effective-read-geometry` supplies one or two positive biological read lengths,
-bounded by the physical Stats layout. `read_geometry` and libprep selection use
+bounded by the physical Stats/RunInfo layout. `read_geometry` and libprep selection use
 those effective lengths; `run_read_geometry` records the physical lengths.
 Automatic project-pair discovery derives effective lengths from the selected
 pair's OverrideCycles/RunInfo where available. Without an explicit/derived
