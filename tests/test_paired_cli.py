@@ -182,6 +182,20 @@ def test_paired_example_installed_cli_default_pep(example):
     assert contents(source) == before
 
 
+@pytest.mark.parametrize("qualified", [False, True])
+def test_canonical_legacy_pair_ignores_unselected_metadata_backups(example, qualified):
+    source, work = example
+    run = source / RUN
+    sheet = run / ((PROJECT + "_" if qualified else "") + "SampleSheet_alternate.csv")
+    sheet.write_text("An unrelated historical backup,not selected\n")
+    (run / "Sample-Submission-Form_backup.xlsx").write_bytes(b"Unrelated backup, not selected")
+    before = contents(source)
+    result = cli(source, work)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert_outputs(source, work)
+    assert contents(source) == before
+
+
 def test_paired_fixture_regeneration(tmp_path):
     from paired_fixture import create_fixture
     regenerated = create_fixture(tmp_path / "regenerated")

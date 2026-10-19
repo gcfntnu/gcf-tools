@@ -67,8 +67,13 @@ class ProjectPairResult(ValidationResult):
         return ValidationResult.render_text(contextual)
 
 
+def filename_project_keys(path):
+    """Return distinct association tokens in basename order without inference."""
+    return list(dict.fromkeys(_PROJECT.findall(Path(path).name)))
+
+
 def _filename_key(path, result):
-    keys = list(dict.fromkeys(_PROJECT.findall(Path(path).name)))
+    keys = filename_project_keys(path)
     if len(keys) > 1:
         result.add("error", "pair.ambiguous_filename", "Filename names multiple GCF projects; use one GCF-YYYY-NNN key.",
                    file=path, details={"project_ids": keys})
@@ -337,6 +342,10 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
         try:
             settings = samplesheet_settings(sheet)
             result.project_settings[key] = settings
+            if str(settings.get("IndependentIndexCollisionCheck", "")).strip():
+                result.add("error", "demux.unsupported_collision_policy",
+                           "IndependentIndexCollisionCheck is unsupported for project-paired validation; remove it or use a separately supported run plan before processing.",
+                           project_id=pair.project_id, file=pair.sample_sheet, column="IndependentIndexCollisionCheck")
             has_geometry = run_info is not None or bool(sheet.get("sections", {}).get("reads")) or settings.get("OverrideCycles") or any(row.get("OverrideCycles") for row in sheet["records"])
             if has_geometry:
                 geometry = derive_project_geometry(sheet, run_info=captured_run_info)

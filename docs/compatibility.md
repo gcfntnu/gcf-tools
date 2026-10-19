@@ -280,6 +280,13 @@ and a separate analysis directory per invocation. Existing explicit `-s`/`-S`
 options select the exact source pair and preserve the historical manual override
 route. Legacy single-pair discovery/content and intentional manual combined
 multi-flowcell behavior retain their existing metadata/selection rules.
+When the canonical `SampleSheet.csv`/`Sample-Submission-Form.xlsx` pair exists
+and discovered sheet filenames name at most one distinct project key, standalone
+discovery retains that canonical legacy pair and ignores backup/alternate files.
+Two or more explicitly qualified project keys activate full project-pair
+discovery. Without an established canonical pair, ambiguous generic candidates
+fail rather than receiving filesystem-order selection. The explicit shared
+`resolve_project_pairs` input-list API always checks every supplied candidate.
 
 `--effective-read-geometry` supplies one or two positive biological read lengths,
 bounded by the physical Stats layout. `read_geometry` and libprep selection use

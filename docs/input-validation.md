@@ -388,6 +388,10 @@ All other global settings must match across pairs, including explicit versus
 absent values, or `demux.incompatible_settings` fails before execution/cleanup.
 Backend capability checks and derived sheets belong to BFQ; accepting per-sample
 settings here does not make a legacy demultiplexer support them.
+Nonempty `IndependentIndexCollisionCheck` is explicitly unsupported in the new
+mode (`demux.unsupported_collision_policy`); the optional independent-index
+policy requires separate normalization/validation support before processing.
+Legacy validation acceptance is unchanged.
 
 `derive_project_geometry(parsed_sheet_or_path, run_info=None)` resolves biological
 read lengths from row-level or sheet-level `OverrideCycles`; `Y`, `I`, `U`, `N`

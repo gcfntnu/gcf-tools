@@ -100,3 +100,16 @@ def test_invalid_unselected_pair_blocks_automatic_initialization(flowcell, tmp_p
     assert "sample.missing_metadata" in result.stderr and B in result.stderr
     assert not (work / "config.yaml").exists()
     assert not (work / "data").exists()
+
+
+def test_multiple_generic_candidates_without_canonical_pair_are_ambiguous(flowcell, tmp_path):
+    run, (sa, fa, sb, fb) = flowcell
+    sa.rename(run / "SampleSheet_one.csv")
+    sb.rename(run / "SampleSheet_two.csv")
+    fa.rename(run / "Sample-Submission-Form_one.xlsx")
+    fb.rename(run / "Sample-Submission-Form_two.xlsx")
+    work = workdir(tmp_path / "ambiguous")
+    result = invoke(run, work, A)
+    assert result.returncode == 2
+    assert "pair.missing_filename_key" in result.stderr
+    assert not (work / "data").exists()

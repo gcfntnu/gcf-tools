@@ -35,7 +35,7 @@ if __name__ == "__main__":
 from configmaker.libprep import LibprepConfig, LibprepConfigError, find_read_geometry, validate_read_geometry
 from configmaker.validation import (validate_inputs, ValidationResult, InputValidationError,
                                    parse_samplesheet, parse_submission_form, VALIDATOR_VERSION)
-from configmaker.project_pairs import resolve_project_pairs, validate_project_pairs
+from configmaker.project_pairs import filename_project_keys, resolve_project_pairs, validate_project_pairs
 
 
 SEQUENCERS = {
@@ -688,6 +688,13 @@ def check_input(args):
                                   if path.is_file() and path.suffix.lower() in (".xls", ".xlsx")
                                   and "submission" in path.name.lower() and "form" in path.name.lower())
         if args.samplesheet is None and args.ssub is None:
+            canonical_sheet = Path(pth) / "SampleSheet.csv"
+            canonical_form = Path(pth) / "Sample-Submission-Form.xlsx"
+            qualified_keys = {key for path in discovered_sheets for key in filename_project_keys(path)}
+            if len(qualified_keys) <= 1 and canonical_sheet.is_file() and canonical_form.is_file():
+                # Preserve established standalone selection when generic
+                # backups/alternates coexist with the canonical legacy pair.
+                discovered_sheets, discovered_forms = [str(canonical_sheet)], [str(canonical_form)]
             pairing = resolve_project_pairs(discovered_sheets, discovered_forms)
             if not pairing.ok:
                 raise InputValidationError(pairing)

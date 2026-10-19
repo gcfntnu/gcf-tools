@@ -118,6 +118,7 @@ def test_wrong_projects_form_cannot_supply_missing_sample(tmp_path):
 
 def test_single_qualified_pair_keeps_legacy_multi_project_content_after_dedup(tmp_path):
     sheet = sample_sheet(tmp_path / (A + "_SampleSheet.csv"), [["A", A], ["B", B]])
+    sheet.write_text("[Settings]\nIndependentIndexCollisionCheck,1\n" + sheet.read_text())
     generic = tmp_path / "SampleSheet.csv"
     generic.write_bytes(sheet.read_bytes())
     form = submission_form(tmp_path / (A + "_Sample-Submission-Form.xlsx"),
@@ -152,6 +153,7 @@ def test_project_preparations_settings_metadata_and_geometry_stay_independent(tm
     ("id", "demux.cross_project_sample_id"), ("lane", "demux.invalid_lane"),
     ("cycles", "demux.project_geometry"), ("index_cycles", "demux.index_geometry"),
     ("symbolic_index", "demux.unexpanded_index"), ("global_setting", "demux.incompatible_settings"),
+    ("independent_collision", "demux.unsupported_collision_policy"),
     ("sheet_project", "pair.sheet_project_conflict"), ("form_project", "pair.form_project_conflict"),
 ])
 def test_whole_flowcell_conflicts_are_blocking(tmp_path, change, expected):
@@ -174,6 +176,9 @@ def test_whole_flowcell_conflicts_are_blocking(tmp_path, change, expected):
         sb.write_text(sb.read_text().replace("CCCCCCCC", "SI-TT-SYNTHETIC"))
     elif change == "global_setting":
         sb.write_text("[Settings]\nMinimumTrimmedReadLength,20\n" + sb.read_text())
+    elif change == "independent_collision":
+        sa.write_text("[Settings]\nIndependentIndexCollisionCheck,1\n" + sa.read_text())
+        sb.write_text("[Settings]\nIndependentIndexCollisionCheck,1\n" + sb.read_text())
     elif change == "sheet_project":
         sb.write_text(sb.read_text().replace(B, C))
     else:
