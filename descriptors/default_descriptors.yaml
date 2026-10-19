@@ -101,7 +101,7 @@ Organism:
   display_name: Organism
   dtype: string
   subtype: organism
-  description: organism name (genus_species)
+  description: canonical species or strain key; unresolved annotations retain their original text
   placement: 6
 RIN:
   display_name: RIN

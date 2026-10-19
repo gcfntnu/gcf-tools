@@ -32,7 +32,7 @@ Source: `configmaker/configmaker.py:parse_args`, `check_input`, `main`.
 | `-S`, `--sample-submission-form` | Discover `Sample-Submission-Form.xlsx`; explicit single file replaces that list |
 | `-o`, `--output` | `config.yaml`; changes YAML destination, not the project working directory |
 | `--subsample` | Unset → `filter.subsample_fastq: skip`; positive fraction below 1 stays float, exactly 1 means skip, above 1 is converted to integer. It configures later processing, not local FASTQ sampling |
-| `--organism` | Unset; a truthy CLI value wins over SampleSheet `Organism`. See normalization limits below |
+| `--organism` | Unset; a truthy CLI value wins over SampleSheet `Organism`. See the offline resolution contract below |
 | `--libkit` | Unset; overrides SampleSheet `Libprep` when supplied |
 | `--libprep-config` | `src/gcf-workflows/libprep.config` relative to cwd; explicit file supplies effective bytes |
 | `--libprep-sha256`, `--libprep-entry`, `--expected-read-geometry` | Unset; exact hash/entry/one-or-more integer length assertions, not selection overrides |
@@ -176,7 +176,7 @@ must be reviewed together.
 | `quant.batch` | Normally `{method: skip}`; batch mode uses `{name: Flowcell_ID}` |
 | `filter.subsample_fastq` | String `skip`, float fraction, or integer count; other nested kit defaults remain present |
 | `libprep_selection` | Diagnostics: source/hash/kit/entry/geometry/workflow, as defined in the libprep guide |
-| `organism` | Global value from CLI/custom options when present; a nonempty value is not necessarily canonicalized. Descriptor organism conversion is a separate, dependency-sensitive path |
+| `organism` | Canonical global species key from the shared offline resolver; ambiguous/unresolved nonmissing values fail before initialization. Missing and per-sample mixed-species roles are preserved |
 | Missing metadata | Stringification can emit strings such as `<NA>` or `nan`, not necessarily YAML null; descriptor category handling may use empty strings |
 | `descriptors` | Metadata for emitted columns; explicit descriptor keys override defaults, with inferred subtype/range/category information added |
 
@@ -191,12 +191,23 @@ configmaker's protected identity columns bypass it altogether. Nucleotide
 descriptors uppercase values; categorical inference can affect reference levels.
 These potentially lossy conversions require dedicated decisions before changes.
 
-Organism matching uses packaged `ens_org.pkl`, with default fuzzy score 80 and
-alias minimum length 4; `fuzzmatch_reference` defaults to score 80 against known
-control/reference terms. Imports do not fetch a replacement database. A real
-lookup with missing packaged data fails explicitly. Do not call the explicit
-network refresh helper in routine checks or replace the matching engine as
-incidental cleanup.
+Organism resolution uses a fixed packaged JSON inventory and exact canonical/
+curated aliases. Fuzzy hits are suggestions only. Unknown/ambiguous descriptive
+annotations retain their original text with contextual diagnostics. Project
+values fail before output mutation if unresolved/ambiguous; SampleSheet `N/A`
+retains the validator's missing/absent-key route, and explicit CLI `N/A` emits
+`N/A`. Mixed sample metadata never sets the global organism. The uniform
+resolved/missing column's existing global override remains; unresolved text is
+not overwritten. New config/PEP `organism_inventory` identifies schema, version,
+SHA-256 and provenance. See [organisms.md](organisms.md) for aliases/strains,
+public API return behavior, missing values, explicit maintenance, packaging and
+offline provisioning. The reference/control-term matcher is unchanged.
+Explicit mixed reference keys (`Human__Mouse` → `homo_sapiens__mus_musculus`)
+resolve every member, preserve order/strains, and reject incomplete or ambiguous
+membership. Mixed sample annotations never collapse into a single global species.
+The established non-species project label `metagenome` is preserved only with a
+locally supplied libprep snapshot selecting the metagenome workflow; it does not
+resolve to a species or select a classifier database.
 
 PEP output declares `pep_version: 2.0.0` and uses CSV column `sample_name`.
 Read attributes use `R1`/`R2`/`I1` derivation tokens. Private CSV columns

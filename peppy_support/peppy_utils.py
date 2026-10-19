@@ -11,7 +11,8 @@ import pandas as pd
 
 BASE = ['project_id',
         'src_project_id',
-        'organism']
+        'organism',
+        'organism_inventory']
 
 RUN =  ['workflow',
         'machine',

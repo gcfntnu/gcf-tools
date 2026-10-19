@@ -90,7 +90,7 @@ def assert_outputs(source, work, samples=SAMPLES):
     config = yaml.safe_load((work / "config.yaml").read_text())
     assert config["project_id"] == [PROJECT]
     assert config["experiment_title"] == PROJECT
-    assert config["organism"] == "Homo sapiens"
+    assert config["organism"] == "homo_sapiens"
     assert config["read_geometry"] == [75, 150]
     assert all(type(length) is int for length in config["read_geometry"])
     assert config["workflow"] == "rnaseq"
