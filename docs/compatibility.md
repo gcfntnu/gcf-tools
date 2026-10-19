@@ -261,3 +261,37 @@ five historically dropped library metadata columns for Parse only. Header
 mapping, descriptor conversion, exact IDs, customer/lab precedence, FASTQ grouping,
 PEP identities and the `samples`/`wells` sections retain their established meaning.
 No TSV materialization or workflow processing is implemented in tools.
+
+## Independent project pairs (#91)
+
+The additive [project-pair API](input-validation.md#independent-project-pairs-additive-api-1-91)
+keeps project filename matching and flowcell assignment checks separate from
+legacy cross-flowcell metadata merging. Existing API/report 1 remains unchanged.
+The deliberate new restrictions apply to qualified project-pair mode: exact
+filename/content project agreement, independent form matching, unambiguous
+cross-project sample outputs, lane/index/mismatch compatibility, and compatible
+global demultiplexer settings. Symbolic index expansion is outside this issue.
+
+Configmaker automatically discovers CSV filenames containing `SampleSheet`
+(case-insensitive, with optional hyphens/underscores) and `.xls`/`.xlsx` names
+containing `submission` and `form`. It suppresses exact sheet copies and validates
+every effective pair before creating analysis outputs. Use one selected project
+and a separate analysis directory per invocation. Existing explicit `-s`/`-S`
+options select the exact source pair and preserve the historical manual override
+route. Legacy single-pair discovery/content and intentional manual combined
+multi-flowcell behavior retain their existing metadata/selection rules.
+
+`--effective-read-geometry` supplies one or two positive biological read lengths,
+bounded by the physical Stats layout. `read_geometry` and libprep selection use
+those effective lengths; `run_read_geometry` records the physical lengths.
+Automatic project-pair discovery derives effective lengths from the selected
+pair's OverrideCycles/RunInfo where available. Without an explicit/derived
+override, the historical Stats authority remains. `--expected-read-geometry`
+asserts the selected effective layout.
+
+Config/PEP now retain `samplesheet_options`, `metadata_inputs` file/hash identities and libprep selection
+diagnostics; an effective-layout override also retains `run_read_geometry` in
+PEP. Analysis summaries add selected project IDs, both layouts, metadata input
+identities and libprep selection. FASTQ discovery order, source-relative paths,
+sample IDs and checksum associations remain unchanged. These additive fields do
+not rewrite retained analyses or validate scientific outputs.

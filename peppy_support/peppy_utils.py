@@ -12,11 +12,15 @@ import pandas as pd
 BASE = ['project_id',
         'src_project_id',
         'organism',
-        'organism_inventory']
+        'organism_inventory',
+        'metadata_inputs',
+        'samplesheet_options']
 
 RUN =  ['workflow',
         'machine',
-        'read_geometry']
+        'read_geometry',
+        'run_read_geometry',
+        'libprep_selection']
 
 LIBPREP = ['adapter',
            'adapter2',

@@ -95,3 +95,23 @@ Use the [contributor test tiers](../CONTRIBUTING.md#available-checks) for API an
 real standalone CLI checks. The CLI
 checks initialize temporary projects using the repository's small input fixture;
 they do not launch Snakemake or require an `/opt` installation.
+
+## Project-paired effective layout (#91)
+
+One physical flowcell may demultiplex projects with different biological read
+layouts and kit/workflow entries. The additive project-pair validator selects
+all entries from the same supplied `LibprepConfig` snapshot and hashes those
+captured bytes in its report. Each entry uses that project's `Libprep` and
+normalized effective Y cycles, independent of other projects' metadata/options.
+Physical RunInfo cycles validate masks; this does not inspect FASTQ contents.
+
+For a BFQ-selected exact pair, pass the existing `-s`/`-S` options and
+`--effective-read-geometry` to standalone configmaker along with the existing
+snapshot/hash/entry assertions. `--expected-read-geometry` asserts the effective
+layout used by selection. Configmaker still reads/validates physical Stats and
+records it separately as `run_read_geometry`; the workflow-facing
+`read_geometry` is the effective project layout. Without the additive option or
+project-pair derivation, Stats selection remains unchanged. Both layouts and the
+selected snapshot/entry are included in generated configuration, PEP and analysis
+summary. A different kit name alone does not imply a different demultiplexer
+pass; BFQ owns compatible backend/settings reconciliation and execution.

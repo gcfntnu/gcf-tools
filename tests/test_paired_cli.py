@@ -154,6 +154,20 @@ def assert_outputs(source, work, samples=SAMPLES):
         "schema_version": 1, "kind": "fastq_discovery", "sample_count": len(samples),
         "planned_sample_count": 3, "missing_sample_ids": sorted(set(SAMPLES) - set(samples)),
         "samples": [{"sample_id": sample, "flowcells": [RUN]} for sample in samples],
+        "project_ids": [PROJECT], "read_geometry": [75, 150], "run_read_geometry": [75, 150],
+        "metadata_inputs": [
+            {"kind": kind, "path": str(source / RUN / filename),
+             "sha256": hashlib.sha256((source / RUN / filename).read_bytes()).hexdigest(),
+             "size_bytes": (source / RUN / filename).stat().st_size}
+            for kind, filename in (("samplesheet", "SampleSheet.csv"),
+                                   ("submission_form", "Sample-Submission-Form.xlsx"))
+        ],
+        "samplesheet_options": {"Libprep": "Synthetic", "Organism": "Homo sapiens"},
+        "libprep_selection": {
+            "source": str(work / "src/gcf-workflows/libprep.config"),
+            "sha256": hashlib.sha256(kit).hexdigest(), "kit": "Synthetic", "entry": "Synthetic PE",
+            "read_geometry": [75, 150], "workflow": "rnaseq",
+        },
     }
     assert f"FASTQ discovery: {len(samples)} of 3 planned" in (work / ".configmaker.log").read_text()
 
