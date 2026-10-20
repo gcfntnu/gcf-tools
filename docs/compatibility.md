@@ -110,7 +110,11 @@ and shared validation rules are unchanged.
 - Geometry comes from `Stats/Stats.json` in every selected run. Within
   `ReadInfosForLanes[*].ReadInfos`, `IsIndexedRead` must be a boolean and non-index
   `NumCycles` values must be one or two positive integers, consistent across lanes
-  and runs. `Number` does not reorder that list. This is geometry validation, not
+  and runs. `Number` does not reorder that list. If legacy Stats is absent,
+  physical `RunInfo.xml` supplies the ordered read definitions instead, including
+  for native v2 output with `Reports/`. Present malformed/unreadable Stats is an
+  error and never triggers fallback. XML flags must be Y/N and all cycle counts
+  positive. This is geometry validation, not
   a FASTQ content/read-length check. [Libprep policy](libprep-config.md#kit-and-read-geometry-policy)
   defines matching, layout checks and explicit errors.
 - Standalone callers choose the local or explicit libprep source; the library has
@@ -261,3 +265,44 @@ five historically dropped library metadata columns for Parse only. Header
 mapping, descriptor conversion, exact IDs, customer/lab precedence, FASTQ grouping,
 PEP identities and the `samples`/`wells` sections retain their established meaning.
 No TSV materialization or workflow processing is implemented in tools.
+
+## Independent project pairs (#91)
+
+The additive [project-pair API](input-validation.md#independent-project-pairs-additive-api-1-91)
+keeps project filename matching and flowcell assignment checks separate from
+legacy cross-flowcell metadata merging. Existing API/report 1 remains unchanged.
+The deliberate new restrictions apply to qualified project-pair mode: exact
+filename/content project agreement, independent form matching, unambiguous
+cross-project sample outputs, lane/index/mismatch compatibility, and compatible
+global demultiplexer settings. Symbolic index expansion is outside this issue.
+
+Configmaker automatically discovers CSV filenames containing `SampleSheet`
+(case-insensitive, with optional hyphens/underscores) and `.xls`/`.xlsx` names
+containing `submission` and `form`. It suppresses exact sheet copies and validates
+every effective pair before creating analysis outputs. Use one selected project
+and a separate analysis directory per invocation. Existing explicit `-s`/`-S`
+options select the exact source pair and preserve the historical manual override
+route. Legacy single-pair discovery/content and intentional manual combined
+multi-flowcell behavior retain their existing metadata/selection rules.
+When the canonical `SampleSheet.csv`/`Sample-Submission-Form.xlsx` pair exists
+and discovered sheet filenames name at most one distinct project key, standalone
+discovery retains that canonical legacy pair and ignores backup/alternate files.
+Two or more explicitly qualified project keys activate full project-pair
+discovery. Without an established canonical pair, ambiguous generic candidates
+fail rather than receiving filesystem-order selection. The explicit shared
+`resolve_project_pairs` input-list API always checks every supplied candidate.
+
+`--effective-read-geometry` supplies one or two positive biological read lengths,
+bounded by the physical Stats/RunInfo layout. `read_geometry` and libprep selection use
+those effective lengths; `run_read_geometry` records the physical lengths.
+Automatic project-pair discovery derives effective lengths from the selected
+pair's OverrideCycles/RunInfo where available. Without an explicit/derived
+override, the historical Stats authority remains. `--expected-read-geometry`
+asserts the selected effective layout.
+
+Config/PEP now retain `samplesheet_options`, `metadata_inputs` file/hash identities and libprep selection
+diagnostics; an effective-layout override also retains `run_read_geometry` in
+PEP. Analysis summaries add selected project IDs, both layouts, metadata input
+identities and libprep selection. FASTQ discovery order, source-relative paths,
+sample IDs and checksum associations remain unchanged. These additive fields do
+not rewrite retained analyses or validate scientific outputs.

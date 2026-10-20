@@ -146,6 +146,7 @@ def parse_samplesheet(content, path, result):
     """Parse IEM [Data] / BCL Convert [BCLConvert_Data] without dtype inference."""
     initial_errors = sum(f["severity"] == "error" for f in result.findings)
     records, headers, options, header, section = [], None, {}, {}, None
+    sections, data_section = {}, None
     seen_sections = set()
     try:
         text = content.decode("utf-8-sig") if isinstance(content, bytes) else content
@@ -161,11 +162,15 @@ def parse_samplesheet(content, path, result):
             tag = cells[0].strip()
             if tag.startswith("[") and tag.endswith("]") and all(not c.strip() for c in cells[1:]):
                 section = tag[1:-1].lower()
+                sections.setdefault(section, [])
                 if section in ("data", "bclconvert_data"):
+                    data_section = tag[1:-1]
                     if "data" in seen_sections:
                         result.add("error", "samplesheet.duplicate_data_section", "Multiple data sections make sample definitions ambiguous.", file=path, row=rownum)
                     seen_sections.add("data")
                 continue
+            if section is not None:
+                sections.setdefault(section, []).append(list(cells))
             if section in ("data", "bclconvert_data"):
                 if headers is None:
                     headers = cells
@@ -231,7 +236,8 @@ def parse_samplesheet(content, path, result):
             previous.append(record)
     if sum(f["severity"] == "error" for f in result.findings) > initial_errors:
         return None
-    return {"path": path, "records": records, "columns": [h for h in headers if h], "options": options, "header": header}
+    return {"path": path, "records": records, "columns": [h for h in headers if h], "options": options, "header": header,
+            "sections": sections, "data_section": data_section}
 
 
 def _worksheet(book, path, name, header_row, mapper, result, optional_empty=False, pooled=False):

@@ -125,3 +125,58 @@ def test_geometry_all_lanes_and_runfolders(tmp_path):
         find_read_geometry([a, c])
     with pytest.raises(LibprepConfigError, match="Stats.json"):
         find_read_geometry([tmp_path / "missing"])
+
+
+def run_info(path, reads=(("N", 75), ("Y", 8), ("Y", 8), ("N", 150))):
+    path.mkdir(exist_ok=True)
+    source = path / "RunInfo.xml"
+    source.write_text("<RunInfo><Run><Reads>" + "".join(
+        '<Read Number="{}" NumCycles="{}" IsIndexedRead="{}"/>'.format(i, cycles, flag)
+        for i, (flag, cycles) in enumerate(reads, 1)) + "</Reads></Run></RunInfo>")
+    return path
+
+
+def test_absent_legacy_stats_uses_physical_run_info_without_reordering(tmp_path):
+    first = run_info(tmp_path / "first")
+    second = run_info(tmp_path / "second", [("N", 50)])
+    (second / "Stats").mkdir()
+    (second / "Stats/Stats.json").write_text(json.dumps({"ReadInfosForLanes": [{"ReadInfos": [
+        {"IsIndexedRead": False, "NumCycles": 75}, {"IsIndexedRead": False, "NumCycles": 150}]}]}))
+    # The present legacy Stats stays authoritative even when RunInfo differs.
+    assert find_read_geometry([first, second]) == [75, 150]
+    third = run_info(tmp_path / "third", [("N", 50)])
+    with pytest.raises(LibprepConfigError, match="mismatch"):
+        find_read_geometry([first, third])
+
+
+@pytest.mark.parametrize("content", ["{", "{}", '{"ReadInfosForLanes": []}',
+                                     '{"ReadInfosForLanes": [{"ReadInfos": [{"IsIndexedRead": 0, "NumCycles": 75}]}]}'])
+def test_present_invalid_stats_does_not_fall_back_to_valid_run_info(tmp_path, content):
+    run = run_info(tmp_path / "run")
+    (run / "Stats").mkdir()
+    (run / "Stats/Stats.json").write_text(content)
+    with pytest.raises(LibprepConfigError, match="Stats.json"):
+        find_read_geometry([run])
+
+
+def test_dangling_legacy_stats_symlink_does_not_use_run_info(tmp_path):
+    run = run_info(tmp_path / "run")
+    (run / "Stats").mkdir()
+    (run / "Stats/Stats.json").symlink_to("missing-stats.json")
+    with pytest.raises(LibprepConfigError, match="Stats.json"):
+        find_read_geometry([run])
+
+
+@pytest.mark.parametrize("reads", [[], [("false", 75)], [("N", 0)], [("Y", -1), ("N", 75)],
+                                  [("N", 75), ("N", 75), ("N", 75)]])
+def test_run_info_fallback_requires_valid_physical_geometry(tmp_path, reads):
+    run = run_info(tmp_path / "run", reads)
+    with pytest.raises(LibprepConfigError, match="RunInfo"):
+        find_read_geometry([run])
+
+
+def test_invalid_run_info_xml_fails_with_source_context(tmp_path):
+    run = run_info(tmp_path / "run")
+    (run / "RunInfo.xml").write_bytes(b"<RunInfo>")
+    with pytest.raises(LibprepConfigError, match="RunInfo.xml"):
+        find_read_geometry([run])

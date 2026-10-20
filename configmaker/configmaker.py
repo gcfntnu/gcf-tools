@@ -32,9 +32,10 @@ if __name__ == "__main__":
     # remove both locations so configmaker.py cannot shadow the package.
     script_dirs = {Path(__file__).resolve().parent, Path(sys.argv[0]).resolve().parent}
     sys.path[:] = [p for p in sys.path if Path(p or os.curdir).resolve() not in script_dirs]
-from configmaker.libprep import LibprepConfig, LibprepConfigError, find_read_geometry
+from configmaker.libprep import LibprepConfig, LibprepConfigError, find_read_geometry, validate_read_geometry
 from configmaker.validation import (validate_inputs, ValidationResult, InputValidationError,
                                    parse_samplesheet, parse_submission_form, VALIDATOR_VERSION)
+from configmaker.project_pairs import filename_project_keys, resolve_project_pairs, validate_project_pairs
 
 
 SEQUENCERS = {
@@ -475,7 +476,19 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
         config["libprepkit"] = args.libkit
 
     config["organism_inventory"] = inventory_identity()
-    config["read_geometry"] = find_read_geometry(args.runfolders)
+    config["samplesheet_options"] = copy.deepcopy(opts)
+    validation = getattr(args, "_validation", None)
+    if validation is not None:
+        config["metadata_inputs"] = copy.deepcopy(validation.inputs)
+    physical_geometry = find_read_geometry(args.runfolders)
+    effective_geometry = getattr(args, "effective_read_geometry", None)
+    if effective_geometry is not None:
+        effective_geometry = list(validate_read_geometry(effective_geometry))
+        if len(effective_geometry) > len(physical_geometry) or any(
+                effective > physical for effective, physical in zip(effective_geometry, physical_geometry)):
+            raise LibprepConfigError("Effective read geometry {} exceeds physical geometry {}".format(effective_geometry, physical_geometry))
+        config["run_read_geometry"] = physical_geometry
+    config["read_geometry"] = effective_geometry or physical_geometry
     config["machine"] = args.machine or find_machine(args.runfolders)
 
     if args.PI is not None:
@@ -631,7 +644,13 @@ def project_summary(config, output="config.yaml", validation=None):
     planned = {item["sample_id"] for item in validation.summary["planned_samples"]} if validation else set(config["samples"])
     report = {"schema_version": 1, "kind": "fastq_discovery", "samples": samples,
               "sample_count": len(samples), "planned_sample_count": len(planned),
-              "missing_sample_ids": sorted(planned - set(config["samples"]))}
+              "missing_sample_ids": sorted(planned - set(config["samples"])),
+              "metadata_inputs": copy.deepcopy(config.get("metadata_inputs", [])),
+              "project_ids": list(config.get("project_id", [])),
+              "read_geometry": list(config.get("read_geometry", [])),
+              "run_read_geometry": list(config.get("run_read_geometry", config.get("read_geometry", []))),
+              "libprep_selection": copy.deepcopy(config.get("libprep_selection", {}))}
+    report["samplesheet_options"] = copy.deepcopy(config.get("samplesheet_options", {}))
     directory = Path(output).parent
     summary_file = directory / "configmaker.analysis-summary.json"
     summary_file.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
@@ -651,6 +670,7 @@ def check_input(args):
     requested = list(dict.fromkeys(args.project_id or []))
     args._requested_project_ids = requested
     args._samplesheet_override = args.samplesheet is not None
+    args._project_pair_reports = []
     for pth in dict.fromkeys(args.runfolders):
         if requested:
             matches = [(os.path.join(pth, pid), pid) for pid in requested if os.path.isdir(os.path.join(pth, pid))]
@@ -661,12 +681,51 @@ def check_input(args):
         for project_dir, project_id in matches:
             dirs.append(project_dir)
             ids.append(project_id)
-        samplesheet_fn = os.path.join(pth, "SampleSheet.csv")
-        ssub_fn = os.path.join(pth, "Sample-Submission-Form.xlsx")
-        if os.path.exists(samplesheet_fn) and args.samplesheet is None:
-            samplesheets.append(samplesheet_fn)
-        if os.path.exists(ssub_fn) and args.ssub is None:
-            submission_forms.append(ssub_fn)
+        discovered_sheets = sorted(str(path) for path in Path(pth).iterdir()
+                                   if path.is_file() and path.suffix.lower() == ".csv"
+                                   and "samplesheet" in path.name.lower().replace("-", "").replace("_", ""))
+        discovered_forms = sorted(str(path) for path in Path(pth).iterdir()
+                                  if path.is_file() and path.suffix.lower() in (".xls", ".xlsx")
+                                  and "submission" in path.name.lower() and "form" in path.name.lower())
+        if args.samplesheet is None and args.ssub is None:
+            canonical_sheet = Path(pth) / "SampleSheet.csv"
+            canonical_form = Path(pth) / "Sample-Submission-Form.xlsx"
+            qualified_keys = {key for path in discovered_sheets for key in filename_project_keys(path)}
+            if len(qualified_keys) <= 1 and canonical_sheet.is_file() and canonical_form.is_file():
+                # Preserve established standalone selection when generic
+                # backups/alternates coexist with the canonical legacy pair.
+                discovered_sheets, discovered_forms = [str(canonical_sheet)], [str(canonical_form)]
+            pairing = resolve_project_pairs(discovered_sheets, discovered_forms)
+            if not pairing.ok:
+                raise InputValidationError(pairing)
+            if pairing.mode == "project_pairs":
+                run_info = Path(pth) / "RunInfo.xml"
+                report = validate_project_pairs(discovered_sheets, discovered_forms,
+                                                run_info=run_info if run_info.exists() else None)
+                if not report.ok:
+                    raise InputValidationError(report)
+                selected_pairs = [pair for pair in report.pairs if pair.project_id in [pid for _, pid in matches]]
+                if len({pair.project_id for pair in selected_pairs}) != 1:
+                    raise ValueError("Project-paired metadata requires one selected project per configmaker invocation; use -p and a separate analysis directory for each project")
+                args._project_pair_reports.append(report.to_dict())
+                for pair in selected_pairs:
+                    samplesheets.append(pair.sample_sheet)
+                    submission_forms.append(pair.submission_form)
+                    geometry = report.project_geometry.get(pair.project_id)
+                    if geometry:
+                        if args.effective_read_geometry is not None and list(args.effective_read_geometry) != geometry:
+                            raise ValueError("Selected project effective read geometry differs between inputs or from --effective-read-geometry")
+                        args.effective_read_geometry = geometry
+                continue
+            samplesheets.extend(pair.sample_sheet for pair in pairing.pairs)
+            submission_forms.extend(pair.submission_form for pair in pairing.pairs)
+        else:
+            samplesheet_fn = os.path.join(pth, "SampleSheet.csv")
+            ssub_fn = os.path.join(pth, "Sample-Submission-Form.xlsx")
+            if os.path.exists(samplesheet_fn) and args.samplesheet is None:
+                samplesheets.append(samplesheet_fn)
+            if os.path.exists(ssub_fn) and args.ssub is None:
+                submission_forms.append(ssub_fn)
     missing = [pid for pid in requested if pid not in ids]
     if missing:
         raise ValueError("Requested source project(s) have no usable directory in the supplied runs: {}".format(", ".join(missing)))
@@ -767,8 +826,10 @@ def parse_args(argv=None):
                         help="Explicit configuration snapshot (default: src/gcf-workflows/libprep.config)")
     parser.add_argument("--libprep-sha256", help="Require this configuration SHA-256")
     parser.add_argument("--libprep-entry", help="Require this exact selected entry")
+    parser.add_argument("--effective-read-geometry", type=int, nargs="+",
+                        help="Effective project FASTQ read lengths after demultiplexing; physical Stats geometry is retained separately")
     parser.add_argument("--expected-read-geometry", nargs="+", type=int,
-                        help="Require these read lengths from Stats.json")
+                        help="Require these effective project read lengths (Stats.json by default)")
     parser.add_argument("--machine",
                         help="Sequencer model."
                         )
@@ -839,7 +900,7 @@ def main(argv=None):
                 # and reuse its immutable bytes when initializing the workflow.
                 snapshot = LibprepConfig.load(selected_libprep or Path('src/gcf-workflows/libprep.config'))
                 kit = args.libkit if args.libkit is not None else custom_opts.get('Libprep')
-                selection = snapshot.select(kit, find_read_geometry(args.runfolders))
+                selection = snapshot.select(kit, args.effective_read_geometry or find_read_geometry(args.runfolders))
                 if selection.workflow != 'metagenome':
                     raise ValueError('Project organism: ' + organism.diagnostic(args.organism))
                 selected_libprep = snapshot
