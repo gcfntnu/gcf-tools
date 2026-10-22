@@ -31,4 +31,5 @@ include-package-data = false
 version = {attr = "configmaker.__version__"}
 
 [tool.setuptools.package-data]
+configmaker = ["tenx_indexes.json"]
 descriptors = ["*.yaml", "*.pkl", "*.json"]

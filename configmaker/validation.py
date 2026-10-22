@@ -225,10 +225,13 @@ def parse_samplesheet(content, path, result):
             if previous:
                 if any(p["Sample_Project"] != record["Sample_Project"] for p in previous):
                     code, message = "sample.conflicting_projects", "Conflicting project assignments for Sample_ID {!r} within one SampleSheet."
-                elif not record.get("Lane") or any(p.get("Lane") == record["Lane"] or not p.get("Lane") for p in previous):
-                    code, message = "sample.duplicate_definition", "Duplicate Sample_ID {!r} without distinct explicit lanes."
                 elif any(any(p[k] != record[k] for k in headers if k and k not in ("Lane", "index", "index2", "I7_Index_ID", "I5_Index_ID", "Index_Plate_Well")) for p in previous):
-                    code, message = "sample.conflicting_definition", "Conflicting metadata for repeated Sample_ID {!r} across lanes."
+                    code, message = "sample.conflicting_definition", "Conflicting metadata for repeated Sample_ID {!r}."
+                elif any((not record.get("Lane") or not p.get("Lane") or p.get("Lane") == record.get("Lane")) and
+                         (not record.get("index") or not p.get("index") or
+                          (record.get("index", "").upper(), record.get("index2", "").upper()) ==
+                          (p.get("index", "").upper(), p.get("index2", "").upper())) for p in previous):
+                    code, message = "sample.duplicate_definition", "Duplicate/overlapping index assignment for Sample_ID {!r}."
                 else:
                     code = None
                 if code:

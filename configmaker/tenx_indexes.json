@@ -1,0 +1,2901 @@
+{
+  "entries": {
+    "SI-GA-A1": {
+      "assignments": [
+        {
+          "index": "GGTTTACT",
+          "index2": ""
+        },
+        {
+          "index": "CTAAACGG",
+          "index2": ""
+        },
+        {
+          "index": "TCGGCGTC",
+          "index2": ""
+        },
+        {
+          "index": "AACCGTAA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-A10": {
+      "assignments": [
+        {
+          "index": "GAAACCCT",
+          "index2": ""
+        },
+        {
+          "index": "TTTCTGTC",
+          "index2": ""
+        },
+        {
+          "index": "CCGTGTGA",
+          "index2": ""
+        },
+        {
+          "index": "AGCGAAAG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-A11": {
+      "assignments": [
+        {
+          "index": "GTCCGGTC",
+          "index2": ""
+        },
+        {
+          "index": "AAGATCAT",
+          "index2": ""
+        },
+        {
+          "index": "CCTGAAGG",
+          "index2": ""
+        },
+        {
+          "index": "TGATCTCA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-A12": {
+      "assignments": [
+        {
+          "index": "AGTGGAAC",
+          "index2": ""
+        },
+        {
+          "index": "GTCTCCTT",
+          "index2": ""
+        },
+        {
+          "index": "TCACATCA",
+          "index2": ""
+        },
+        {
+          "index": "CAGATGGG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-A2": {
+      "assignments": [
+        {
+          "index": "TTTCATGA",
+          "index2": ""
+        },
+        {
+          "index": "ACGTCCCT",
+          "index2": ""
+        },
+        {
+          "index": "CGCATGTG",
+          "index2": ""
+        },
+        {
+          "index": "GAAGGAAC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-A3": {
+      "assignments": [
+        {
+          "index": "CAGTACTG",
+          "index2": ""
+        },
+        {
+          "index": "AGTAGTCT",
+          "index2": ""
+        },
+        {
+          "index": "GCAGTAGA",
+          "index2": ""
+        },
+        {
+          "index": "TTCCCGAC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-A4": {
+      "assignments": [
+        {
+          "index": "TATGATTC",
+          "index2": ""
+        },
+        {
+          "index": "CCCACAGT",
+          "index2": ""
+        },
+        {
+          "index": "ATGCTGAA",
+          "index2": ""
+        },
+        {
+          "index": "GGATGCCG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-A5": {
+      "assignments": [
+        {
+          "index": "CTAGGTGA",
+          "index2": ""
+        },
+        {
+          "index": "TCGTTCAG",
+          "index2": ""
+        },
+        {
+          "index": "AGCCAATT",
+          "index2": ""
+        },
+        {
+          "index": "GATACGCC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-A6": {
+      "assignments": [
+        {
+          "index": "CGCTATGT",
+          "index2": ""
+        },
+        {
+          "index": "GCTGTCCA",
+          "index2": ""
+        },
+        {
+          "index": "TTGAGATC",
+          "index2": ""
+        },
+        {
+          "index": "AAACCGAG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-A7": {
+      "assignments": [
+        {
+          "index": "ACAGAGGT",
+          "index2": ""
+        },
+        {
+          "index": "TATAGTTG",
+          "index2": ""
+        },
+        {
+          "index": "CGGTCCCA",
+          "index2": ""
+        },
+        {
+          "index": "GTCCTAAC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-A8": {
+      "assignments": [
+        {
+          "index": "GCATCTCC",
+          "index2": ""
+        },
+        {
+          "index": "TGTAAGGT",
+          "index2": ""
+        },
+        {
+          "index": "CTGCGATG",
+          "index2": ""
+        },
+        {
+          "index": "AACGTCAA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-A9": {
+      "assignments": [
+        {
+          "index": "TCTTAAAG",
+          "index2": ""
+        },
+        {
+          "index": "CGAGGCTC",
+          "index2": ""
+        },
+        {
+          "index": "GTCCTTCT",
+          "index2": ""
+        },
+        {
+          "index": "AAGACGGA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B1": {
+      "assignments": [
+        {
+          "index": "GTAATCTT",
+          "index2": ""
+        },
+        {
+          "index": "TCCGGAAG",
+          "index2": ""
+        },
+        {
+          "index": "AGTTCGGC",
+          "index2": ""
+        },
+        {
+          "index": "CAGCATCA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B10": {
+      "assignments": [
+        {
+          "index": "ACCGTATG",
+          "index2": ""
+        },
+        {
+          "index": "GATTAGAT",
+          "index2": ""
+        },
+        {
+          "index": "CTGACTGA",
+          "index2": ""
+        },
+        {
+          "index": "TGACGCCC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B11": {
+      "assignments": [
+        {
+          "index": "GTTCCTCA",
+          "index2": ""
+        },
+        {
+          "index": "AGGTACGC",
+          "index2": ""
+        },
+        {
+          "index": "TAAGTATG",
+          "index2": ""
+        },
+        {
+          "index": "CCCAGGAT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B12": {
+      "assignments": [
+        {
+          "index": "TACCACCA",
+          "index2": ""
+        },
+        {
+          "index": "CTAAGTTT",
+          "index2": ""
+        },
+        {
+          "index": "GGGTCAAG",
+          "index2": ""
+        },
+        {
+          "index": "ACTGTGGC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B2": {
+      "assignments": [
+        {
+          "index": "TACTCTTC",
+          "index2": ""
+        },
+        {
+          "index": "CCTGTGCG",
+          "index2": ""
+        },
+        {
+          "index": "GGACACGT",
+          "index2": ""
+        },
+        {
+          "index": "ATGAGAAA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B3": {
+      "assignments": [
+        {
+          "index": "GTGTATTA",
+          "index2": ""
+        },
+        {
+          "index": "TGTGCGGG",
+          "index2": ""
+        },
+        {
+          "index": "ACCATAAC",
+          "index2": ""
+        },
+        {
+          "index": "CAACGCCT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B4": {
+      "assignments": [
+        {
+          "index": "ACTTCATA",
+          "index2": ""
+        },
+        {
+          "index": "GAGATGAC",
+          "index2": ""
+        },
+        {
+          "index": "TGCCGTGG",
+          "index2": ""
+        },
+        {
+          "index": "CTAGACCT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B5": {
+      "assignments": [
+        {
+          "index": "AATAATGG",
+          "index2": ""
+        },
+        {
+          "index": "CCAGGGCA",
+          "index2": ""
+        },
+        {
+          "index": "TGCCTCAT",
+          "index2": ""
+        },
+        {
+          "index": "GTGTCATC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B6": {
+      "assignments": [
+        {
+          "index": "CGTTAATC",
+          "index2": ""
+        },
+        {
+          "index": "GCCACGCT",
+          "index2": ""
+        },
+        {
+          "index": "TTACTCAG",
+          "index2": ""
+        },
+        {
+          "index": "AAGGGTGA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B7": {
+      "assignments": [
+        {
+          "index": "AAACCTCA",
+          "index2": ""
+        },
+        {
+          "index": "GCCTTGGT",
+          "index2": ""
+        },
+        {
+          "index": "CTGGACTC",
+          "index2": ""
+        },
+        {
+          "index": "TGTAGAAG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B8": {
+      "assignments": [
+        {
+          "index": "AAAGTGCT",
+          "index2": ""
+        },
+        {
+          "index": "GCTACCTG",
+          "index2": ""
+        },
+        {
+          "index": "TGCTGTAA",
+          "index2": ""
+        },
+        {
+          "index": "CTGCAAGC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-B9": {
+      "assignments": [
+        {
+          "index": "CTGTAACT",
+          "index2": ""
+        },
+        {
+          "index": "TCTAGCGA",
+          "index2": ""
+        },
+        {
+          "index": "AGAGTGTG",
+          "index2": ""
+        },
+        {
+          "index": "GACCCTAC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C1": {
+      "assignments": [
+        {
+          "index": "CCACTTAT",
+          "index2": ""
+        },
+        {
+          "index": "AACTGGCG",
+          "index2": ""
+        },
+        {
+          "index": "TTGGCATA",
+          "index2": ""
+        },
+        {
+          "index": "GGTAACGC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C10": {
+      "assignments": [
+        {
+          "index": "TCTCAGTG",
+          "index2": ""
+        },
+        {
+          "index": "GAGACTAT",
+          "index2": ""
+        },
+        {
+          "index": "CGCTTAGC",
+          "index2": ""
+        },
+        {
+          "index": "ATAGGCCA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C11": {
+      "assignments": [
+        {
+          "index": "GAGGATCT",
+          "index2": ""
+        },
+        {
+          "index": "AGACCATA",
+          "index2": ""
+        },
+        {
+          "index": "TCCTGCGC",
+          "index2": ""
+        },
+        {
+          "index": "CTTATGAG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C12": {
+      "assignments": [
+        {
+          "index": "TCTCGTTT",
+          "index2": ""
+        },
+        {
+          "index": "GGCTAGCG",
+          "index2": ""
+        },
+        {
+          "index": "ATGACCGC",
+          "index2": ""
+        },
+        {
+          "index": "CAAGTAAA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C2": {
+      "assignments": [
+        {
+          "index": "CCTAGACC",
+          "index2": ""
+        },
+        {
+          "index": "ATCTCTGT",
+          "index2": ""
+        },
+        {
+          "index": "TAGCTCTA",
+          "index2": ""
+        },
+        {
+          "index": "GGAGAGAG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C3": {
+      "assignments": [
+        {
+          "index": "TCAGCCGT",
+          "index2": ""
+        },
+        {
+          "index": "CAGAGGCC",
+          "index2": ""
+        },
+        {
+          "index": "GGTCAATA",
+          "index2": ""
+        },
+        {
+          "index": "ATCTTTAG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C4": {
+      "assignments": [
+        {
+          "index": "ACAATTCA",
+          "index2": ""
+        },
+        {
+          "index": "TGCGCAGC",
+          "index2": ""
+        },
+        {
+          "index": "CATCACTT",
+          "index2": ""
+        },
+        {
+          "index": "GTGTGGAG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C5": {
+      "assignments": [
+        {
+          "index": "CGACTTGA",
+          "index2": ""
+        },
+        {
+          "index": "TACAGACT",
+          "index2": ""
+        },
+        {
+          "index": "ATTGCGTG",
+          "index2": ""
+        },
+        {
+          "index": "GCGTACAC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C6": {
+      "assignments": [
+        {
+          "index": "ATTACTTC",
+          "index2": ""
+        },
+        {
+          "index": "TGCGAACT",
+          "index2": ""
+        },
+        {
+          "index": "GCATTCGG",
+          "index2": ""
+        },
+        {
+          "index": "CAGCGGAA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C7": {
+      "assignments": [
+        {
+          "index": "GTCTCTCG",
+          "index2": ""
+        },
+        {
+          "index": "AATCTCTC",
+          "index2": ""
+        },
+        {
+          "index": "CGGAGGGA",
+          "index2": ""
+        },
+        {
+          "index": "TCAGAAAT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C8": {
+      "assignments": [
+        {
+          "index": "GTTGAGAA",
+          "index2": ""
+        },
+        {
+          "index": "AGATCTGG",
+          "index2": ""
+        },
+        {
+          "index": "TCGATACT",
+          "index2": ""
+        },
+        {
+          "index": "CACCGCTC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-C9": {
+      "assignments": [
+        {
+          "index": "GCGCAGAA",
+          "index2": ""
+        },
+        {
+          "index": "ATCTTACC",
+          "index2": ""
+        },
+        {
+          "index": "TATGGTGT",
+          "index2": ""
+        },
+        {
+          "index": "CGAACCTG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D1": {
+      "assignments": [
+        {
+          "index": "CACTCGGA",
+          "index2": ""
+        },
+        {
+          "index": "GCTGAATT",
+          "index2": ""
+        },
+        {
+          "index": "TGAAGTAC",
+          "index2": ""
+        },
+        {
+          "index": "ATGCTCCG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D10": {
+      "assignments": [
+        {
+          "index": "CAATACCC",
+          "index2": ""
+        },
+        {
+          "index": "TGTCTATG",
+          "index2": ""
+        },
+        {
+          "index": "ACCACGAA",
+          "index2": ""
+        },
+        {
+          "index": "GTGGGTGT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D11": {
+      "assignments": [
+        {
+          "index": "CTTTGCGG",
+          "index2": ""
+        },
+        {
+          "index": "TGCACAAA",
+          "index2": ""
+        },
+        {
+          "index": "AAGCAGTC",
+          "index2": ""
+        },
+        {
+          "index": "GCAGTTCT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D12": {
+      "assignments": [
+        {
+          "index": "GCACAATG",
+          "index2": ""
+        },
+        {
+          "index": "CTTGGTAC",
+          "index2": ""
+        },
+        {
+          "index": "TGCACCGT",
+          "index2": ""
+        },
+        {
+          "index": "AAGTTGCA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D2": {
+      "assignments": [
+        {
+          "index": "TAACAAGG",
+          "index2": ""
+        },
+        {
+          "index": "GGTTCCTC",
+          "index2": ""
+        },
+        {
+          "index": "ATCATGCA",
+          "index2": ""
+        },
+        {
+          "index": "CCGGGTAT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D3": {
+      "assignments": [
+        {
+          "index": "ACATTACT",
+          "index2": ""
+        },
+        {
+          "index": "TTTGGGTA",
+          "index2": ""
+        },
+        {
+          "index": "CAGCCCAC",
+          "index2": ""
+        },
+        {
+          "index": "GGCAATGG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D4": {
+      "assignments": [
+        {
+          "index": "CCCTAACA",
+          "index2": ""
+        },
+        {
+          "index": "ATTCCGAT",
+          "index2": ""
+        },
+        {
+          "index": "TGGATTGC",
+          "index2": ""
+        },
+        {
+          "index": "GAAGGCTG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D5": {
+      "assignments": [
+        {
+          "index": "CTCGTCAC",
+          "index2": ""
+        },
+        {
+          "index": "GATCAGCA",
+          "index2": ""
+        },
+        {
+          "index": "ACAACAGG",
+          "index2": ""
+        },
+        {
+          "index": "TGGTGTTT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D6": {
+      "assignments": [
+        {
+          "index": "CATGCGAT",
+          "index2": ""
+        },
+        {
+          "index": "TGATATTC",
+          "index2": ""
+        },
+        {
+          "index": "GTGATCGA",
+          "index2": ""
+        },
+        {
+          "index": "ACCCGACG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D7": {
+      "assignments": [
+        {
+          "index": "ATTTGCTA",
+          "index2": ""
+        },
+        {
+          "index": "TAGACACC",
+          "index2": ""
+        },
+        {
+          "index": "CCACAGGG",
+          "index2": ""
+        },
+        {
+          "index": "GGCGTTAT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D8": {
+      "assignments": [
+        {
+          "index": "GCAACAAA",
+          "index2": ""
+        },
+        {
+          "index": "TAGTTGTC",
+          "index2": ""
+        },
+        {
+          "index": "CGCCATCG",
+          "index2": ""
+        },
+        {
+          "index": "ATTGGCGT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-D9": {
+      "assignments": [
+        {
+          "index": "AGGAGATG",
+          "index2": ""
+        },
+        {
+          "index": "GATGTGGT",
+          "index2": ""
+        },
+        {
+          "index": "CTACATCC",
+          "index2": ""
+        },
+        {
+          "index": "TCCTCCAA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E1": {
+      "assignments": [
+        {
+          "index": "TGGTAAAC",
+          "index2": ""
+        },
+        {
+          "index": "GAAAGGGT",
+          "index2": ""
+        },
+        {
+          "index": "ACTGCTCG",
+          "index2": ""
+        },
+        {
+          "index": "CTCCTCTA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E10": {
+      "assignments": [
+        {
+          "index": "AAATGTGC",
+          "index2": ""
+        },
+        {
+          "index": "GGGCAAAT",
+          "index2": ""
+        },
+        {
+          "index": "TCTATCCG",
+          "index2": ""
+        },
+        {
+          "index": "CTCGCGTA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E11": {
+      "assignments": [
+        {
+          "index": "AAGCGCTG",
+          "index2": ""
+        },
+        {
+          "index": "CGTTTGAT",
+          "index2": ""
+        },
+        {
+          "index": "GTAGCACA",
+          "index2": ""
+        },
+        {
+          "index": "TCCAATGC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E12": {
+      "assignments": [
+        {
+          "index": "ACCGGCTC",
+          "index2": ""
+        },
+        {
+          "index": "GAGTTAGT",
+          "index2": ""
+        },
+        {
+          "index": "CGTCCTAG",
+          "index2": ""
+        },
+        {
+          "index": "TTAAAGCA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E2": {
+      "assignments": [
+        {
+          "index": "GTGGTACC",
+          "index2": ""
+        },
+        {
+          "index": "TACTATAG",
+          "index2": ""
+        },
+        {
+          "index": "ACAAGGTA",
+          "index2": ""
+        },
+        {
+          "index": "CGTCCCGT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E3": {
+      "assignments": [
+        {
+          "index": "AGGTATTG",
+          "index2": ""
+        },
+        {
+          "index": "CTCCTAGT",
+          "index2": ""
+        },
+        {
+          "index": "TCAAGGCC",
+          "index2": ""
+        },
+        {
+          "index": "GATGCCAA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E4": {
+      "assignments": [
+        {
+          "index": "TTCGCCCT",
+          "index2": ""
+        },
+        {
+          "index": "GGATGGGC",
+          "index2": ""
+        },
+        {
+          "index": "AATCAATG",
+          "index2": ""
+        },
+        {
+          "index": "CCGATTAA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E5": {
+      "assignments": [
+        {
+          "index": "CATTAGCG",
+          "index2": ""
+        },
+        {
+          "index": "TTCGCTGA",
+          "index2": ""
+        },
+        {
+          "index": "ACAAGAAT",
+          "index2": ""
+        },
+        {
+          "index": "GGGCTCTC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E6": {
+      "assignments": [
+        {
+          "index": "CTGCGGCT",
+          "index2": ""
+        },
+        {
+          "index": "GACTCAAA",
+          "index2": ""
+        },
+        {
+          "index": "AGAAACTC",
+          "index2": ""
+        },
+        {
+          "index": "TCTGTTGG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E7": {
+      "assignments": [
+        {
+          "index": "CACGCCTT",
+          "index2": ""
+        },
+        {
+          "index": "GTATATAG",
+          "index2": ""
+        },
+        {
+          "index": "TCTCGGGC",
+          "index2": ""
+        },
+        {
+          "index": "AGGATACA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E8": {
+      "assignments": [
+        {
+          "index": "ATAGTTAC",
+          "index2": ""
+        },
+        {
+          "index": "TGCTGAGT",
+          "index2": ""
+        },
+        {
+          "index": "CCTACGTA",
+          "index2": ""
+        },
+        {
+          "index": "GAGCACCG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-E9": {
+      "assignments": [
+        {
+          "index": "TTGTTTCC",
+          "index2": ""
+        },
+        {
+          "index": "GGAGGAGG",
+          "index2": ""
+        },
+        {
+          "index": "CCTAACAA",
+          "index2": ""
+        },
+        {
+          "index": "AACCCGTT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F1": {
+      "assignments": [
+        {
+          "index": "GTTGCAGC",
+          "index2": ""
+        },
+        {
+          "index": "TGGAATTA",
+          "index2": ""
+        },
+        {
+          "index": "CAATGGAG",
+          "index2": ""
+        },
+        {
+          "index": "ACCCTCCT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F10": {
+      "assignments": [
+        {
+          "index": "GCTTGGCT",
+          "index2": ""
+        },
+        {
+          "index": "AAACAAAC",
+          "index2": ""
+        },
+        {
+          "index": "CGGGCTTA",
+          "index2": ""
+        },
+        {
+          "index": "TTCATCGG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F11": {
+      "assignments": [
+        {
+          "index": "GCGAGAGT",
+          "index2": ""
+        },
+        {
+          "index": "TACGTTCA",
+          "index2": ""
+        },
+        {
+          "index": "AGTCCCAC",
+          "index2": ""
+        },
+        {
+          "index": "CTATAGTG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F12": {
+      "assignments": [
+        {
+          "index": "TGATGCAT",
+          "index2": ""
+        },
+        {
+          "index": "GCTACTGA",
+          "index2": ""
+        },
+        {
+          "index": "CACCTGCC",
+          "index2": ""
+        },
+        {
+          "index": "ATGGAATG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F2": {
+      "assignments": [
+        {
+          "index": "TTTACATG",
+          "index2": ""
+        },
+        {
+          "index": "CGCGATAC",
+          "index2": ""
+        },
+        {
+          "index": "ACGCGGGT",
+          "index2": ""
+        },
+        {
+          "index": "GAATTCCA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F3": {
+      "assignments": [
+        {
+          "index": "TTCAGGTG",
+          "index2": ""
+        },
+        {
+          "index": "ACGGACAT",
+          "index2": ""
+        },
+        {
+          "index": "GATCTTGA",
+          "index2": ""
+        },
+        {
+          "index": "CGATCACC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F4": {
+      "assignments": [
+        {
+          "index": "CCCAATAG",
+          "index2": ""
+        },
+        {
+          "index": "GTGTCGCT",
+          "index2": ""
+        },
+        {
+          "index": "AGAGTCGC",
+          "index2": ""
+        },
+        {
+          "index": "TATCGATA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F5": {
+      "assignments": [
+        {
+          "index": "GACTACGT",
+          "index2": ""
+        },
+        {
+          "index": "CTAGCGAG",
+          "index2": ""
+        },
+        {
+          "index": "TCTATATC",
+          "index2": ""
+        },
+        {
+          "index": "AGGCGTCA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F6": {
+      "assignments": [
+        {
+          "index": "CGGAGCAC",
+          "index2": ""
+        },
+        {
+          "index": "GACCTATT",
+          "index2": ""
+        },
+        {
+          "index": "ACTTAGGA",
+          "index2": ""
+        },
+        {
+          "index": "TTAGCTCG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F7": {
+      "assignments": [
+        {
+          "index": "CGTGCAGA",
+          "index2": ""
+        },
+        {
+          "index": "AACAAGAT",
+          "index2": ""
+        },
+        {
+          "index": "TCGCTTCG",
+          "index2": ""
+        },
+        {
+          "index": "GTATGCTC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F8": {
+      "assignments": [
+        {
+          "index": "CATGAACA",
+          "index2": ""
+        },
+        {
+          "index": "TCACTCGC",
+          "index2": ""
+        },
+        {
+          "index": "AGCTGGAT",
+          "index2": ""
+        },
+        {
+          "index": "GTGACTTG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-F9": {
+      "assignments": [
+        {
+          "index": "CAAGCTCC",
+          "index2": ""
+        },
+        {
+          "index": "GTTCACTG",
+          "index2": ""
+        },
+        {
+          "index": "TCGTGAAA",
+          "index2": ""
+        },
+        {
+          "index": "AGCATGGT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G1": {
+      "assignments": [
+        {
+          "index": "ATGAATCT",
+          "index2": ""
+        },
+        {
+          "index": "GATCTCAG",
+          "index2": ""
+        },
+        {
+          "index": "CCAGGAGC",
+          "index2": ""
+        },
+        {
+          "index": "TGCTCGTA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G10": {
+      "assignments": [
+        {
+          "index": "TCGCCAGC",
+          "index2": ""
+        },
+        {
+          "index": "AATGTTAG",
+          "index2": ""
+        },
+        {
+          "index": "CGATAGCT",
+          "index2": ""
+        },
+        {
+          "index": "GTCAGCTA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G11": {
+      "assignments": [
+        {
+          "index": "TTATCGTT",
+          "index2": ""
+        },
+        {
+          "index": "AGCAGAGC",
+          "index2": ""
+        },
+        {
+          "index": "CATCTCCA",
+          "index2": ""
+        },
+        {
+          "index": "GCGGATAG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G12": {
+      "assignments": [
+        {
+          "index": "ATTCTAAG",
+          "index2": ""
+        },
+        {
+          "index": "CCCGATTA",
+          "index2": ""
+        },
+        {
+          "index": "TGGAGGCT",
+          "index2": ""
+        },
+        {
+          "index": "GAATCCGC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G2": {
+      "assignments": [
+        {
+          "index": "TGATTCTA",
+          "index2": ""
+        },
+        {
+          "index": "ACTAGGAG",
+          "index2": ""
+        },
+        {
+          "index": "CAGCCACT",
+          "index2": ""
+        },
+        {
+          "index": "GTCGATGC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G3": {
+      "assignments": [
+        {
+          "index": "CCTCATTC",
+          "index2": ""
+        },
+        {
+          "index": "AGCATCCG",
+          "index2": ""
+        },
+        {
+          "index": "GTGGCAAT",
+          "index2": ""
+        },
+        {
+          "index": "TAATGGGA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G4": {
+      "assignments": [
+        {
+          "index": "GCGATGTG",
+          "index2": ""
+        },
+        {
+          "index": "AGATACAA",
+          "index2": ""
+        },
+        {
+          "index": "TTTCCACT",
+          "index2": ""
+        },
+        {
+          "index": "CACGGTGC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G5": {
+      "assignments": [
+        {
+          "index": "GAGCAAGA",
+          "index2": ""
+        },
+        {
+          "index": "TCTGTGAT",
+          "index2": ""
+        },
+        {
+          "index": "CGCAGTTC",
+          "index2": ""
+        },
+        {
+          "index": "ATATCCCG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G6": {
+      "assignments": [
+        {
+          "index": "CTGACGCG",
+          "index2": ""
+        },
+        {
+          "index": "GGTCGTAC",
+          "index2": ""
+        },
+        {
+          "index": "TCCTTCTT",
+          "index2": ""
+        },
+        {
+          "index": "AAAGAAGA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G7": {
+      "assignments": [
+        {
+          "index": "GGTATGCA",
+          "index2": ""
+        },
+        {
+          "index": "CTCGAAAT",
+          "index2": ""
+        },
+        {
+          "index": "ACACCTTC",
+          "index2": ""
+        },
+        {
+          "index": "TAGTGCGG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G8": {
+      "assignments": [
+        {
+          "index": "TATGAGCT",
+          "index2": ""
+        },
+        {
+          "index": "CCGATAGC",
+          "index2": ""
+        },
+        {
+          "index": "ATACCCAA",
+          "index2": ""
+        },
+        {
+          "index": "GGCTGTTG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-G9": {
+      "assignments": [
+        {
+          "index": "TAGGACGT",
+          "index2": ""
+        },
+        {
+          "index": "ATCCCACA",
+          "index2": ""
+        },
+        {
+          "index": "GGAATGTC",
+          "index2": ""
+        },
+        {
+          "index": "CCTTGTAG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H1": {
+      "assignments": [
+        {
+          "index": "GTATGTCA",
+          "index2": ""
+        },
+        {
+          "index": "TGTCAGAC",
+          "index2": ""
+        },
+        {
+          "index": "CACGTCGG",
+          "index2": ""
+        },
+        {
+          "index": "ACGACATT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H10": {
+      "assignments": [
+        {
+          "index": "GTAATTGC",
+          "index2": ""
+        },
+        {
+          "index": "AGTCGCTT",
+          "index2": ""
+        },
+        {
+          "index": "CACGAGAA",
+          "index2": ""
+        },
+        {
+          "index": "TCGTCACG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H11": {
+      "assignments": [
+        {
+          "index": "GGCGAGTA",
+          "index2": ""
+        },
+        {
+          "index": "ACTTCTAT",
+          "index2": ""
+        },
+        {
+          "index": "CAAATACG",
+          "index2": ""
+        },
+        {
+          "index": "TTGCGCGC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H12": {
+      "assignments": [
+        {
+          "index": "GACAGCAT",
+          "index2": ""
+        },
+        {
+          "index": "TTTGTACA",
+          "index2": ""
+        },
+        {
+          "index": "AGGCCGTG",
+          "index2": ""
+        },
+        {
+          "index": "CCATATGC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H2": {
+      "assignments": [
+        {
+          "index": "TAATGACC",
+          "index2": ""
+        },
+        {
+          "index": "ATGCCTTA",
+          "index2": ""
+        },
+        {
+          "index": "GCCGAGAT",
+          "index2": ""
+        },
+        {
+          "index": "CGTATCGG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H3": {
+      "assignments": [
+        {
+          "index": "CCAAGATG",
+          "index2": ""
+        },
+        {
+          "index": "AGGCCCGA",
+          "index2": ""
+        },
+        {
+          "index": "TACGTGAC",
+          "index2": ""
+        },
+        {
+          "index": "GTTTATCT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H4": {
+      "assignments": [
+        {
+          "index": "GCCATTCC",
+          "index2": ""
+        },
+        {
+          "index": "CAAGAATT",
+          "index2": ""
+        },
+        {
+          "index": "TTGCCGGA",
+          "index2": ""
+        },
+        {
+          "index": "AGTTGCAG",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H5": {
+      "assignments": [
+        {
+          "index": "CCACTACA",
+          "index2": ""
+        },
+        {
+          "index": "GATTCTGG",
+          "index2": ""
+        },
+        {
+          "index": "TGCGGCTT",
+          "index2": ""
+        },
+        {
+          "index": "ATGAAGAC",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H6": {
+      "assignments": [
+        {
+          "index": "TAGGATAA",
+          "index2": ""
+        },
+        {
+          "index": "CCTTTGTC",
+          "index2": ""
+        },
+        {
+          "index": "GTACGCGG",
+          "index2": ""
+        },
+        {
+          "index": "AGCACACT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H7": {
+      "assignments": [
+        {
+          "index": "AGCTATCA",
+          "index2": ""
+        },
+        {
+          "index": "CATATAAC",
+          "index2": ""
+        },
+        {
+          "index": "TCAGGGTG",
+          "index2": ""
+        },
+        {
+          "index": "GTGCCCGT",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H8": {
+      "assignments": [
+        {
+          "index": "TTGTTGAT",
+          "index2": ""
+        },
+        {
+          "index": "GCTCAACC",
+          "index2": ""
+        },
+        {
+          "index": "CAAAGTGG",
+          "index2": ""
+        },
+        {
+          "index": "AGCGCCTA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-GA-H9": {
+      "assignments": [
+        {
+          "index": "ACACTGTT",
+          "index2": ""
+        },
+        {
+          "index": "CAGGATGG",
+          "index2": ""
+        },
+        {
+          "index": "GGCTGAAC",
+          "index2": ""
+        },
+        {
+          "index": "TTTACCCA",
+          "index2": ""
+        }
+      ],
+      "kind": "single"
+    },
+    "SI-TT-A1": {
+      "assignments": [
+        {
+          "index": "GTAACATGCG",
+          "index2": "AGTGTTACCT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-A10": {
+      "assignments": [
+        {
+          "index": "CGTGACATGC",
+          "index2": "ATGGTCTAAA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-A11": {
+      "assignments": [
+        {
+          "index": "CGGAACCCAA",
+          "index2": "GATTCGAGGA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-A12": {
+      "assignments": [
+        {
+          "index": "CACCGCACCA",
+          "index2": "GACTGTCAAT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-A2": {
+      "assignments": [
+        {
+          "index": "GTGGATCAAA",
+          "index2": "GCCAACCCTG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-A3": {
+      "assignments": [
+        {
+          "index": "CACTACGAAA",
+          "index2": "TTAGACTGAT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-A4": {
+      "assignments": [
+        {
+          "index": "CTCTAGCGAG",
+          "index2": "TATCTTCATC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-A5": {
+      "assignments": [
+        {
+          "index": "GTAGCCCTGT",
+          "index2": "GAGCATCTAT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-A6": {
+      "assignments": [
+        {
+          "index": "TAACGCGTGA",
+          "index2": "CCCTAACTTC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-A7": {
+      "assignments": [
+        {
+          "index": "TCCCAAGGGT",
+          "index2": "TACTACCTTT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-A8": {
+      "assignments": [
+        {
+          "index": "CGAAGTATAC",
+          "index2": "GAACTTGGAG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-A9": {
+      "assignments": [
+        {
+          "index": "AAGTGGAGAG",
+          "index2": "TTCCTGTTAC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B1": {
+      "assignments": [
+        {
+          "index": "ACAGTAACTA",
+          "index2": "ACAGTTCGTT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B10": {
+      "assignments": [
+        {
+          "index": "GCCCGATGGA",
+          "index2": "AATCGTCTAG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B11": {
+      "assignments": [
+        {
+          "index": "TCTTACTTGC",
+          "index2": "TGACCTCTAG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B12": {
+      "assignments": [
+        {
+          "index": "CGTCAAGGGC",
+          "index2": "TAGGTCACTC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B2": {
+      "assignments": [
+        {
+          "index": "TCTACCATTT",
+          "index2": "CGGGAGAGTC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B3": {
+      "assignments": [
+        {
+          "index": "CACGGTGAAT",
+          "index2": "GTTCGTCACA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B4": {
+      "assignments": [
+        {
+          "index": "GTAGACGAAA",
+          "index2": "CTAGTGTGGT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B5": {
+      "assignments": [
+        {
+          "index": "TCGGCTCTAC",
+          "index2": "CCGATGGTCT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B6": {
+      "assignments": [
+        {
+          "index": "AATGCCATGA",
+          "index2": "TACGTAATGC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B7": {
+      "assignments": [
+        {
+          "index": "GCCTTCGGTA",
+          "index2": "CCAACGATTT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B8": {
+      "assignments": [
+        {
+          "index": "GCACTGAGAA",
+          "index2": "TATGCGTGAA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-B9": {
+      "assignments": [
+        {
+          "index": "TATTGAGGCA",
+          "index2": "CAGGTAAGTG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C1": {
+      "assignments": [
+        {
+          "index": "TGCGCGGTTT",
+          "index2": "CAAGGATAAA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C10": {
+      "assignments": [
+        {
+          "index": "AGAATGGTTT",
+          "index2": "GAGGGTGGGA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C11": {
+      "assignments": [
+        {
+          "index": "ATGGGTGAAA",
+          "index2": "CTTGGGAATT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C12": {
+      "assignments": [
+        {
+          "index": "TCGTCAAGAT",
+          "index2": "GCAACTCAGG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C2": {
+      "assignments": [
+        {
+          "index": "CAATCCCGAC",
+          "index2": "CCGAGTAGTA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C3": {
+      "assignments": [
+        {
+          "index": "ATGGCTTGTG",
+          "index2": "GAATGTTGTG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C4": {
+      "assignments": [
+        {
+          "index": "TTCTCGATGA",
+          "index2": "TGTCGGGCAC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C5": {
+      "assignments": [
+        {
+          "index": "TCCGTTGGAT",
+          "index2": "ACGTTCTCGC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C6": {
+      "assignments": [
+        {
+          "index": "ACGACTACCA",
+          "index2": "ACGACCCTAA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C7": {
+      "assignments": [
+        {
+          "index": "CGCGCACTTA",
+          "index2": "CCTGTATTCT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C8": {
+      "assignments": [
+        {
+          "index": "GCTACAAAGC",
+          "index2": "CACGTGCCCT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-C9": {
+      "assignments": [
+        {
+          "index": "TATCAGCCTA",
+          "index2": "GTTTCGTCCT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D1": {
+      "assignments": [
+        {
+          "index": "TGCAATGTTC",
+          "index2": "GCTTGTCGAA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D10": {
+      "assignments": [
+        {
+          "index": "ATGCGAATGG",
+          "index2": "ACAAGTGTCG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D11": {
+      "assignments": [
+        {
+          "index": "CGAATATTCG",
+          "index2": "CTGGAAGCAA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D12": {
+      "assignments": [
+        {
+          "index": "GAATTGGTTA",
+          "index2": "ACTCTAGTAG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D2": {
+      "assignments": [
+        {
+          "index": "TTAATACGCG",
+          "index2": "CACCTCGGGT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D3": {
+      "assignments": [
+        {
+          "index": "CCTTCTAGAG",
+          "index2": "AATACAACGA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D4": {
+      "assignments": [
+        {
+          "index": "GCAGTATAGG",
+          "index2": "TTCCGTGCAC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D5": {
+      "assignments": [
+        {
+          "index": "TGGTTCGGGT",
+          "index2": "GTGGCAGGAG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D6": {
+      "assignments": [
+        {
+          "index": "CCCAGCTTCT",
+          "index2": "GACACCAAAC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D7": {
+      "assignments": [
+        {
+          "index": "CCTGTCAGGG",
+          "index2": "AGCCCGTAAC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D8": {
+      "assignments": [
+        {
+          "index": "CGCTGAAATC",
+          "index2": "AGGTGTCTGC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-D9": {
+      "assignments": [
+        {
+          "index": "TGGTCCCAAG",
+          "index2": "CCTCTGGCGT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E1": {
+      "assignments": [
+        {
+          "index": "TTATTCGAGG",
+          "index2": "CTGTCCTGCT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E10": {
+      "assignments": [
+        {
+          "index": "CACAATCCCA",
+          "index2": "ATATCCACAA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E11": {
+      "assignments": [
+        {
+          "index": "TCCGGGACAA",
+          "index2": "GTGAATGCCA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E12": {
+      "assignments": [
+        {
+          "index": "CGTCCACCTG",
+          "index2": "CATTCATGAC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E2": {
+      "assignments": [
+        {
+          "index": "ATGGAGGGAG",
+          "index2": "ATAACCCATT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E3": {
+      "assignments": [
+        {
+          "index": "ACCAGACAAC",
+          "index2": "AGGAACTAGG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E4": {
+      "assignments": [
+        {
+          "index": "AACCACGCAT",
+          "index2": "ATTCAGGTTA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E5": {
+      "assignments": [
+        {
+          "index": "CGCGGTAGGT",
+          "index2": "CAGGATGTTG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E6": {
+      "assignments": [
+        {
+          "index": "TTGAGAGTCA",
+          "index2": "AACCTGGTAG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E7": {
+      "assignments": [
+        {
+          "index": "GTCCTTCGGC",
+          "index2": "TCATGCACAG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E8": {
+      "assignments": [
+        {
+          "index": "GAGCAAGGGC",
+          "index2": "ATTGACTTGG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-E9": {
+      "assignments": [
+        {
+          "index": "TGTCCCAACG",
+          "index2": "TCGATGTCCA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F1": {
+      "assignments": [
+        {
+          "index": "AAGATTGGAT",
+          "index2": "AGCGGGATTT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F10": {
+      "assignments": [
+        {
+          "index": "CCGGCAACTG",
+          "index2": "CGGTTTAACA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F11": {
+      "assignments": [
+        {
+          "index": "TTCACACCTT",
+          "index2": "TAGTGTACAC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F12": {
+      "assignments": [
+        {
+          "index": "GAGACGCACG",
+          "index2": "CTATGAACAT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F2": {
+      "assignments": [
+        {
+          "index": "AAGGGCCGCA",
+          "index2": "CTGATTCCTC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F3": {
+      "assignments": [
+        {
+          "index": "GAGAGGATAT",
+          "index2": "TTGAAATGGG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F4": {
+      "assignments": [
+        {
+          "index": "CCCACCACAA",
+          "index2": "ACCTCCGCTT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F5": {
+      "assignments": [
+        {
+          "index": "CGGCTGGATG",
+          "index2": "TGATAAGCAC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F6": {
+      "assignments": [
+        {
+          "index": "TTGCCCGTGC",
+          "index2": "GCGTGAGATT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F7": {
+      "assignments": [
+        {
+          "index": "AATGTATCCA",
+          "index2": "AATGAGCTTA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F8": {
+      "assignments": [
+        {
+          "index": "CTCCTTTAGA",
+          "index2": "GACATAGCTC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-F9": {
+      "assignments": [
+        {
+          "index": "GTCCCATCAA",
+          "index2": "CGAACGTGAC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G1": {
+      "assignments": [
+        {
+          "index": "TGTAGTCATT",
+          "index2": "CTTGATCGTA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G10": {
+      "assignments": [
+        {
+          "index": "ACTTTACGTG",
+          "index2": "TGAACGCCCT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G11": {
+      "assignments": [
+        {
+          "index": "GATAACCTGC",
+          "index2": "CATTAGAAAC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G12": {
+      "assignments": [
+        {
+          "index": "CTTGCATAAA",
+          "index2": "ATCAGGGCTT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G2": {
+      "assignments": [
+        {
+          "index": "CATGTGGGTT",
+          "index2": "GATTCCTTTA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G3": {
+      "assignments": [
+        {
+          "index": "ATGACGTCGC",
+          "index2": "AGGTCAGGAT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G4": {
+      "assignments": [
+        {
+          "index": "GCGCTTATGG",
+          "index2": "GCCTGGCTAG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G5": {
+      "assignments": [
+        {
+          "index": "ATAGGGCGAG",
+          "index2": "TGCATCGAGT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G6": {
+      "assignments": [
+        {
+          "index": "GCGGGTAAGT",
+          "index2": "TAGCACTAAG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G7": {
+      "assignments": [
+        {
+          "index": "GTTTCACGAT",
+          "index2": "TTCGGCCAAA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G8": {
+      "assignments": [
+        {
+          "index": "TAAGCAACTG",
+          "index2": "CTATACTCAA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-G9": {
+      "assignments": [
+        {
+          "index": "CCGGAGGAAG",
+          "index2": "TGCGGATGTT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H1": {
+      "assignments": [
+        {
+          "index": "ACAATGTGAA",
+          "index2": "CGTACCGTTA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H10": {
+      "assignments": [
+        {
+          "index": "TTATCTAGGG",
+          "index2": "AAAGGCTCTA"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H11": {
+      "assignments": [
+        {
+          "index": "ACAATCGATC",
+          "index2": "TGACGGAATG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H12": {
+      "assignments": [
+        {
+          "index": "TGATGATTCA",
+          "index2": "GTAGGAGTCG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H2": {
+      "assignments": [
+        {
+          "index": "TAGCATAGTG",
+          "index2": "CGGCTCTGTC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H3": {
+      "assignments": [
+        {
+          "index": "CCCGTTCTCG",
+          "index2": "GACGGATTGG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H4": {
+      "assignments": [
+        {
+          "index": "AGTTTCCTGG",
+          "index2": "TGCCACACAG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H5": {
+      "assignments": [
+        {
+          "index": "AGCAAGAAGC",
+          "index2": "TTGTGTTTCT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H6": {
+      "assignments": [
+        {
+          "index": "CCTATCCTCG",
+          "index2": "GAATACTAAC"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H7": {
+      "assignments": [
+        {
+          "index": "ACCTCGAGCT",
+          "index2": "TGTGTTCGAT"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H8": {
+      "assignments": [
+        {
+          "index": "ATAAGGATAC",
+          "index2": "ATAGATAGGG"
+        }
+      ],
+      "kind": "dual"
+    },
+    "SI-TT-H9": {
+      "assignments": [
+        {
+          "index": "AGAACTTAGA",
+          "index2": "CGAGTCCTTT"
+        }
+      ],
+      "kind": "dual"
+    }
+  },
+  "orientation": "i7-forward/i5-forward",
+  "schema_version": 1,
+  "sources": [
+    {
+      "sha256": "02425196bb1c65eb835e6d01411a4dc66ea6bf2b44db5162a56f9aef045c3722",
+      "url": "https://cdn.10xgenomics.com/raw/upload/v1655151897/support/in-line%20documents/Dual_Index_Kit_TT_Set_A.csv"
+    },
+    {
+      "sha256": "5904b1c5fafc26b1c98b91c1eb182bfcab599363d6c541d1467376c18a62bb60",
+      "url": "https://cdn.10xgenomics.com/raw/upload/v1655155613/support/in-line%20documents/chromium-shared-sample-indexes-plate.csv"
+    },
+    {
+      "sha256": "5904b1c5fafc26b1c98b91c1eb182bfcab599363d6c541d1467376c18a62bb60",
+      "url": "https://cdn.10xgenomics.com/raw/upload/v1655155615/support/in-line%20documents/Single_Index_Kit_T_Set_A.csv"
+    }
+  ],
+  "version": "2026-10-22"
+}
