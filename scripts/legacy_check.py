@@ -23,6 +23,10 @@ Lexogen SENSE Total RNA-Seq Library Prep Kit (w/RiboCop rRNA Depletion Kit V1.2)
 
 def main():
     assert getattr(sys, "_gcf_offline_guard", False), "Run with the documented offline guard"
+    from configmaker.indexes import load_catalogue, normalize_indexes
+    assert len(load_catalogue()['entries']) == 192
+    assert len(normalize_indexes('SI-GA-A1')) == 4
+    assert len(normalize_indexes('SI-TT-A1')) == 1
     if not (ROOT / ".tests/configmaker").is_dir():
         raise SystemExit("Legacy matrix requires Git-only historical inputs; sdist supports check tests/all")
     work = Path(sys.argv[1]).resolve()

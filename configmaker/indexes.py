@@ -9,7 +9,11 @@ import copy
 import hashlib
 import json
 import re
-from importlib.resources import files
+try:
+    from importlib.resources import files
+except ImportError:  # Python 3.8 remains an installed-command comparator.
+    from importlib.resources import read_binary
+    files = None
 
 INDEX_API_VERSION = 1
 
@@ -25,7 +29,8 @@ def reverse_complement(sequence):
 
 
 def load_catalogue():
-    content = files('configmaker').joinpath('tenx_indexes.json').read_bytes()
+    content = (files('configmaker').joinpath('tenx_indexes.json').read_bytes()
+               if files is not None else read_binary('configmaker', 'tenx_indexes.json'))
     catalogue = json.loads(content)
     if catalogue.get('schema_version') != 1 or catalogue.get('orientation') != 'i7-forward/i5-forward':
         raise IndexNormalizationError('index.catalogue_invalid', 'Unsupported local 10x index catalogue schema/orientation.')
