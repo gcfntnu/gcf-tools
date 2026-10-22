@@ -60,3 +60,7 @@ See [BFQ #156](https://github.com/gcfntnu/gcf-bfq/issues/156) and
 [workflows #208](https://github.com/gcfntnu/gcf-workflows/issues/208) for coordinated
 integration. Offline unit/CLI/distribution checks do not establish scientific
 compatibility or authorize retirement of a legacy converter.
+
+This API and bundled catalogue first ship in `gcf-tools 0.4.0`. BFQ's coordinated
+change declares that minimum version; an older installation must not be mistaken
+for a compatible dependency merely because metadata validation API 1 exists.
