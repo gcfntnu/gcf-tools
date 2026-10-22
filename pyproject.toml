@@ -31,4 +31,4 @@ include-package-data = false
 version = {attr = "configmaker.__version__"}
 
 [tool.setuptools.package-data]
-descriptors = ["*.yaml", "*.pkl"]
+descriptors = ["*.yaml", "*.pkl", "*.json"]

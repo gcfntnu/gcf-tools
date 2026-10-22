@@ -89,8 +89,8 @@ def cli(source, work):
 def assert_outputs(source, work, samples=SAMPLES):
     config = yaml.safe_load((work / "config.yaml").read_text())
     assert config["project_id"] == [PROJECT]
-    assert config["experiment_title"] == [PROJECT]
-    assert config["organism"] == "Homo sapiens"
+    assert config["experiment_title"] == PROJECT
+    assert config["organism"] == "homo_sapiens"
     assert config["read_geometry"] == [75, 150]
     assert all(type(length) is int for length in config["read_geometry"])
     assert config["workflow"] == "rnaseq"
@@ -133,9 +133,9 @@ def assert_outputs(source, work, samples=SAMPLES):
             key = f"R{mate}"
             relative = f"{RUN}/{PROJECT}/{sample}_{key}.fastq.gz"
             assert entry[key] == relative
-            assert row[key] == key
+            assert row[key] in pep["sample_modifiers"]["derive"]["sources"]
             # Evaluate the published PEP source template independently of exporter.
-            assert pep["sample_modifiers"]["derive"]["sources"][key].format(**row) == relative
+            assert pep["sample_modifiers"]["derive"]["sources"][row[key]].format(**row) == relative
             link = work / config["fastq_dir"] / relative
             original = source / relative
             assert link.is_symlink() and link.is_file()
@@ -154,6 +154,20 @@ def assert_outputs(source, work, samples=SAMPLES):
         "schema_version": 1, "kind": "fastq_discovery", "sample_count": len(samples),
         "planned_sample_count": 3, "missing_sample_ids": sorted(set(SAMPLES) - set(samples)),
         "samples": [{"sample_id": sample, "flowcells": [RUN]} for sample in samples],
+        "project_ids": [PROJECT], "read_geometry": [75, 150], "run_read_geometry": [75, 150],
+        "metadata_inputs": [
+            {"kind": kind, "path": str(source / RUN / filename),
+             "sha256": hashlib.sha256((source / RUN / filename).read_bytes()).hexdigest(),
+             "size_bytes": (source / RUN / filename).stat().st_size}
+            for kind, filename in (("samplesheet", "SampleSheet.csv"),
+                                   ("submission_form", "Sample-Submission-Form.xlsx"))
+        ],
+        "samplesheet_options": {"Libprep": "Synthetic", "Organism": "Homo sapiens"},
+        "libprep_selection": {
+            "source": str(work / "src/gcf-workflows/libprep.config"),
+            "sha256": hashlib.sha256(kit).hexdigest(), "kit": "Synthetic", "entry": "Synthetic PE",
+            "read_geometry": [75, 150], "workflow": "rnaseq",
+        },
     }
     assert f"FASTQ discovery: {len(samples)} of 3 planned" in (work / ".configmaker.log").read_text()
 
@@ -161,6 +175,20 @@ def assert_outputs(source, work, samples=SAMPLES):
 def test_paired_example_installed_cli_default_pep(example):
     source, work = example
     assert_inputs(source)
+    before = contents(source)
+    result = cli(source, work)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert_outputs(source, work)
+    assert contents(source) == before
+
+
+@pytest.mark.parametrize("qualified", [False, True])
+def test_canonical_legacy_pair_ignores_unselected_metadata_backups(example, qualified):
+    source, work = example
+    run = source / RUN
+    sheet = run / ((PROJECT + "_" if qualified else "") + "SampleSheet_alternate.csv")
+    sheet.write_text("An unrelated historical backup,not selected\n")
+    (run / "Sample-Submission-Form_backup.xlsx").write_bytes(b"Unrelated backup, not selected")
     before = contents(source)
     result = cli(source, work)
     assert result.returncode == 0, result.stdout + result.stderr

@@ -17,7 +17,7 @@ it does not silently replace the original comparator or the synthetic local stub
 | `configmaker/configmaker.py` | CLI parsing, project/FASTQ discovery, metadata orchestration, links, config/Snakefile/PEP initialization and discovery summaries; start with `main()` |
 | `configmaker/validation.py`, `columns.py` | Metadata-only validation, exact identifiers, worksheet joins and structured findings; [input contract](input-validation.md) |
 | `configmaker/libprep.py` | Immutable source bytes, kit/read-layout selection and Stats.json geometry; [libprep contract](libprep-config.md) |
-| `descriptors/` | Header descriptors, defaults, metadata conversion and fuzzy organism/reference matching; packaged `default_descriptors.yaml` and `ens_org.pkl` influence generated values |
+| `descriptors/` | Header descriptors, defaults, metadata conversion and fuzzy organism/reference matching; packaged `default_descriptors.yaml` and the [offline JSON organism inventory](organisms.md) influence generated values; the legacy pickle remains a compatibility artifact |
 | `peppy_support/peppy_utils.py` | Translates config into PEP 2.0.0 YAML, sample and optional subsample CSVs; it writes PEP without requiring the `peppy` package |
 | `testdata/create_testdata.py`, `_generation.py`, `parse_cells.py` | Installed producer CLI, shared paired validation/safe publication, and explicit Parse cell selection; [supported profiles](testdata.md#generate-and-verify-the-supported-profiles) |
 | `tests/`, `.tests/configmaker/` | API/subprocess tests and older fixture inputs; not interchangeable with the testdata producer or proof of valid paired read content |

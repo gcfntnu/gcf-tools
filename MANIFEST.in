@@ -3,7 +3,7 @@ include pyproject.toml setup.py MANIFEST.in
 recursive-include configmaker *.py
 recursive-include testdata *.py
 recursive-include peppy_support *.py
-recursive-include descriptors *.py *.yaml *.pkl
+recursive-include descriptors *.py *.yaml *.pkl *.json
 recursive-include scripts *.py
 recursive-include tests *.py
 recursive-include tests/fixtures/paired *

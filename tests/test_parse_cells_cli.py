@@ -53,7 +53,7 @@ def test_parse_installed_workers_then_normal_pep(tmp_path):
     table = list(csv.DictReader((work / "pep/sample_table.csv").open()))
     for row in table:
         for mate in ("R1", "R2"):
-            relative = pep["sample_modifiers"]["derive"]["sources"][mate].format(**row)
+            relative = pep["sample_modifiers"]["derive"]["sources"][row[mate]].format(**row)
             actual = work / config["fastq_dir"] / relative
             assert actual.is_file()
             assert config["samples"][row["sample_name"]][mate] == relative

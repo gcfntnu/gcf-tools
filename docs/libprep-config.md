@@ -59,6 +59,12 @@ a path or a `LibprepConfig` snapshot.
 - Geometry comes from non-index reads in `Stats/Stats.json`, checked across all
   lanes and input flowcells. One positive length means SE; two mean PE. A missing
   or inconsistent geometry is an error, never an arbitrary SE/PE guess.
+  If that legacy file is absent, physical `RunInfo.xml` read definitions supply
+  the geometry. This supports native v2 conversion output containing `Reports/`
+  without legacy Stats. XML indexed flags must be Y/N, all cycle counts must be
+  positive, and one or two biological reads are required. Existing Stats remains
+  authoritative; malformed, unreadable or dangling-symlink Stats never falls
+  back and hides a bad input. RunInfo order is retained, as with Stats.
 - Kit matching ignores outer whitespace and letter case. Prefer `<kit> SE` or
   `<kit> PE` for the actual geometry, then an exact unsuffixed entry. A supplied
   suffix or configured `library_layout`/`reads` value must agree with the geometry.
@@ -77,7 +83,7 @@ This API/CLI was introduced for `gcfntnu/gcf-bfq#123`. Shared metadata validatio
 from `gcf-tools#56` / `gcf-bfq#121` has since landed. At the
 [inspected BFQ baseline](architecture.md), BFQ requires `gcf-tools>=0.3.0` and
 validation API 1, loads libprep configuration before demultiplexing, and selects
-the geometry-specific entry once Stats.json is available. Both BFQ's Python
+the geometry-specific entry once physical run geometry is available. Both BFQ's Python
 environment and the interpreter running `configmaker.py` must contain compatible
 gcf-tools; BFQ checks the exact validator version at that subprocess boundary.
 
@@ -95,3 +101,24 @@ Use the [contributor test tiers](../CONTRIBUTING.md#available-checks) for API an
 real standalone CLI checks. The CLI
 checks initialize temporary projects using the repository's small input fixture;
 they do not launch Snakemake or require an `/opt` installation.
+
+## Project-paired effective layout (#91)
+
+One physical flowcell may demultiplex projects with different biological read
+layouts and kit/workflow entries. The additive project-pair validator selects
+all entries from the same supplied `LibprepConfig` snapshot and hashes those
+captured bytes in its report. Each entry uses that project's `Libprep` and
+normalized effective Y cycles, independent of other projects' metadata/options.
+Physical RunInfo cycles validate masks; this does not inspect FASTQ contents.
+
+For a BFQ-selected exact pair, pass the existing `-s`/`-S` options and
+`--effective-read-geometry` to standalone configmaker along with the existing
+snapshot/hash/entry assertions. `--expected-read-geometry` asserts the effective
+layout used by selection. Configmaker still reads/validates physical Stats (or
+RunInfo when Stats is absent) and
+records it separately as `run_read_geometry`; the workflow-facing
+`read_geometry` is the effective project layout. Without the additive option or
+project-pair derivation, legacy Stats selection remains unchanged. Both layouts and the
+selected snapshot/entry are included in generated configuration, PEP and analysis
+summary. A different kit name alone does not imply a different demultiplexer
+pass; BFQ owns compatible backend/settings reconciliation and execution.

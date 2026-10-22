@@ -32,14 +32,14 @@ Source: `configmaker/configmaker.py:parse_args`, `check_input`, `main`.
 | `-S`, `--sample-submission-form` | Discover `Sample-Submission-Form.xlsx`; explicit single file replaces that list |
 | `-o`, `--output` | `config.yaml`; changes YAML destination, not the project working directory |
 | `--subsample` | Unset → `filter.subsample_fastq: skip`; positive fraction below 1 stays float, exactly 1 means skip, above 1 is converted to integer. It configures later processing, not local FASTQ sampling |
-| `--organism` | Unset; a truthy CLI value wins over SampleSheet `Organism`. See normalization limits below |
+| `--organism` | Unset; a truthy CLI value wins over SampleSheet `Organism`. See the offline resolution contract below |
 | `--libkit` | Unset; overrides SampleSheet `Libprep` when supplied |
 | `--libprep-config` | `src/gcf-workflows/libprep.config` relative to cwd; explicit file supplies effective bytes |
 | `--libprep-sha256`, `--libprep-entry`, `--expected-read-geometry` | Unset; exact hash/entry/one-or-more integer length assertions, not selection overrides |
 | `--machine` | Infer from the instrument field (second underscore-delimited flowcell-name component) and `SEQUENCERS`; unknown code yields an empty string, differing models fail |
 | `--PI` | String `NA`; writes existing key `experiment_principal_inverstigator` (spelling retained) |
 | `--contributor` | Unset; omitted from config unless supplied |
-| `--title` | Unset; defaults to the generated `project_id` value, including its scalar/list type |
+| `--title` | Unset; defaults to analysis IDs joined with `, ` (always text) |
 | `--summary` | String `NA` |
 | `--skip-create-fastq-dir` | False; if true skips link creation and omits `fastq_dir` from the default config |
 | `--skip-peppy` | False; if true omits PEP export. Does not currently create a runnable alternative launcher; see defects |
@@ -89,10 +89,12 @@ and shared validation rules are unchanged.
   SampleSheet project authority, custom descriptors and batch scoping. Its
   [API/report](input-validation.md#public-api-version-1) owns schema 1 and finding
   codes. Consumers branch on codes rather than diagnostic wording.
-- `check_input` discovers one selected project directory per retained run.
-  Supplying several `-p` IDs does not guarantee all matching directories in one
-  run are processed. Current first/last directory selection is a known limitation;
-  use unambiguous inputs and inspect observed sample counts.
+- Explicit `-p` selection includes every matching source project in each supplied
+  run, in run order then requested-project order. A project need not occur in
+  every run. A requested project absent from all runs, or with no usable selected
+  FASTQs, fails before analysis output mutation. Partial sample discovery within
+  a contributing project still warns and initializes the observed samples.
+  Omitted `-p` retains the existing automatic-discovery policy.
 - SampleSheet custom options are merged in input order; later values win with
   `samplesheet.option_override` warnings. `--libkit` and truthy `--organism`
   then override their respective custom options. Metadata preflight requires
@@ -108,7 +110,11 @@ and shared validation rules are unchanged.
 - Geometry comes from `Stats/Stats.json` in every selected run. Within
   `ReadInfosForLanes[*].ReadInfos`, `IsIndexedRead` must be a boolean and non-index
   `NumCycles` values must be one or two positive integers, consistent across lanes
-  and runs. `Number` does not reorder that list. This is geometry validation, not
+  and runs. `Number` does not reorder that list. If legacy Stats is absent,
+  physical `RunInfo.xml` supplies the ordered read definitions instead, including
+  for native v2 output with `Reports/`. Present malformed/unreadable Stats is an
+  error and never triggers fallback. XML flags must be Y/N and all cycle counts
+  positive. This is geometry validation, not
   a FASTQ content/read-length check. [Libprep policy](libprep-config.md#kit-and-read-geometry-policy)
   defines matching, layout checks and explicit errors.
 - Standalone callers choose the local or explicit libprep source; the library has
@@ -146,14 +152,14 @@ identity and retains `Src_Sample_ID` in real batch discovery.
 | Workflow tree | `cwd/src/gcf-workflows`; absent tree causes an unpinned Git clone. Tests must pre-stage it; API `add_workflow(src_dir=...)` is separate from CLI options |
 | PEP | `cwd/pep/pep_config.yaml`, `sample_table.csv`, optionally `subsample_table.csv`; skipped only by `--skip-peppy` |
 | Discovery summaries | `configmaker.analysis-summary.json` and `.configmaker.log` beside output YAML; schema/content authority is [input-validation.md](input-validation.md#standalone-configmaker) |
-| Optional input checksums | `<run>/md5sum_<project>_fastq.txt`; whitespace-separated checksum/filename records, looked up by basename |
+| Optional input checksums | `<run>/md5sum_<project>_fastq.txt`; whitespace-separated checksum/filename records, associated by run/project/source path (unique basenames remain available to direct helper callers) |
 
 Run from a dedicated project cwd and normally retain the default output filename.
 An absolute `--output` path does not relocate the other artifacts. Configmaker
 does not calculate or verify input checksums: it copies supplied values into
-generated metadata. If no checksum manifests exist, it warns and omits values;
-if some exist, missing manifests are silently skipped. Incomplete or
-colliding basename mappings have [known failure/ambiguity risks](known-limitations.md).
+generated metadata. If no checksum manifests exist, it warns and omits values.
+A read attribute receives checksums only when its complete ordered list is
+available. Repeated filenames across runs/projects do not share checksum lookup.
 
 ## Generated values, normalization and PEP
 
@@ -164,7 +170,7 @@ must be reviewed together.
 
 | Value | Current type/meaning to preserve or explicitly review |
 | --- | --- |
-| `project_id` | Usually list of strings; `--new-project-id` produces a scalar string plus list `src_project_id` (inconsistency tracked in #41) |
+| `project_id` | Always distinct strings in a list, preserving first-occurrence source order; `--new-project-id` emits a singleton analysis-ID list and distinct source IDs in `src_project_id` |
 | `samples` | Mapping keyed by exact analysis sample ID; per-sample scalar values are stringified, iterable non-string values become lists of strings |
 | `R1`, `R2`, optional `I1` | Per-sample comma-separated relative-path strings; empty mates may be empty strings. Workflow consumers split these strings |
 | `Project_ID`, `Flowcell_Name`, `Flowcell_ID` | Per-sample strings, comma-separated for merged contributions; repetition can follow R1 file count |
@@ -174,7 +180,7 @@ must be reviewed together.
 | `quant.batch` | Normally `{method: skip}`; batch mode uses `{name: Flowcell_ID}` |
 | `filter.subsample_fastq` | String `skip`, float fraction, or integer count; other nested kit defaults remain present |
 | `libprep_selection` | Diagnostics: source/hash/kit/entry/geometry/workflow, as defined in the libprep guide |
-| `organism` | Global value from CLI/custom options when present; a nonempty value is not necessarily canonicalized. Descriptor organism conversion is a separate, dependency-sensitive path |
+| `organism` | Canonical global species key from the shared offline resolver; ambiguous/unresolved nonmissing values fail before initialization. Missing and per-sample mixed-species roles are preserved |
 | Missing metadata | Stringification can emit strings such as `<NA>` or `nan`, not necessarily YAML null; descriptor category handling may use empty strings |
 | `descriptors` | Metadata for emitted columns; explicit descriptor keys override defaults, with inferred subtype/range/category information added |
 
@@ -189,20 +195,35 @@ configmaker's protected identity columns bypass it altogether. Nucleotide
 descriptors uppercase values; categorical inference can affect reference levels.
 These potentially lossy conversions require dedicated decisions before changes.
 
-Organism matching uses packaged `ens_org.pkl`, with default fuzzy score 80 and
-alias minimum length 4; `fuzzmatch_reference` defaults to score 80 against known
-control/reference terms. Imports do not fetch a replacement database. A real
-lookup with missing packaged data fails explicitly. Do not call the explicit
-network refresh helper in routine checks or replace the matching engine as
-incidental cleanup.
+Organism resolution uses a fixed packaged JSON inventory and exact canonical/
+curated aliases. Fuzzy hits are suggestions only. Unknown/ambiguous descriptive
+annotations retain their original text with contextual diagnostics. Project
+values fail before output mutation if unresolved/ambiguous; SampleSheet `N/A`
+retains the validator's missing/absent-key route, and explicit CLI `N/A` emits
+`N/A`. Mixed sample metadata never sets the global organism. The uniform
+resolved/missing column's existing global override remains; unresolved text is
+not overwritten. New config/PEP `organism_inventory` identifies schema, version,
+SHA-256 and provenance. See [organisms.md](organisms.md) for aliases/strains,
+public API return behavior, missing values, explicit maintenance, packaging and
+offline provisioning. The reference/control-term matcher is unchanged.
+Explicit mixed reference keys (`Human__Mouse` → `homo_sapiens__mus_musculus`)
+resolve every member, preserve order/strains, and reject incomplete or ambiguous
+membership. Mixed sample annotations never collapse into a single global species.
+The established non-species project label `metagenome` is preserved only with a
+locally supplied libprep snapshot selecting the metagenome workflow; it does not
+resolve to a species or select a classifier database.
 
-PEP output declares `pep_version: 2.0.0`, uses CSV column `sample_name`, replaces
-read paths in the sample table with `R1`/`R2`/`I1` derivation tokens, and derives
-paths relative to the FASTQ root. Multiple input files cause a subsample table
-with `subsample_name`; selected project/run fields move there when varying.
-Experiment/library fields and descriptors are copied to PEP YAML. The current
-templates assume renamed flat files or a particular single-cell directory shape;
-do not infer that every discoverable FASTQ layout resolves through PEP correctly.
+PEP output declares `pep_version: 2.0.0` and uses CSV column `sample_name`.
+Read attributes use `R1`/`R2`/`I1` derivation tokens. Private CSV columns
+`_R1_source`, `_R2_source` and `_I1_source` carry the actual discovered relative
+paths used by `sample_modifiers.derive.sources`. They are excluded from Peppy's
+public sample table, keeping reports/sample-table consumers unchanged. This
+preserves source directories and filenames when analysis IDs or batch sample
+names differ. Multiple input files cause a subsample table with `subsample_name`;
+varying source/analysis project and run fields move there. Read order and available
+checksums remain paired in those rows. Experiment/library fields and descriptors
+are copied to PEP YAML. This describes newly generated
+PEPs; retained analyses are not rewritten.
 
 ## Deliberate input tightening (#71)
 
@@ -244,3 +265,44 @@ five historically dropped library metadata columns for Parse only. Header
 mapping, descriptor conversion, exact IDs, customer/lab precedence, FASTQ grouping,
 PEP identities and the `samples`/`wells` sections retain their established meaning.
 No TSV materialization or workflow processing is implemented in tools.
+
+## Independent project pairs (#91)
+
+The additive [project-pair API](input-validation.md#independent-project-pairs-additive-api-1-91)
+keeps project filename matching and flowcell assignment checks separate from
+legacy cross-flowcell metadata merging. Existing API/report 1 remains unchanged.
+The deliberate new restrictions apply to qualified project-pair mode: exact
+filename/content project agreement, independent form matching, unambiguous
+cross-project sample outputs, lane/index/mismatch compatibility, and compatible
+global demultiplexer settings. Symbolic index expansion is outside this issue.
+
+Configmaker automatically discovers CSV filenames containing `SampleSheet`
+(case-insensitive, with optional hyphens/underscores) and `.xls`/`.xlsx` names
+containing `submission` and `form`. It suppresses exact sheet copies and validates
+every effective pair before creating analysis outputs. Use one selected project
+and a separate analysis directory per invocation. Existing explicit `-s`/`-S`
+options select the exact source pair and preserve the historical manual override
+route. Legacy single-pair discovery/content and intentional manual combined
+multi-flowcell behavior retain their existing metadata/selection rules.
+When the canonical `SampleSheet.csv`/`Sample-Submission-Form.xlsx` pair exists
+and discovered sheet filenames name at most one distinct project key, standalone
+discovery retains that canonical legacy pair and ignores backup/alternate files.
+Two or more explicitly qualified project keys activate full project-pair
+discovery. Without an established canonical pair, ambiguous generic candidates
+fail rather than receiving filesystem-order selection. The explicit shared
+`resolve_project_pairs` input-list API always checks every supplied candidate.
+
+`--effective-read-geometry` supplies one or two positive biological read lengths,
+bounded by the physical Stats/RunInfo layout. `read_geometry` and libprep selection use
+those effective lengths; `run_read_geometry` records the physical lengths.
+Automatic project-pair discovery derives effective lengths from the selected
+pair's OverrideCycles/RunInfo where available. Without an explicit/derived
+override, the historical Stats authority remains. `--expected-read-geometry`
+asserts the selected effective layout.
+
+Config/PEP now retain `samplesheet_options`, `metadata_inputs` file/hash identities and libprep selection
+diagnostics; an effective-layout override also retains `run_read_geometry` in
+PEP. Analysis summaries add selected project IDs, both layouts, metadata input
+identities and libprep selection. FASTQ discovery order, source-relative paths,
+sample IDs and checksum associations remain unchanged. These additive fields do
+not rewrite retained analyses or validate scientific outputs.

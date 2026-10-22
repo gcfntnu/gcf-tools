@@ -7,6 +7,7 @@ source edits cannot change either the selected workflow or its parameters.
 import hashlib
 import json
 import re
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -159,12 +160,41 @@ class LibprepSelection:
 
 
 def find_read_geometry(runfolders):
-    """Read the same demultiplexer Stats.json geometry for BFQ and configmaker."""
+    """Resolve physical reads from legacy Stats, or RunInfo when Stats is absent.
+
+    Native v2 conversion reports need not include legacy Stats.json. A present
+    legacy file remains authoritative: malformed/unreadable data never falls
+    through to another source and hides an operational input problem.
+    """
     geometries = set()
     for directory in runfolders:
         path = Path(directory) / "Stats" / "Stats.json"
+        source = str(path)
         try:
-            stats = json.loads(path.read_bytes())
+            try:
+                content = path.read_bytes()
+            except FileNotFoundError:
+                if path.is_symlink():
+                    raise
+                run_info = Path(directory) / "RunInfo.xml"
+                source = "{} (absent; fallback {})".format(path, run_info)
+                root = ET.fromstring(run_info.read_bytes())
+                reads = root.findall(".//Reads/Read")
+                if not reads:
+                    raise ValueError("RunInfo contains no read definitions")
+                cycles, indexed = [], []
+                for read in reads:
+                    flag = read.attrib["IsIndexedRead"].upper()
+                    if flag not in ("Y", "N"):
+                        raise ValueError("RunInfo IsIndexedRead must be Y or N")
+                    length = int(read.attrib["NumCycles"])
+                    if length <= 0:
+                        raise ValueError("RunInfo NumCycles must be positive")
+                    cycles.append(length)
+                    indexed.append(flag == "Y")
+                geometries.add(validate_read_geometry([n for n, is_index in zip(cycles, indexed) if not is_index]))
+                continue
+            stats = json.loads(content)
             lanes = stats["ReadInfosForLanes"]
             if not lanes:
                 raise ValueError("ReadInfosForLanes is empty")
@@ -176,9 +206,9 @@ def find_read_geometry(runfolders):
                     [read["NumCycles"] for read in reads if not read["IsIndexedRead"]]
                 )
                 geometries.add(geometry)
-        except (OSError, ValueError, KeyError, TypeError) as error:
+        except (OSError, ValueError, KeyError, TypeError, ET.ParseError) as error:
             raise LibprepConfigError(
-                "Cannot determine read geometry from {}: {}".format(path, error)
+                "Cannot determine read geometry from {}: {}".format(source, error)
             ) from error
     if len(geometries) != 1:
         raise LibprepConfigError(

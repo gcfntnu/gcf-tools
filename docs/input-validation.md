@@ -207,6 +207,26 @@ longer creates `.configmaker.debug`.
 After metadata passes, FASTQ discovery is separate. No matched samples produces
 an explicit nonzero error. A partly discovered project retains the existing
 behavior of initializing the available samples, with warnings for absent FASTQs.
+With explicit `-p` selection, every requested source project must have a usable
+contribution across the supplied runs. Several projects in one run are all
+searched, without requiring each project in every run. A wholly absent/unusable
+requested project fails before links/config/PEP are changed. Partial discovery
+within a contributing source still warns; metadata counts remain planned counts.
+
+`--new-project-id` assigns samples to the analysis while retaining observed
+source assignments in `Src_Project_ID`. Top-level project IDs are lists; default
+experiment titles are text joined with `, `. PEP read tokens resolve to the same
+source paths and ordered checksums as config, including repeated cross-run
+samples and `--keep-batch`; input files and manifests are never renamed.
+
+Effective CLI/SampleSheet organisms and organism descriptors use the shared
+[offline resolver](organisms.md). Canonical names/curated aliases normalize;
+unresolved or ambiguous nonmissing project values fail before output mutation.
+Descriptive per-sample unknowns remain verbatim with contextual warnings; mixed
+species do not become a global organism. SampleSheet `N/A` remains `None` in the
+validator API, preserving its existing missing-global route. Validator schema,
+findings, input fingerprints, joins, precedence and libprep authority do not change.
+
 A successful initialization writes, beside the output config:
 
 - `configmaker.analysis-summary.json`: `schema_version: 1`,
@@ -278,3 +298,112 @@ checks remain facility integration. Routine development must mock/block email.
 - The descriptor helper configured logger state and could fetch/write an
   organism cache at import if package data was missing. Import is now passive;
   an actual organism lookup reports a missing packaged database explicitly.
+
+## Independent project pairs (additive API 1, #91)
+
+`configmaker.project_pairs` supplies a separate, non-mutating contract for one
+flowcell containing independently curated metadata pairs. It does not change
+`validate_inputs` API/report 1 or its intentional cross-flowcell/manual merges.
+
+```python
+from configmaker.project_pairs import resolve_project_pairs, validate_project_pairs
+
+pairing = resolve_project_pairs(sheet_paths, form_paths)
+result = validate_project_pairs(
+    sheet_paths, form_paths,
+    run_info="/copied-run/RunInfo.xml",  # optional physical cycle/lane validation
+    libprep_config=snapshot,           # optional LibprepConfig or local path
+    mismatch_policy={"index": 1, "index2": 1},
+)
+if not result.ok:
+    raise ValueError(result.render_text())
+for pair in result.pairs:
+    metadata = result.project_results[pair.project_id]
+    # pair.project_id, pair.sample_sheet, pair.submission_form are exact sources.
+```
+
+Both functions accept a path or iterable of paths. They return
+`ProjectPairResult`, with `ok`, `findings`, `inputs`, `summary`, `to_dict()` and
+`render_text()`, plus `pairs` and `duplicates`. `ProjectPair` is immutable;
+`samplesheet` aliases `sample_sheet`. JSON reports retain the common report
+fields and add `kind: project_pairs`, `project_pair_api_version: 1`, `mode`,
+`pairs`, `duplicates`, `project_reports`, `assignments`, `project_geometry`,
+`project_settings` and `libprep_selections`. Consumers must check the explicit
+kind/API and success before processing. Future unknown fields are additive;
+finding codes remain the diagnostic branching contract.
+
+Filename association uses exactly one case-sensitive `GCF-YYYY-NNN` token,
+bounded by non-alphanumeric characters, anywhere in the basename. For example,
+`GCF-2099-001_SampleSheet.csv` pairs with
+`Sample-Submission-Form_GCF-2099-001.xlsx`. Prefix/suffix spelling does not
+participate in association. Absolute lexical path order makes reports stable;
+filesystem enumeration order, timestamps and sample overlap never select a
+partner. Ambiguous/missing keys, unequal effective counts or key sets, missing
+partners, differing sheets for one key and duplicate forms fail with `pair.*`
+codes. Workbooks are never deduplicated.
+
+Byte-identical sheets are suppressed before count/key comparison, preferring a
+qualified filename over a generic name, then lexical absolute path order.
+`duplicates` records each ignored `path`, `retained` path and `sha256`.
+Identical sheets explicitly naming different projects both remain and produce
+`pair.identical_cross_project_sheets`. A sole effective sheet/form retains
+`mode: legacy` when explicit keys are not contradictory, including multi-project content;
+historical inputs need no rename. Two explicitly qualified but contradictory
+keys are errors. Legacy mode uses the established validator without adding
+whole-flowcell index restrictions.
+
+In project-pair mode each pair is passed independently to `validate_inputs`.
+Its findings gain `project_id` context and retain file/worksheet/row details.
+No other project's metadata can satisfy a missing sample. Extra form samples,
+exact/ASCII IDs, customer/lab inner joins, descriptors and pooled metadata retain
+their existing meanings. The new contract deliberately rejects filename versus
+`Sample_Project` contradictions (`pair.sheet_project_conflict`) and conflicting
+selected submission projects (`pair.form_project_conflict`), where the legacy
+validator continues to warn and use SampleSheet authority. Independent project
+custom options and descriptors never merge. A detected file change between
+pairing and validation is `input.changed_during_validation`; reports bind exact
+parsed bytes to SHA-256 identities, including optional RunInfo/libprep inputs.
+
+`assignments` contains `source_sheet`, original 1-based `row`, `project_id`,
+exact `sample_id`, normalized positive integer `lane` (or `*` for every lane),
+uppercase `index`/`index2`, selected `mismatches`, per-sample `settings` and
+`effective_read_geometry`. The sequence-only normalization boundary accepts
+literal A/C/G/T/N indexes. Symbolic names fail `demux.unexpanded_index`; expansion
+and repeated-row support belong to companion #92, with no index catalogue here.
+All assignments, including an operator's unselected projects, participate in
+collision checking. Overlapping lanes and index Hamming balls under the summed
+selected allowances fail `demux.index_collision`; N is conservatively a wildcard
+and unequal lengths are compared over their common prefix. A repeated Sample_ID
+across independent projects fails `demux.cross_project_sample_id` before tools
+can silently merge unsupported output identities. Distinct-lane assignments
+remain valid. RunInfo checks lane bounds; provided indexes must match effective
+index cycles from OverrideCycles, or physical index cycles when no mask applies.
+
+Mismatch allowances are integer 0, 1 or 2 per index; the default is one each.
+Sheet settings and then row `BarcodeMismatchesIndex1`/`2` override caller defaults.
+`PER_SAMPLE_SETTINGS` exports the [BCL Convert 4.2 per-sample settings](https://support-docs.illumina.com/SW/dragen_v42/Content/SW/DRAGEN/SampleSheet.htm):
+`OverrideCycles`, `BarcodeMismatchesIndex1`, `BarcodeMismatchesIndex2`,
+`AdapterRead1`, `AdapterRead2`, `AdapterBehavior` and `AdapterStringency`.
+All other global settings must match across pairs, including explicit versus
+absent values, or `demux.incompatible_settings` fails before execution/cleanup.
+Backend capability checks and derived sheets belong to BFQ; accepting per-sample
+settings here does not make a legacy demultiplexer support them.
+Nonempty `IndependentIndexCollisionCheck` is explicitly unsupported in the new
+mode (`demux.unsupported_collision_policy`); the optional independent-index
+policy requires separate normalization/validation support before processing.
+Legacy validation acceptance is unchanged.
+
+`derive_project_geometry(parsed_sheet_or_path, run_info=None)` resolves biological
+read lengths from row-level or sheet-level `OverrideCycles`; `Y`, `I`, `U`, `N`
+and a single physically resolvable `*` are supported per physical read.
+Physical RunInfo cycles constrain masks and remain separate from effective Y
+cycles. Without a mask, RunInfo or `[Reads]` supplies the layout. Different
+effective layouts within one project fail explicitly. No FASTQ contents are
+examined. Every project's libprep entry is selected from the same supplied
+immutable snapshot, using that project's kit and effective geometry.
+
+The parsed SampleSheet dictionary additively includes `sections` (lowercase
+section names to original CSV cell rows) and `data_section` (original spelling).
+Existing parser keys and legacy normalized dataframes remain available. Tools
+does not stage/copy inputs, write state, generate demultiplexer sheets or clean
+outputs; BFQ owns those operations.

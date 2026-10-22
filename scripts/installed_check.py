@@ -12,7 +12,7 @@ def check(mode, source, expected):
     assert not __import__('os').environ.get('PYTHONPATH'), "source path injection"
     root = Path(source).resolve()
     for name in ["configmaker", "configmaker.configmaker", "configmaker.validation",
-                 "configmaker.libprep", "descriptors", "descriptors.fuzzmatch",
+                 "configmaker.libprep", "descriptors", "descriptors.fuzzmatch", "descriptors.organisms",
                  "peppy_support", "testdata.create_testdata"]:
         module = importlib.import_module(name)
         location = Path(module.__file__).resolve()
@@ -32,6 +32,8 @@ def check(mode, source, expected):
     assert VALIDATION_API_VERSION == 1
     assert "NB501038" in SEQUENCERS and callable(validate_inputs) and callable(add_workflow)
     assert "homo_sapiens" in ORG_DB and fuzzmatch_organism("homo_sapiens") == "homo_sapiens"
+    from descriptors.organisms import inventory_identity
+    assert inventory_identity()["species_count"] >= 433
     import descriptors
     resources = Path(descriptors.__file__).parent
     for filename, digest in json.loads(Path(expected).read_text()).items():
