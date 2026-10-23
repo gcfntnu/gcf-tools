@@ -152,7 +152,7 @@ def test_project_preparations_settings_metadata_and_geometry_stay_independent(tm
     ("index", "demux.index_collision"), ("mismatch", "demux.index_collision"),
     ("id", "demux.cross_project_sample_id"), ("lane", "demux.invalid_lane"),
     ("cycles", "demux.project_geometry"), ("index_cycles", "demux.index_geometry"),
-    ("symbolic_index", "demux.unexpanded_index"), ("global_setting", "demux.incompatible_settings"),
+    ("symbolic_index", "index.unknown_name"), ("global_setting", "demux.incompatible_settings"),
     ("independent_collision", "demux.unsupported_collision_policy"),
     ("sheet_project", "pair.sheet_project_conflict"), ("form_project", "pair.form_project_conflict"),
 ])

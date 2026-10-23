@@ -1,6 +1,6 @@
 include README.md CONTRIBUTING.md AGENTS.md requirements-dev.txt requirements-python38.txt
 include pyproject.toml setup.py MANIFEST.in
-recursive-include configmaker *.py
+recursive-include configmaker *.py *.json
 recursive-include testdata *.py
 recursive-include peppy_support *.py
 recursive-include descriptors *.py *.yaml *.pkl *.json

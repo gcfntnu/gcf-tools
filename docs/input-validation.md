@@ -407,3 +407,12 @@ section names to original CSV cell rows) and `data_section` (original spelling).
 Existing parser keys and legacy normalized dataframes remain available. Tools
 does not stage/copy inputs, write state, generate demultiplexer sheets or clean
 outputs; BFQ owns those operations.
+
+### Multiple oligos for one logical library
+
+Repeated Sample_ID rows may now represent distinct index assignments for the same
+library in one lane or across unspecified lanes, provided project and metadata/read
+settings agree. A submission form still contains one row for that library. Exact
+duplicates and conflicting definitions remain errors. The shared
+[offline 10x index contract](tenx-indexes.md) defines supported catalogue expansion,
+orientation and conversion-specific validation; metadata-only parsing remains non-mutating.

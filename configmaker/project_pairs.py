@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from configmaker.indexes import IndexNormalizationError, normalize_rows
 from configmaker.libprep import LibprepConfig, LibprepConfigError, validate_read_geometry
 from configmaker.validation import ValidationResult, _paths, _read, parse_samplesheet, validate_inputs
 
@@ -279,7 +280,8 @@ def _distance(left, right):
 
 
 def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
-                           libprep_config=None, mismatch_policy=None):
+                           libprep_config=None, mismatch_policy=None, effective_settings=None,
+                           allow_separate_passes=False, validate_legacy=False, skip_conversion_projects=()):
     """Validate each pair independently, then all normalized lane/index outputs.
 
     ``mismatch_policy`` is an integer for both indexes or an ``index``/``index2``
@@ -326,7 +328,7 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
         if not validated.sheets:
             continue
         sheet = validated.sheets[0]
-        if result.mode == "legacy":
+        if key in skip_conversion_projects or (result.mode == "legacy" and not validate_legacy):
             # Filename-paired restrictions must not redefine historical
             # multi-project or unindexed/manual-analysis acceptance.
             continue
@@ -341,7 +343,11 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
                                project_id=pair.project_id, **{k: v for k, v in finding.items() if k not in ("code", "message", "severity")})
         try:
             settings = samplesheet_settings(sheet)
+            settings.update((effective_settings or {}).get(key, {}))
             result.project_settings[key] = settings
+            sheet = copy.deepcopy(sheet)
+            sheet["sections"]["settings"] = list(settings.items())
+            sheet["sections"].pop("bclconvert_settings", None)
             if str(settings.get("IndependentIndexCollisionCheck", "")).strip():
                 result.add("error", "demux.unsupported_collision_policy",
                            "IndependentIndexCollisionCheck is unsupported for project-paired validation; remove it or use a separately supported run plan before processing.",
@@ -355,7 +361,12 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
         except LibprepConfigError as error:
             result.add("error", "demux.project_geometry", str(error), project_id=pair.project_id, file=pair.sample_sheet)
             settings = result.project_settings.get(key, {})
-        for row in sheet["records"]:
+        try:
+            normalized_rows = normalize_rows(sheet["records"], i5_orientation=sheet["options"].get("Index2Orientation", "forward"))
+        except IndexNormalizationError as error:
+            result.add("error", error.code, str(error), project_id=pair.project_id, file=pair.sample_sheet)
+            normalized_rows = []
+        for row in normalized_rows:
             pid, sid = row["Sample_Project"], row["Sample_ID"]
             context = dict(project_id=pid, file=pair.sample_sheet, row=row["_row"], sample_id=sid)
             lane = row.get("Lane", "").strip() or "*"
@@ -373,18 +384,18 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
                 if value and re.fullmatch("[ACGTN]+", value) is None:
                     result.add("error", "demux.unexpanded_index", "Index must be a normalized nucleotide sequence; expand symbolic index names with the shared index-normalization producer.", column=column, details={"value": row.get(column)}, **context)
                 indexes[column] = value
-            effective_settings = {name: row.get(name) or settings[name] for name in PER_SAMPLE_SETTINGS if row.get(name) or name in settings}
+            row_settings = {name: row.get(name) or settings[name] for name in PER_SAMPLE_SETTINGS if row.get(name) or name in settings}
             try:
-                allowances = {column: _allowance(effective_settings.get("BarcodeMismatchesIndex" + str(i), policy[column]))
+                allowances = {column: _allowance(row_settings.get("BarcodeMismatchesIndex" + str(i), policy[column]))
                               for i, column in enumerate(("index", "index2"), 1)}
             except LibprepConfigError as error:
                 result.add("error", "demux.mismatch_policy", str(error), **context)
                 allowances = policy.copy()
             if physical is not None:
                 physical_indexes = [cycles for cycles, indexed in physical if indexed]
-                if effective_settings.get("OverrideCycles"):
+                if row_settings.get("OverrideCycles"):
                     try:
-                        _geometry, physical_indexes = _override_geometry(effective_settings["OverrideCycles"], physical, include_indexes=True)
+                        _geometry, physical_indexes = _override_geometry(row_settings["OverrideCycles"], physical, include_indexes=True)
                     except LibprepConfigError:
                         # The contextual project-geometry finding above reports
                         # the malformed mask without a dependent index cascade.
@@ -394,8 +405,9 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
                         result.add("error", "demux.index_geometry", "Index sequence length must match the corresponding effective index cycles.", column=column, **context)
             result.assignments.append(dict(source_sheet=pair.sample_sheet, row=row["_row"], project_id=pid,
                                            sample_id=sid, lane=lane, **indexes, mismatches=allowances,
-                                           settings=effective_settings, effective_read_geometry=result.project_geometry.get(key)))
-    if result.mode == "project_pairs":
+                                           settings=row_settings, effective_read_geometry=result.project_geometry.get(key),
+                                           index_provenance=row["_index_provenance"]))
+    if result.mode == "project_pairs" and not allow_separate_passes:
         all_global_keys = set().union(*(set(settings) for settings in result.project_settings.values())) - PER_SAMPLE_SETTINGS
         for setting in sorted(all_global_keys):
             values = {key: settings.get(setting) for key, settings in result.project_settings.items()}
@@ -410,6 +422,9 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
             if left["project_id"] != right["project_id"] and left["sample_id"] == right["sample_id"]:
                 result.add("error", "demux.cross_project_sample_id", "Repeated Sample_ID across independent projects is unsupported; choose distinct source IDs before processing.", **context)
             if not _overlap(left["lane"], right["lane"]):
+                continue
+            same_library = left["project_id"] == right["project_id"] and left["sample_id"] == right["sample_id"]
+            if same_library and any(left[column] != right[column] for column in ("index", "index2")):
                 continue
             if all(_distance(left[column], right[column]) <= left["mismatches"][column] + right["mismatches"][column] for column in ("index", "index2")):
                 result.add("error", "demux.index_collision", "Lane/index assignments overlap under the selected mismatch allowances.", **context)
