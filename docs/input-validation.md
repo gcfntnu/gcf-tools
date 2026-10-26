@@ -318,7 +318,7 @@ result = validate_project_pairs(
 if not result.ok:
     raise ValueError(result.render_text())
 for pair in result.pairs:
-    metadata = result.project_results[pair.project_id]
+    metadata = result.project_results[pair.project_id or "legacy"]
     # pair.project_id, pair.sample_sheet, pair.submission_form are exact sources.
 ```
 
@@ -331,6 +331,14 @@ fields and add `kind: project_pairs`, `project_pair_api_version: 1`, `mode`,
 `project_settings` and `libprep_selections`. Consumers must check the explicit
 kind/API and success before processing. Future unknown fields are additive;
 finding codes remain the diagnostic branching contract.
+
+The additive conversion-planning keywords are documented in the shared
+[offline index contract](tenx-indexes.md): `effective_settings` supplies resolved
+settings per project, `allow_separate_passes` defers global-setting compatibility
+to the caller's explicit pass planner, `validate_legacy` enables conversion checks
+for a sole legacy pair, and `skip_conversion_projects` retains metadata-only
+checks for explicitly selected legacy backend profiles. These options retain
+the existing defaults and do not schedule conversion or select a backend.
 
 Filename association uses exactly one case-sensitive `GCF-YYYY-NNN` token,
 bounded by non-alphanumeric characters, anywhere in the basename. For example,
@@ -367,15 +375,24 @@ parsed bytes to SHA-256 identities, including optional RunInfo/libprep inputs.
 `assignments` contains `source_sheet`, original 1-based `row`, `project_id`,
 exact `sample_id`, normalized positive integer `lane` (or `*` for every lane),
 uppercase `index`/`index2`, selected `mismatches`, per-sample `settings` and
-`effective_read_geometry`. The sequence-only normalization boundary accepts
-literal A/C/G/T/N indexes. Symbolic names fail `demux.unexpanded_index`; expansion
-and repeated-row support belong to companion #92, with no index catalogue here.
+`effective_read_geometry`. The shared [offline index normalizer](tenx-indexes.md)
+accepts literal A/C/G/T/N sequences and expands supported GA/TT names before
+lane/index collision checks. Each assignment retains its original source `row`;
+`index_provenance` records original index values, orientation and catalogue identity.
+Unknown names fail with `index.unknown_name`; incomplete or conflicting index
+pairs retain the normalizer's actionable `index.*` finding codes. The shared
+contract defines catalogue coverage and orientation without a second catalogue
+or expansion implementation in the project-pair validator.
+
 All assignments, including an operator's unselected projects, participate in
 collision checking. Overlapping lanes and index Hamming balls under the summed
 selected allowances fail `demux.index_collision`; N is conservatively a wildcard
-and unequal lengths are compared over their common prefix. A repeated Sample_ID
-across independent projects fails `demux.cross_project_sample_id` before tools
-can silently merge unsupported output identities. Distinct-lane assignments
+and unequal lengths are compared over their common prefix. Distinct index
+assignments for one consistent logical library may share a mismatch neighborhood;
+exact duplicate assignments and collisions between libraries remain errors.
+A repeated Sample_ID across independent projects fails
+`demux.cross_project_sample_id` before tools can silently merge unsupported
+output identities. Distinct-lane assignments
 remain valid. RunInfo checks lane bounds; provided indexes must match effective
 index cycles from OverrideCycles, or physical index cycles when no mask applies.
 
@@ -384,8 +401,11 @@ Sheet settings and then row `BarcodeMismatchesIndex1`/`2` override caller defaul
 `PER_SAMPLE_SETTINGS` exports the [BCL Convert 4.2 per-sample settings](https://support-docs.illumina.com/SW/dragen_v42/Content/SW/DRAGEN/SampleSheet.htm):
 `OverrideCycles`, `BarcodeMismatchesIndex1`, `BarcodeMismatchesIndex2`,
 `AdapterRead1`, `AdapterRead2`, `AdapterBehavior` and `AdapterStringency`.
-All other global settings must match across pairs, including explicit versus
-absent values, or `demux.incompatible_settings` fails before execution/cleanup.
+By default all other global settings must match across pairs, including explicit
+versus absent values, or `demux.incompatible_settings` fails before execution/cleanup.
+`allow_separate_passes=True` defers this compatibility decision to the caller's
+explicit pass planner while retaining flowcell-wide index collision checks for
+projects participating in conversion validation.
 Backend capability checks and derived sheets belong to BFQ; accepting per-sample
 settings here does not make a legacy demultiplexer support them.
 Nonempty `IndependentIndexCollisionCheck` is explicitly unsupported in the new

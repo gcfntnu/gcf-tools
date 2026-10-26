@@ -274,7 +274,11 @@ legacy cross-flowcell metadata merging. Existing API/report 1 remains unchanged.
 The deliberate new restrictions apply to qualified project-pair mode: exact
 filename/content project agreement, independent form matching, unambiguous
 cross-project sample outputs, lane/index/mismatch compatibility, and compatible
-global demultiplexer settings. Symbolic index expansion is outside this issue.
+global demultiplexer settings by default. Since gcf-tools 0.4.0, the validator
+consumes the shared [offline GA/TT index normalization contract](tenx-indexes.md)
+before collision checks, retaining one logical library for expanded oligos.
+Explicit separate-pass planning may defer global-setting compatibility to BFQ;
+cross-project index/output conflicts remain validation errors.
 
 Configmaker automatically discovers CSV filenames containing `SampleSheet`
 (case-insensitive, with optional hyphens/underscores) and `.xls`/`.xlsx` names
