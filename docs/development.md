@@ -154,6 +154,17 @@ recorded [historical comparator](../requirements-python38.txt). Its acquisition
 is separated from offline installed-command/legacy checks. This does not prove
 all public APIs work on every interpreter or establish deployed versions.
 
+The Python 3.11 development baseline uses `setuptools==84.1.0` for upstream
+archive and legacy wheel path-containment fixes. The Python 3.8 comparator
+retains `setuptools==75.3.4`, its last compatible release; 84.1.0 requires Python
+3.10 or later. Updating the modern baseline does not remediate the legacy pin's
+security findings. The documented checks use Linux, local prepared wheels and
+the PEP 517 backend without `setup_requires`; they do not establish that old
+setuptools is safe for other consumers or arbitrary untrusted archives. Removing
+this comparator or changing Python support requires a separate explicit decision.
+See the [upstream 84.1.0 release notes](https://setuptools.pypa.io/en/stable/history.html#v84-1-0)
+and [published Python requirement](https://pypi.org/project/setuptools/84.1.0/).
+
 The primary development pins retain the runtime versions exercised under #60;
 they are not inferred production requirements. In particular pandas 3.0.6 has
 known organism-assignment differences. Pinning it makes existing evidence

@@ -1,7 +1,9 @@
 # Historical runtime/CLI comparator from successful run 36572498127, Python 3.8.18.
 # Separate from the primary Python 3.11 development baseline and runtime metadata.
 pip==25.0.1
-setuptools==84.1.0
+# Last Python 3.8-compatible release; newer setuptools requires newer Python.
+# Security fixes in 84.1.0 are unavailable here; see docs/development.md.
+setuptools==75.3.4
 wheel==0.45.1
 pandas==2.0.3
 numpy==1.24.4
