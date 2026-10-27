@@ -2,6 +2,7 @@
 import csv
 import gzip
 import hashlib
+import io
 import json
 from pathlib import Path
 import shutil
@@ -255,3 +256,39 @@ def test_pair_oracle_rejects_corruption(example, damage):
     second.write_bytes(gzip.compress(("\n".join(lines) + "\n").encode(), mtime=0))
     with pytest.raises(AssertionError):
         assert_pairs(first, second, "001")
+
+
+def test_expanded_bcl_convert_files_remain_one_logical_sample_in_config_and_pep(example):
+    """Four converter oligos do not require four workbook rows or analyses."""
+    from configmaker.indexes import normalize_indexes
+
+    source, work = example
+    run = source / RUN
+    sheet = run / 'SampleSheet.csv'
+    original = sheet.read_text().split('[Data]', 1)[0]
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, lineterminator='\n')
+    writer.writerow(['Sample_ID', 'Sample_Project', 'index'])
+    for sample in SAMPLES:
+        for assignment in normalize_indexes('SI-GA-A1') if sample == '001' else [{'index': 'CCCCCCCC'}]:
+            writer.writerow([sample, PROJECT, assignment['index']])
+    sheet.write_text(original + '[Data]\n' + buffer.getvalue())
+    for mate in (1, 2):
+        first = run / PROJECT / f'001_R{mate}.fastq.gz'
+        content = first.read_bytes()
+        first.rename(run / PROJECT / f'001_S1_R{mate}_001.fastq.gz')
+        for ordinal in range(2, 5):
+            (run / PROJECT / f'001_S{ordinal}_R{mate}_001.fastq.gz').write_bytes(content)
+    result = cli(source, work)
+    assert result.returncode == 0, result.stderr
+    config = yaml.safe_load((work / 'config.yaml').read_text())
+    assert set(config['samples']) == set(SAMPLES)
+    assert len(config['samples']['001']['R1'].split(',')) == 4
+    assert len(config['samples']['001']['R2'].split(',')) == 4
+    with (work / 'pep/sample_table.csv').open() as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == 3
+    assert sum(row['sample_name'] == '001' for row in rows) == 1
+    with (work / 'pep/subsample_table.csv').open() as handle:
+        rows = list(csv.DictReader(handle))
+    assert sum(row['sample_name'] == '001' for row in rows) == 4

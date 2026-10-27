@@ -79,3 +79,6 @@ and [verification record](docs/verification-65.md) distinguish independent agent
 rehearsals from facility-developer confirmation. The tracker remains open until
 its agreed human acceptance is recorded. Routine local development needs no
 facility setup or running service.
+
+The [offline 10x index normalization contract](docs/tenx-indexes.md) covers versioned
+GA/TT mappings, logical-library repeated rows and coordinated converter validation.
