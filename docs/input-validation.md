@@ -77,6 +77,24 @@ and a list of `Project_ID` values), `metadata` (merged effective dataframe),
 uses these objects directly. These dataframe/parser internals are not the JSON
 compatibility contract; external consumers should use `to_dict()`.
 
+## Optional custom metadata
+
+The shared reader and standalone `get_data_from_samplesheet` compatibility API
+accept retired cleaner options both present and absent. `RemoveHumanReads`,
+`SingleCell`, `TrimAdapter`, `Rerun`, `ReverseComplementIndexP5` and
+`ReverseComplementIndexP7` are optional `[CustomOptions]` keys, as are `Priority`
+and `InitialHold`. Unknown keys remain supported. Readers preserve present values
+and do not insert absent keys or defaults. Existing parsing types are unchanged:
+case-insensitive `true` becomes Python `True`; `false` remains its parsed text.
+Do not change that historical coercion as part of retiring a producer's controls.
+
+Priority/hold validation, defaults, freezing and manual release belong to BFQ.
+Shared metadata validation preserves these values without applying scheduling
+policy; an invalid explicit BFQ scheduling value can therefore pass metadata
+parsing and subsequently fail BFQ preflight. Cleaner provenance keys do not imply
+an index-orientation correction. Ordinary conflicting-option diagnostics and
+ordered merge rules remain unchanged.
+
 ## Accepted input and matching rules
 
 - UTF-8/BOM CSV SampleSheets support `[Data]` and `[BCLConvert_Data]`, with
