@@ -28,5 +28,5 @@ def test_installed_configmaker_initializes_each_workbook_format(example, suffix,
         command += ["--sample-submission-form", str(form)]
     result = subprocess.run(command, cwd=work, capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert_outputs(source, work)
+    assert_outputs(source, work, submission_form=form.name)
     assert contents(source) == before

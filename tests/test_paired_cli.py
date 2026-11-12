@@ -87,7 +87,7 @@ def cli(source, work):
     return result
 
 
-def assert_outputs(source, work, samples=SAMPLES):
+def assert_outputs(source, work, samples=SAMPLES, submission_form="Sample-Submission-Form.xlsx"):
     config = yaml.safe_load((work / "config.yaml").read_text())
     assert config["project_id"] == [PROJECT]
     assert config["experiment_title"] == PROJECT
@@ -161,7 +161,7 @@ def assert_outputs(source, work, samples=SAMPLES):
              "sha256": hashlib.sha256((source / RUN / filename).read_bytes()).hexdigest(),
              "size_bytes": (source / RUN / filename).stat().st_size}
             for kind, filename in (("samplesheet", "SampleSheet.csv"),
-                                   ("submission_form", "Sample-Submission-Form.xlsx"))
+                                   ("submission_form", submission_form))
         ],
         "samplesheet_options": {"Libprep": "Synthetic", "Organism": "Homo sapiens"},
         "libprep_selection": {
