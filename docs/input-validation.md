@@ -77,6 +77,12 @@ and a list of `Project_ID` values), `metadata` (merged effective dataframe),
 uses these objects directly. These dataframe/parser internals are not the JSON
 compatibility contract; external consumers should use `to_dict()`.
 
+## Proposed sheet-only intake boundary
+
+The additive [sheet-only API proposal](sheet-validation.md) defines a preserved
+CSV document and an explicit portable-converter intake profile for #104. It is
+separate from the existing metadata API and requires no submission workbook.
+
 ## Optional custom metadata
 
 The shared reader and standalone `get_data_from_samplesheet` compatibility API
