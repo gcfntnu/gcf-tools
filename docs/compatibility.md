@@ -81,6 +81,15 @@ Both profiles now preserve optional `RunInfo.xml` bytes/hash, while Stats remain
 the geometry authority. The selection schema is auxiliary; configmaker formats
 and shared validation rules are unchanged.
 
+## Excel reader dependency
+
+`gcf-tools 0.5.0` uses `xlrd==2.0.2`, matching SS Manager's existing dependency
+pin. Legacy `.xls` workbooks retain the xlrd reader; `.xlsx` keeps openpyxl.
+Workbook matching, exact IDs, lab precedence, CLI selection and output formats
+remain unchanged. The [development guide](development.md#evidence-concurrency-and-compatibility)
+describes synthetic real-format API/installed-command regressions and the
+updated Python 3.8 comparator.
+
 ## Sheet-only intake API
 
 `gcf-tools 0.5.0` adds `configmaker.samplesheet` API 1 for a path or uploaded

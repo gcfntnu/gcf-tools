@@ -162,7 +162,10 @@ duplicates. Multiple Data/BCLConvert_Data sections are always ambiguous.
 
 ## Consumer adoption and compatibility
 
-This is an additive module/API with no new dependencies or Python runtime floor.
+The sheet-only API uses the existing runtime packages and adds no Python runtime
+floor. gcf-tools 0.5.0 updates the xlrd pin to **2.0.2**, matching SS Manager;
+`.xls` and `.xlsx` reading remain covered separately by the workbook tests.
+The `xlwt` writer is a test-only development extra.
 Consumers must pin the reviewed implementation commit (package **0.5.0** or
 later) and check `SHEET_API_VERSION == 1`. Package 0.4.0 lacks this module; its
 metadata/index/project-pair API versions do not establish sheet-only availability.

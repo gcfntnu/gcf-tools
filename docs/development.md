@@ -93,8 +93,9 @@ The wheel contains the four existing packages, both unchanged script filenames,
 `descriptors/organisms.json` inventory. Setuptools
 `script-files` preserves the current script/package shadowing protection. The
 version comes from `configmaker.__version__`; `setup.py` is a compatibility shim.
-`setup_requires` is gone. Runtime dependencies remain unchanged; intentional
-organism API behavior changes are described in [organisms.md](organisms.md).
+`setup_requires` is gone. The xlrd reader is pinned to 2.0.2 as described below;
+other runtime dependency declarations remain unchanged. Intentional organism API
+behavior changes are described in [organisms.md](organisms.md).
 
 The sdist includes runtime source/resources, tests, the safe fixture generator,
 helpers, the reviewed wholly synthetic `tests/fixtures/paired/` data, development
@@ -150,7 +151,8 @@ An agent rehearsal does not establish that either facility developer completed i
 Python 3.11 is a **development reference**, not a new runtime floor. There is no
 new `Requires-Python` restriction. Historical Python 3.8.18 CI passed the legacy
 matrix at runtime baseline `059d7d9`; the retained 3.8 CI job uses the separately
-recorded [historical comparator](../requirements-python38.txt). Its acquisition
+recorded [historical comparator](../requirements-python38.txt), with its xlrd pin
+updated to 2.0.2 for gcf-tools 0.5.0. Its acquisition
 is separated from offline installed-command/legacy checks. This does not prove
 all public APIs work on every interpreter or establish deployed versions.
 
@@ -165,13 +167,30 @@ this comparator or changing Python support requires a separate explicit decision
 See the [upstream 84.1.0 release notes](https://setuptools.pypa.io/en/stable/history.html#v84-1-0)
 and [published Python requirement](https://pypi.org/project/setuptools/84.1.0/).
 
-The primary development pins retain the runtime versions exercised under #60;
-they are not inferred production requirements. In particular pandas 3.0.6 has
-known organism-assignment differences. Pinning it makes existing evidence
-repeatable, not scientifically authoritative. `xlrd==1.2.0`, fuzzy libraries,
-`.xls` acceptance code, version 0.3.0 and validation API 1 remain unchanged.
-Actual `.xls` behavior and facility dependency identities still need independent
-evidence; dropping Python 3.8 or `.xls` requires a separate explicit decision.
+The primary development pins otherwise retain the runtime versions exercised
+under #60; they are not inferred production requirements. In particular pandas
+3.0.6 has known organism-assignment differences. Pinning it makes existing
+evidence repeatable, not scientifically authoritative. Fuzzy libraries and
+validation API 1 remain unchanged.
+
+For gcf-tools 0.5.0, `xlrd==2.0.2` replaces 1.2.0 in runtime metadata, the
+Python 3.11 baseline and the Python 3.8 comparator. This matches SS Manager's
+existing xlrd pin. Upstream xlrd 2 only reads historical `.xls`; the existing
+pandas reader uses openpyxl for `.xlsx`. Neither accepted extension is removed
+and no parsing/identity/CLI rule is changed. See the
+[xlrd format boundary](https://pypi.org/project/xlrd/2.0.2/) and
+[pandas engine selection](https://pandas.pydata.org/docs/reference/api/pandas.ExcelFile.html).
+
+`tests/test_excel_formats.py` writes wholly synthetic .xls/.xlsx workbooks in
+invocation-owned paths and checks actual reader selection, exact text IDs, lab
+precedence, empty-lab fallback, diagnostics, source hashes and the compatibility
+wrapper. `tests/test_excel_formats_cli.py` runs installed default-PEP initialization
+with both formats, through discovery and explicit selection, retaining existing
+YAML/PEP value assertions. The BIFF8 writer `xlwt==1.3.0` is test-only (`dev` extra
+and the exact development baseline); no new runtime writer, binary fixture or
+network acquisition during checks is introduced. Facility-origin workbook
+variants still require separate integration evidence. Python 3.8 support and
+`.xls` acceptance remain; dropping either requires a separate explicit decision.
 
 Optional BFQ/container/scientific integration remains manual, using fixed source
 revisions, copied inputs and private output roots as described in

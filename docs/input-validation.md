@@ -106,7 +106,10 @@ ordered merge rules remain unchanged.
 - UTF-8/BOM CSV SampleSheets support `[Data]` and `[BCLConvert_Data]`, with
   `Sample_ID` and `Sample_Project` columns and at least one sample row. Empty CSV
   export columns and missing trailing optional empty fields are harmless.
-- Submission workbooks use `Sample-Submission-Form` (header row 15) and
+- Submission workbooks accept legacy `.xls` through xlrd 2.0.2 and `.xlsx`
+  through openpyxl, selected by pandas from workbook content. gcf-tools 0.5.0
+  updates the xlrd pin without changing metadata rules. Workbooks use
+  `Sample-Submission-Form` (header row 15) and
   `INFO (GCF-lab only)` (header row 1). Existing descriptive headers and bracketed
   column descriptors are supported. The customer sample-ID header is
   `Unique Sample ID`; lab sample IDs use `Sample_ID`. Both worksheets must exist.
