@@ -81,6 +81,14 @@ Both profiles now preserve optional `RunInfo.xml` bytes/hash, while Stats remain
 the geometry authority. The selection schema is auxiliary; configmaker formats
 and shared validation rules are unchanged.
 
+## Sheet-only intake API
+
+`gcf-tools 0.5.0` adds `configmaker.samplesheet` API 1 for a path or uploaded
+bytes without submission forms. Its [contract](sheet-validation.md) defines
+preserved CSV cells, raw options and an explicit portable-converter profile.
+This opt-in API does not change `validate_inputs`, configmaker commands, BFQ
+imports, historical option types or existing metadata acceptance.
+
 ## Metadata, selection and configuration authority
 
 - [Input validation](input-validation.md#accepted-input-and-matching-rules) defines

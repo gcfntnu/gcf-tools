@@ -77,10 +77,10 @@ and a list of `Project_ID` values), `metadata` (merged effective dataframe),
 uses these objects directly. These dataframe/parser internals are not the JSON
 compatibility contract; external consumers should use `to_dict()`.
 
-## Proposed sheet-only intake boundary
+## Sheet-only intake boundary (additive API 1)
 
-The additive [sheet-only API proposal](sheet-validation.md) defines a preserved
-CSV document and an explicit portable-converter intake profile for #104. It is
+`gcf-tools 0.5.0` adds the [sheet-only API](sheet-validation.md), with a preserved
+CSV document and an explicit portable-converter intake profile (#104). It is
 separate from the existing metadata API and requires no submission workbook.
 
 ## Optional custom metadata

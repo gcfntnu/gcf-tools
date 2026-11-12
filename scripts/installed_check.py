@@ -12,7 +12,7 @@ def check(mode, source, expected):
     assert not __import__('os').environ.get('PYTHONPATH'), "source path injection"
     root = Path(source).resolve()
     for name in ["configmaker", "configmaker.configmaker", "configmaker.validation",
-                 "configmaker.libprep", "descriptors", "descriptors.fuzzmatch", "descriptors.organisms",
+                 "configmaker.libprep", "configmaker.samplesheet", "descriptors", "descriptors.fuzzmatch", "descriptors.organisms",
                  "peppy_support", "testdata.create_testdata"]:
         module = importlib.import_module(name)
         location = Path(module.__file__).resolve()
@@ -28,7 +28,11 @@ def check(mode, source, expected):
     from descriptors.fuzzmatch import ORG_DB
     from descriptors import fuzzmatch_organism
     from peppy_support import conifg2sampletable, create_peppy
-    assert __version__ == VALIDATOR_VERSION == importlib.metadata.version("gcf-tools") == "0.4.0"
+    assert __version__ == VALIDATOR_VERSION == importlib.metadata.version("gcf-tools") == "0.5.0"
+    from configmaker.samplesheet import SHEET_API_VERSION, validate_samplesheet_bytes
+    result = validate_samplesheet_bytes(b"[Data]\nSample_ID,Sample_Project,index\n001,SyntheticProject,acgtn\n", profile="portable-converter")
+    assert SHEET_API_VERSION == 1 and result.ok and result.assignments[0]["sample_id"] == "001"
+    assert result.assignments[0]["index"] == "ACGTN"
     assert VALIDATION_API_VERSION == 1
     assert "NB501038" in SEQUENCERS and callable(validate_inputs) and callable(add_workflow)
     assert "homo_sapiens" in ORG_DB and fuzzmatch_organism("homo_sapiens") == "homo_sapiens"

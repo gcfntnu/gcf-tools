@@ -1,23 +1,33 @@
-# Sheet-only validation proposal (API 1)
+# Sheet-only validation and CSV preservation (API 1)
 
-This is the proposed boundary for [gcf-tools #104](https://github.com/gcfntnu/gcf-tools/issues/104),
+`gcf-tools 0.5.0` adds this boundary for [gcf-tools #104](https://github.com/gcfntnu/gcf-tools/issues/104),
 following the [SS Manager contract](https://github.com/gcfntnu/ss_manager/pull/19).
 It extends the [input-validation contract](input-validation.md); it does not change
 `validate_inputs`, metadata/report API 1, project-pair API 1, or index API 1.
-Review this schema/profile before consumer adoption. SS Manager #15–#18 own
-application integration, export authority/review, v2 UI and configuration snapshots.
+SS Manager #15–#18 own application integration, export authority/review, v2 UI and configuration snapshots.
 
 ## Calls and result
 
-The proposed `configmaker.samplesheet` module exposes:
+The `configmaker.samplesheet` module exposes:
 
 ```python
-validate_samplesheet(path, *, profile="metadata")
-validate_samplesheet_bytes(content, *, source="<memory>", profile="metadata")
+from configmaker.samplesheet import SHEET_API_VERSION, validate_samplesheet_bytes
+
+assert SHEET_API_VERSION == 1
+result = validate_samplesheet_bytes(
+    uploaded_bytes, source="uploaded.csv", profile="portable-converter",
+)
+report = result.to_dict()
+if not result.ok:
+    raise ValueError(result.render_text())
+# Use the preserved strings for review/export; assignments are normalized views.
+rows = [row["cells"] for row in report["document"]["rows"]]
+options = report["custom_options"]
 ```
 
-The first reads one local path once; the second accepts bytes already held by an
-intake application. Both hash exactly the bytes parsed, including a UTF-8 BOM.
+`validate_samplesheet(path, *, profile="metadata")` reads one local path once.
+`validate_samplesheet_bytes(content, *, source="<memory>", profile="metadata")`
+accepts bytes already held by an intake application. Both hash exactly the bytes parsed, including a UTF-8 BOM.
 They collect input/parse/validation errors in `SampleSheetResult`; invalid Python
 argument types or an unknown profile raise `TypeError`/`ValueError`.
 No form, FASTQ, workflow, service or run directory is required.
@@ -53,12 +63,15 @@ Unknown sections produce a passthrough notice, without semantic approval.
 Reusing `csv.writer` on `row['cells']` produces comma CSV with the same cell
 values. No writer mutates inputs or applies SS Manager's form/export policy.
 
-`custom_options` is an ordered list of `{key, value, row, column, logical_key}`.
-`key` and `value` are exact first/second cell text, including blanks, spaces,
-false, decimals and case-insensitive true. `logical_key` is the canonical known
-option name, or the original unknown key. `document` retains any further cells.
-The legacy typed metadata dictionary is never an export source and keeps its
-existing true coercion and Organism N/A handling.
+`custom_options` is an ordered list of `{key, value, row, end_row, column, logical_key}`.
+`row`/`end_row` locate the source record and `column: 2` identifies its value
+cell (1-based). `key` and `value` are exact first/second cell text, including
+blanks, spaces, false, decimals and case-insensitive true. `logical_key` is the canonical known
+option name, or the original unknown key. Further empty export cells remain in
+`document`; populated surplus fields in key/value sections fail `samplesheet.option_width`.
+The historical typed `validate_inputs(...).custom_options` dictionary is separate
+and keeps its true coercion and Organism N/A handling. It is never an export
+source for this API: raw true/false/blank/decimal values stay strings here.
 
 ## Profiles and ownership
 
@@ -80,8 +93,9 @@ that differs from Sample_ID generates a review warning, without clearing it.
 
 Absent Lane or an empty lane cell means all lanes (`*`). Explicit values must
 match `[0-9]+` and be greater than zero; whitespace, signs, fractions and embedded
-text fail. Mixed all-lane and explicit lane scope within one sheet fails. Leading
-zeroes are preserved in the document and reported as a representation notice;
+text fail. Numeric values must be representable by the Python interpreter;
+no physical lane bound is imposed. Mixed all-lane and explicit lane scope within
+one sheet fails. Leading zeroes are preserved in the document and reported as a representation notice;
 normalized assignment lanes are positive integers.
 
 Indexes are normalized in full through `configmaker.indexes`, including literal
@@ -111,9 +125,10 @@ not establish converter or scientific compatibility.
 
 ## Diagnostic policy
 
-All cell findings carry `file`, physical starting `row`, `end_row`, named `column`
+Cell findings carry `file`, physical starting `row`, `end_row`, named `column`
 and `details.value` where applicable; duplicate/conflict findings identify earlier
-rows. CSV errors identify their physical line; byte-decoding errors identify the
+rows. Failed structural or library checks suppress dependent assignment checks.
+CSV errors identify their physical line; byte-decoding errors identify the
 byte offset. Existing metadata codes retain their meaning. New codes cover:
 
 | Code | Meaning |
@@ -122,6 +137,8 @@ byte offset. Existing metadata codes retain their meaning. New codes cover:
 | `samplesheet.duplicate_columns` | Duplicate nonblank data headers, including case aliases |
 | `samplesheet.conflicting_option` | Conflicting exact values for one logical key |
 | `samplesheet.duplicate_option` | Identical duplicate logical key retained, with notice |
+| `samplesheet.missing_option_key` | Populated option has no key |
+| `samplesheet.option_width` | Populated surplus fields make a key/value row ambiguous |
 | `samplesheet.option_alias` | Known key uses a noncanonical spelling; original retained |
 | `samplesheet.unknown_section` | Cells retained without semantic validation |
 | `samplesheet.parse_failed` | Undecodable UTF-8 or malformed CSV quoting |
@@ -143,18 +160,39 @@ text. Exact duplicate values are retained with a notice; differing raw values
 fail before form precedence. Header/settings keys also reject conflicting exact
 duplicates. Multiple Data/BCLConvert_Data sections are always ambiguous.
 
-## Compatibility and verification plan
+## Consumer adoption and compatibility
 
 This is an additive module/API with no new dependencies or Python runtime floor.
-Consumers must pin the reviewed implementation commit and check
-`SHEET_API_VERSION == 1`; package 0.4.0 alone cannot establish availability.
+Consumers must pin the reviewed implementation commit (package **0.5.0** or
+later) and check `SHEET_API_VERSION == 1`. Package 0.4.0 lacks this module; its
+metadata/index/project-pair API versions do not establish sheet-only availability.
 Historical `validate_inputs`, installed commands, BFQ imports and generated files
 keep their current behavior. No application or companion implementation is bundled.
 
-Synthetic tests must cover IEM/v2, exact IDs, all contract cases relevant to this
-boundary, malformed indexes/lanes, complete N sequences, GA/TT expansion,
+The synthetic regressions in `tests/test_samplesheet.py` cover all 22 SS Manager
+PR #19 contract cases: IEM/v2, exact IDs, malformed indexes/lanes, complete N
+sequences, GA/TT expansion,
 duplicates/aliases, UTF-8/BOM, quoted comma/quote/newline cells, exact input hashes,
-nonmutation, and retained unknown cells. Run the repository's fast and full local
-gates, including installed wheel/sdist tests with network/SMTP protection. These
-do not establish facility, converter, server or scientific integration. Consumer
+nonmutation, and retained unknown cells. The installed smoke check also imports
+this module from the inspected installation and validates exact ID/index values.
+Run the repository's fast and full local gates, including installed wheel/sdist
+tests with network/SMTP protection. These do not establish facility, converter, server or scientific integration. Consumer
 adoption, lab acceptance and deployment remain separate reviewed work.
+
+`summary` contains `data_row_count` (source rows), `sample_count` (distinct logical
+IDs), ordered `project_ids`, expanded `assignment_count`, `validation_complete`,
+and `deferred_checks`. Counts can be partial on failure. The deferred checks are
+`submission_forms`, `physical_run`, `backend`, `scheduling`, `libprep_selection`
+and `mismatch_collisions`; they are never implied by `status: passed`.
+
+For SS Manager adoption, pass original upload bytes with a stable source label,
+require `kind == "samplesheet"`, `sheet_api_version == 1` and successful status,
+and retain the original bytes/hash alongside the report. Inspect warnings such
+as `sample.name_review` before committing a generation. Enforce the application's
+GCF project policy against actual data project IDs; no project-count heuristic
+or form authority is implemented here. Merge/review/export remains SS Manager
+#16 work: use preserved cells/raw options, show replacements/removals, and
+revalidate generated comma CSV through the same API. Never reconstruct exports
+from normalized assignments or the historical typed options dictionary. Those
+views intentionally differ from source spelling. Repeated corrections must still
+start from the stored original upload.
