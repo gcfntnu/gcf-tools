@@ -77,6 +77,12 @@ and a list of `Project_ID` values), `metadata` (merged effective dataframe),
 uses these objects directly. These dataframe/parser internals are not the JSON
 compatibility contract; external consumers should use `to_dict()`.
 
+## Sheet-only intake boundary (additive API 1)
+
+`gcf-tools 0.5.0` adds the [sheet-only API](sheet-validation.md), with a preserved
+CSV document and an explicit portable-converter intake profile (#104). It is
+separate from the existing metadata API and requires no submission workbook.
+
 ## Optional custom metadata
 
 The shared reader and standalone `get_data_from_samplesheet` compatibility API
@@ -100,7 +106,10 @@ ordered merge rules remain unchanged.
 - UTF-8/BOM CSV SampleSheets support `[Data]` and `[BCLConvert_Data]`, with
   `Sample_ID` and `Sample_Project` columns and at least one sample row. Empty CSV
   export columns and missing trailing optional empty fields are harmless.
-- Submission workbooks use `Sample-Submission-Form` (header row 15) and
+- Submission workbooks accept legacy `.xls` through xlrd 2.0.2 and `.xlsx`
+  through openpyxl, selected by pandas from workbook content. gcf-tools 0.5.0
+  updates the xlrd pin without changing metadata rules. Workbooks use
+  `Sample-Submission-Form` (header row 15) and
   `INFO (GCF-lab only)` (header row 1). Existing descriptive headers and bracketed
   column descriptors are supported. The customer sample-ID header is
   `Unique Sample ID`; lab sample IDs use `Sample_ID`. Both worksheets must exist.

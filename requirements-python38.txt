@@ -1,5 +1,6 @@
 # Historical runtime/CLI comparator from successful run 36572498127, Python 3.8.18.
-# Separate from the primary Python 3.11 development baseline and runtime metadata.
+# Separate from the primary Python 3.11 development baseline.
+# xlrd is updated to 2.0.2 for gcf-tools 0.5.0; other comparator pins are retained.
 pip==25.0.1
 # Last Python 3.8-compatible release; newer setuptools requires newer Python.
 # Security fixes in 84.1.0 are unavailable here; see docs/development.md.
@@ -8,7 +9,7 @@ wheel==0.45.1
 pandas==2.0.3
 numpy==1.24.4
 openpyxl==3.1.5
-xlrd==1.2.0
+xlrd==2.0.2
 oyaml==1.0
 PyYAML==6.0.3
 thefuzz==0.22.1

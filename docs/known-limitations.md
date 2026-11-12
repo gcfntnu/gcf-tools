@@ -70,7 +70,9 @@ behavior/dependency changes or foundation completion, obtain:
   edits; the hosted verification environment is not the production environment.
 - Active standalone/custom Python callers, descriptor usage, legacy `.xls` and
   Python requirements, and priority real FASTQ layouts. The parser supports
-  workbook reading, but this PR did not verify legacy `.xls` operation.
+  workbook reading. gcf-tools 0.5.0 now tests synthetic `.xls`/`.xlsx` API and
+  installed-command initialization; facility-origin workbook variants remain a
+  separate manual gate. See [Excel reader verification](development.md#evidence-concurrency-and-compatibility).
 - Broader layouts beyond the [supported profiles](testdata.md), and remaining
   scientific coverage listed there; #83's initial Parse integration is complete.
 - Facility-developer onboarding acceptance. [#65 agent rehearsals](verification-65.md)

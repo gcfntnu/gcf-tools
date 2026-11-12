@@ -17,6 +17,7 @@ execute the scientific workflows itself.
 | Understand components, callers and public imports | [Architecture](docs/architecture.md) |
 | Find CLI options, generated values, paths and compatibility boundaries | [Compatibility](docs/compatibility.md) |
 | Interpret SampleSheets, workbooks, IDs and validation reports | [Input validation](docs/input-validation.md) |
+| Validate an uploaded sheet and preserve its CSV cells without a workbook | [Sheet-only API](docs/sheet-validation.md) |
 | Select library kits, read geometry and configuration snapshots | [Library-preparation configuration](docs/libprep-config.md) |
 | See commands actually exercised, source revisions and limits | [Onboarding verification](docs/verification-65.md), [packaging evidence](docs/verification-61.md) |
 | Run the synthetic paired example and inspect its limits | [Testdata guide](docs/testdata.md) |
