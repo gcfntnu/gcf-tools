@@ -237,3 +237,21 @@ def test_planning_missing_cycles_are_deferred_and_v2_read_names_work(tmp_path):
     sheet.write_text(sheet.read_text().replace("Read1Cycles,75\nRead2Cycles,150\n", ""))
     report = validate_sheet_set({A: sheet})
     assert report.ok and any(item["code"] == "planning.geometry_required" for item in report.findings)
+
+
+def test_config_preview_serializes_planned_project_without_fastqs(tmp_path):
+    from configmaker.preview import preview_project_config
+    import yaml
+
+    sheet, form = pair(tmp_path, A, "SampleA", "AAAAAAAA", options="[CustomOptions]\nLibprep,Custom\n")
+    cfg = tmp_path / "libprep.config"
+    cfg.write_text("Custom PE:\n  workflow: default\n  library_layout: paired\n")
+    report = preview_project_config(A, sheet, form, libprep_config=cfg, machine="Synthetic")
+    assert report["status"] == "generated", report
+    config = yaml.safe_load(report["yaml"])
+    assert config["samples"]["SampleA"]["Project_ID"] == A
+    assert config["read_geometry"] == [75, 150]
+    assert config["workflow"] == "default" and config["machine"] == "Synthetic"
+    assert "R1" not in config["samples"]["SampleA"]
+    sheet.write_text(sheet.read_text().replace("[Reads]\n75\n150\n", ""))
+    assert preview_project_config(A, sheet, form, libprep_config=cfg)["status"] == "needs_input"
