@@ -211,3 +211,29 @@ def test_shortened_index_cycles_are_validated_against_effective_mask(tmp_path):
     assert validate_project_pairs([sa, sb], [fa, fb], run_info=info).ok
     sb.write_text(sb.read_text().replace("CCCCCCCC", "CCCCCC"))
     assert "demux.index_geometry" in codes(validate_project_pairs([sa, sb], [fa, fb], run_info=info))
+
+
+def test_planning_uses_same_assignments_without_workbooks(tmp_path):
+    from configmaker.project_pairs import validate_sheet_set, validate_project_workbook
+
+    sa, fa = pair(tmp_path, A, "A", "AAAAAAAA")
+    sb, fb = pair(tmp_path, B, "B", "AAAAAAAC")
+    planned = validate_sheet_set({B: sb, A: sa})
+    actual = validate_project_pairs([sa, sb], [fa, fb])
+    assert planned.assignments == actual.assignments
+    assert codes(planned) == codes(actual) == {"demux.index_collision"}
+    submission_form(fa, [customer_row("A", project=B)])
+    assert "pair.form_project_conflict" in codes(validate_project_workbook(A, sa, fa))
+    sb.write_text(sb.read_text().replace("75\n150", "50\n150"))
+    assert "planning.incompatible_layouts" in codes(validate_sheet_set({A: sa, B: sb}))
+
+
+def test_planning_missing_cycles_are_deferred_and_v2_read_names_work(tmp_path):
+    from configmaker.project_pairs import validate_sheet_set
+
+    sheet, _ = pair(tmp_path, A, "S", "AAAAAAAA")
+    sheet.write_text(sheet.read_text().replace("[Data]", "[BCLConvert_Data]").replace("75\n150\n", "Read1Cycles,75\nRead2Cycles,150\n"))
+    assert validate_sheet_set({A: sheet}).project_geometry[A] == [75, 150]
+    sheet.write_text(sheet.read_text().replace("Read1Cycles,75\nRead2Cycles,150\n", ""))
+    report = validate_sheet_set({A: sheet})
+    assert report.ok and any(item["code"] == "planning.geometry_required" for item in report.findings)
