@@ -183,6 +183,26 @@ def test_paired_example_installed_cli_default_pep(example):
     assert contents(source) == before
 
 
+def test_config_preview_matches_real_project_initialization(example):
+    from configmaker.preview import preview_project_config
+
+    source, work = example
+    run = source / RUN
+    sheet = run / "SampleSheet.csv"
+    sheet.write_text("[Reads]\n75\n150\n" + sheet.read_text())
+    fixture = preview_project_config(PROJECT, sheet, run / "Sample-Submission-Form.xlsx",
+                                     libprep_config=work / "src/gcf-workflows/libprep.config")
+    assert fixture["status"] == "generated", fixture
+    before = yaml.safe_load(fixture["yaml"])
+    result = cli(source, work)
+    assert result.returncode == 0, result.stderr
+    actual = yaml.safe_load((work / "config.yaml").read_text())
+    for key in ("project_id", "read_geometry", "workflow", "organism", "filter", "libprep_selection"):
+        assert before[key] == actual[key]
+    for sid, sample in before["samples"].items():
+        assert sample.items() <= actual["samples"][sid].items()
+
+
 @pytest.mark.parametrize("qualified", [False, True])
 def test_canonical_legacy_pair_ignores_unselected_metadata_backups(example, qualified):
     source, work = example

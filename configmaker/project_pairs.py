@@ -59,6 +59,8 @@ class ProjectPairResult(ValidationResult):
                       project_settings=copy.deepcopy(self.project_settings),
                       libprep_selections=copy.deepcopy(self.selections),
                       project_reports={key: value.to_dict() for key, value in self.project_results.items()})
+        if self.mode == "sheet_set":
+            report.update(kind="sheet_set", sheet_set_api_version=1)
         return report
 
     def render_text(self):
@@ -207,6 +209,10 @@ class PhysicalGeometryRequired(LibprepConfigError):
 
 def _override_geometry(mask, physical, include_indexes=False):
     tokens = str(mask).split(";")
+    # A wildcard in an earlier read must not hide malformed subsequent tokens.
+    for token in tokens:
+        if not re.fullmatch(r"(?:[YIUN](?:[1-9][0-9]*|\*))+", token.upper()) or token.count("*") > 1:
+            raise LibprepConfigError("Unsupported OverrideCycles token {!r}".format(token))
     if physical is not None and len(tokens) != len(physical):
         raise LibprepConfigError("OverrideCycles has {} reads; physical run has {}".format(len(tokens), len(physical)))
     geometry, index_geometry = [], []
@@ -338,7 +344,7 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
 def validate_sheet_set(project_sheets, *, run_info=None, libprep_config=None, mismatch_policy=None,
                        effective_settings=None, allow_separate_passes=False, skip_conversion_projects=()):
     """Validate a mapping of project ID to clean CSV path without workbook discovery."""
-    result = ProjectPairResult()
+    result = ProjectPairResult(mode="sheet_set")
     if not project_sheets:
         result.add("error", "input.missing_samplesheet", "Select at least one project sheet.")
     for project_id, path in sorted(project_sheets.items()):
@@ -349,6 +355,11 @@ def validate_sheet_set(project_sheets, *, run_info=None, libprep_config=None, mi
             if sheet:
                 validated.sheets.append(sheet)
                 validated.custom_options = sheet["options"]
+                ids = sorted({row["Sample_ID"] for row in sheet["records"]})
+                validated.summary = {
+                    "projects": [{"project_id": project_id, "sample_ids": ids, "sample_count": len(ids)}],
+                    "planned_samples": [{"sample_id": sid, "project_ids": [project_id]} for sid in ids],
+                }
         result.inputs.extend(validated.inputs)
         result.project_results[project_id] = validated
         result.pairs.append(ProjectPair(project_id, path, None))
@@ -455,6 +466,15 @@ def _validate_assignments(result, run_info, libprep_config, mismatch_policy, eff
             except LibprepConfigError as error:
                 result.add("error", "demux.mismatch_policy", str(error), **context)
                 allowances = policy.copy()
+            mask = row_settings.get("OverrideCycles")
+            if planning and physical is None and mask and "*" not in mask:
+                tokens = mask.upper().split(";")
+                if all(re.fullmatch(r"(?:[YIUN][1-9][0-9]*)+", t) and ("I" in t or "Y" in t) for t in tokens):
+                    index_lengths = [sum(map(int, re.findall(r"I([0-9]+)", t))) for t in tokens if "I" in t]
+                    for i, column in enumerate(("index", "index2")):
+                        if indexes[column] and (i >= len(index_lengths) or len(indexes[column]) != index_lengths[i]):
+                            result.add("error", "demux.index_geometry", "Index length differs from the explicit OverrideCycles index cycles.",
+                                       column=column, **context)
             if physical is not None:
                 physical_indexes = [cycles for cycles, indexed in physical if indexed]
                 if row_settings.get("OverrideCycles"):
@@ -471,7 +491,7 @@ def _validate_assignments(result, run_info, libprep_config, mismatch_policy, eff
                                            sample_id=sid, lane=lane, **indexes, mismatches=allowances,
                                            settings=row_settings, effective_read_geometry=result.project_geometry.get(key),
                                            index_provenance=row["_index_provenance"]))
-    if result.mode == "project_pairs" and not allow_separate_passes:
+    if result.mode in ("project_pairs", "sheet_set") and not allow_separate_passes:
         all_global_keys = set().union(*(set(settings) for settings in result.project_settings.values())) - PER_SAMPLE_SETTINGS
         for setting in sorted(all_global_keys):
             values = {key: settings.get(setting) for key, settings in result.project_settings.items()}
@@ -517,6 +537,11 @@ def _check_planned_layouts(result, physical):
                 if all(re.fullmatch(r"(?:[YIUN][1-9][0-9]*)+", token) for token in tokens):
                     total = tuple(sum(map(int, re.findall(r"[0-9]+", token))) for token in tokens)
                     masks.setdefault(total, set()).add(key)
+                    # Only explicit biological and index roles constrain the full
+                    # layout here. An entirely masked read needs physical RunInfo.
+                    if all("Y" in token or "I" in token for token in tokens):
+                        reads = tuple(n for n, token in zip(total, tokens) if "Y" in token)
+                        unmasked.setdefault(reads, set()).add(key)
             if not mask:
                 try:
                     reads = declared_reads(sheet)

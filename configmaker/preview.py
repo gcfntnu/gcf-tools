@@ -3,6 +3,8 @@ from types import SimpleNamespace
 
 import oyaml as yaml
 
+from configmaker.validation import _read, validate_inputs
+
 from configmaker.configmaker import (apply_workflow_selection, create_default_config,
                                     merge_samples_with_submission_form, resolve_project_organism)
 from configmaker.libprep import LibprepConfig
@@ -10,9 +12,10 @@ from configmaker.project_pairs import (PhysicalGeometryRequired, derive_project_
                                       validate_project_workbook)
 
 
-def preview_project_config(project_id, samplesheet, workbook, *, libprep_config, run_info=None, machine=None):
+def preview_project_config(project_id, samplesheet, workbook, *, libprep_config, run_info=None, machine=None, shared_sheet=False):
     """Return a JSON-compatible result; only a generated result contains YAML."""
-    validated = validate_project_workbook(project_id, samplesheet, workbook)
+    validated = (validate_inputs([samplesheet], [workbook], project_ids=[project_id]) if shared_sheet
+                 else validate_project_workbook(project_id, samplesheet, workbook))
     report = validated.to_dict()
     report.update(kind="config_preview", preview_api_version=1, status="invalid", yaml=None,
                   runtime_inputs=["FASTQ paths and checksums", "observed run and instrument metadata"])
@@ -24,13 +27,15 @@ def preview_project_config(project_id, samplesheet, workbook, *, libprep_config,
         snapshot = libprep_config if isinstance(libprep_config, LibprepConfig) else LibprepConfig.load(libprep_config)
         report["inputs"].append(dict(kind="libprep_config", path=snapshot.source, sha256=snapshot.sha256))
         if run_info is not None:
-            from configmaker.validation import _read
             _, run_info = _read(run_info, "run_info", validated)
             report["inputs"].append(validated.inputs[-1])
             if run_info is None:
                 report["errors"] = validated.to_dict()["errors"]
                 return report
-        reads = derive_project_geometry(validated.sheets[0], run_info)
+        sheet = validated.sheets[0]
+        if shared_sheet:
+            sheet = dict(sheet, records=[row for row in sheet["records"] if row["Sample_Project"] == project_id])
+        reads = derive_project_geometry(sheet, run_info)
         options = validated.custom_options
         selection = snapshot.select(options.get("Libprep"), reads)
         args = SimpleNamespace(_validation=validated, project_id=[project_id], new_project_id=None,
