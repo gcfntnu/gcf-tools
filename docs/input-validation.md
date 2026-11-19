@@ -463,3 +463,25 @@ settings agree. A submission form still contains one row for that library. Exact
 duplicates and conflicting definitions remain errors. The shared
 [offline 10x index contract](tenx-indexes.md) defines supported catalogue expansion,
 orientation and conversion-specific validation; metadata-only parsing remains non-mutating.
+
+### Planning before workbooks arrive
+
+Call `validate_sheet_set({project_id: csv_path, ...})` from
+`configmaker.project_pairs` for the same normalized assignments and cross-project
+checks without opening a submission form. The returned ProjectPairResult binds
+each CSV by digest. A planner can supply run_info, libprep_config and effective
+pass settings as it does for complete pairs. Inspect planning.geometry_required
+and planning.physical_checks for decisions waiting on physical run information.
+Legacy operational pair discovery still requires its workbooks.
+Use `validate_project_workbook(project_id, csv_path, workbook_path)` for strict
+single-project intake independent of client filenames.
+
+Use `configmaker.preview.preview_project_config(project_id, csv, workbook,
+libprep_config=path, machine=name)` to preview project configuration offline.
+An optional run_info path resolves physical geometry. API version 1 returns
+generated with serialized yaml, invalid with contextual errors, or needs_input
+with the missing prerequisite. Input hashes identify metadata and configuration.
+FASTQ discovery, observed run attributes, checksums and real processing remain
+runtime work. Preview writes no files or workflow checkout.
+
+User-facing findings refer to each sample submission form as an SSF. A missing match identifies the sample from the sheet. Machine-readable finding codes and worksheet locations are retained.

@@ -445,7 +445,7 @@ def find_fastq_md5sums(runfolders, project_id):
     return checksums
 
 
-def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptors=None, write_yaml=False, md5sums=None):
+def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptors=None, write_yaml=False, md5sums=None, *, planned_reads=None):
     """
     create configuration dictionary
     """
@@ -480,16 +480,21 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
     validation = getattr(args, "_validation", None)
     if validation is not None:
         config["metadata_inputs"] = copy.deepcopy(validation.inputs)
-    physical_geometry = find_read_geometry(args.runfolders)
-    effective_geometry = getattr(args, "effective_read_geometry", None)
-    if effective_geometry is not None:
-        effective_geometry = list(validate_read_geometry(effective_geometry))
-        if len(effective_geometry) > len(physical_geometry) or any(
-                effective > physical for effective, physical in zip(effective_geometry, physical_geometry)):
-            raise LibprepConfigError("Effective read geometry {} exceeds physical geometry {}".format(effective_geometry, physical_geometry))
-        config["run_read_geometry"] = physical_geometry
-    config["read_geometry"] = effective_geometry or physical_geometry
-    config["machine"] = args.machine or find_machine(args.runfolders)
+    if planned_reads is None:
+        physical_geometry = find_read_geometry(args.runfolders)
+        effective_geometry = getattr(args, "effective_read_geometry", None)
+        if effective_geometry is not None:
+            effective_geometry = list(validate_read_geometry(effective_geometry))
+            if len(effective_geometry) > len(physical_geometry) or any(
+                    effective > physical for effective, physical in zip(effective_geometry, physical_geometry)):
+                raise LibprepConfigError("Effective read geometry {} exceeds physical geometry {}".format(effective_geometry, physical_geometry))
+            config["run_read_geometry"] = physical_geometry
+        config["read_geometry"] = effective_geometry or physical_geometry
+        config["machine"] = args.machine or find_machine(args.runfolders)
+    else:
+        config["read_geometry"] = list(validate_read_geometry(planned_reads))
+        if args.machine:
+            config["machine"] = args.machine
 
     if args.PI is not None:
         config["experiment_principal_inverstigator"] = args.PI
@@ -507,7 +512,7 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
         config['multiple_flowcells'] = False
     else:
         batch["method"] = "skip"
-        if any(merged_samples.Flowcell_ID.str.contains(',')):
+        if 'Flowcell_ID' in merged_samples and any(merged_samples.Flowcell_ID.str.contains(',')):
             config['multiple_flowcells'] = True
         else:
             config['multiple_flowcells'] = False
@@ -605,6 +610,15 @@ def _merge_defaults(config, defaults):
             _merge_defaults(config[key], value)
 
 
+def apply_workflow_selection(config, selection):
+    if config.get("workflow", selection.workflow) != selection.workflow:
+        raise LibprepConfigError("Configured workflow conflicts with selected libprep entry {!r}".format(selection.entry))
+
+    _merge_defaults(config, selection.parameters)
+    config["libprep_selection"] = selection.diagnostics()
+    logger.warning("Libprep selection: %s", json.dumps(selection.diagnostics(), sort_keys=True))
+
+
 def add_workflow(config, src_dir=None, *, libprep_config=None,
                  expected_sha256=None, expected_entry=None, expected_read_geometry=None):
     """Select a kit from one snapshot; standalone sources remain portable."""
@@ -624,12 +638,7 @@ def add_workflow(config, src_dir=None, *, libprep_config=None,
     if expected_read_geometry is not None and tuple(expected_read_geometry) != selection.read_geometry:
         raise LibprepConfigError("Read geometry changed since BFQ selection: expected {}, got {}".format(
             expected_read_geometry, selection.read_geometry))
-    if config.get("workflow", selection.workflow) != selection.workflow:
-        raise LibprepConfigError("Configured workflow conflicts with selected libprep entry {!r}".format(selection.entry))
-
-    _merge_defaults(config, selection.parameters)
-    config["libprep_selection"] = selection.diagnostics()
-    logger.warning("Libprep selection: %s", json.dumps(selection.diagnostics(), sort_keys=True))
+    apply_workflow_selection(config, selection)
     snapshot.write(wf_path / "libprep.config")
     with open("Snakefile", "w") as sn:
         sn.write(SNAKEFILE_TEMPLATE.format(workflow=selection.workflow))
@@ -874,6 +883,29 @@ def parse_args(argv=None):
     return args
 
 
+def resolve_project_organism(args, custom_opts, read_geometry, *, snapshot=None):
+    selected_libprep = args.libprep_config
+    if args.organism is not None:
+        organism = resolve_organism(args.organism)
+        if organism.status == 'unresolved' and str(args.organism).strip().casefold() == 'metagenome':
+            # This established community label is not a species reference.
+            # Consult the authoritative selector without writing any outputs,
+            # and reuse its immutable bytes when initializing the workflow.
+            snapshot = snapshot or LibprepConfig.load(selected_libprep or Path('src/gcf-workflows/libprep.config'))
+            kit = args.libkit if args.libkit is not None else custom_opts.get('Libprep')
+            selection = snapshot.select(kit, read_geometry())
+            if selection.workflow != 'metagenome':
+                raise ValueError('Project organism: ' + organism.diagnostic(args.organism))
+            selected_libprep = snapshot
+            args.organism = 'metagenome'
+            logger.info('Preserving non-species project context metagenome for selected metagenome workflow')
+        elif organism.status in ('unresolved', 'ambiguous'):
+            raise ValueError('Project organism: ' + organism.diagnostic(args.organism))
+        else:
+            args.organism = organism.canonical if organism.status in ('resolved', 'mixed') else 'N/A'
+    return selected_libprep
+
+
 def main(argv=None):
     args = parse_args(argv)
     setup_logger(args.verbose)
@@ -891,25 +923,8 @@ def main(argv=None):
         args.organism = args.organism or custom_opts.get("Organism")
         identity = inventory_identity()
         logger.info('Organism inventory %s sha256=%s', identity['inventory_version'], identity['sha256'])
-        selected_libprep = args.libprep_config
-        if args.organism is not None:
-            organism = resolve_organism(args.organism)
-            if organism.status == 'unresolved' and str(args.organism).strip().casefold() == 'metagenome':
-                # This established community label is not a species reference.
-                # Consult the authoritative selector without writing any outputs,
-                # and reuse its immutable bytes when initializing the workflow.
-                snapshot = LibprepConfig.load(selected_libprep or Path('src/gcf-workflows/libprep.config'))
-                kit = args.libkit if args.libkit is not None else custom_opts.get('Libprep')
-                selection = snapshot.select(kit, args.effective_read_geometry or find_read_geometry(args.runfolders))
-                if selection.workflow != 'metagenome':
-                    raise ValueError('Project organism: ' + organism.diagnostic(args.organism))
-                selected_libprep = snapshot
-                args.organism = 'metagenome'
-                logger.info('Preserving non-species project context metagenome for selected metagenome workflow')
-            elif organism.status in ('unresolved', 'ambiguous'):
-                raise ValueError('Project organism: ' + organism.diagnostic(args.organism))
-            else:
-                args.organism = organism.canonical if organism.status in ('resolved', 'mixed') else 'N/A'
+        selected_libprep = resolve_project_organism(args, custom_opts,
+            lambda: args.effective_read_geometry or find_read_geometry(args.runfolders))
         if args.test:
             sample_dict = find_samples_test(samples_df, args)
         elif args.keep_batch:
