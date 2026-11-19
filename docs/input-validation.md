@@ -483,3 +483,5 @@ generated with serialized yaml, invalid with contextual errors, or needs_input
 with the missing prerequisite. Input hashes identify metadata and configuration.
 FASTQ discovery, observed run attributes, checksums and real processing remain
 runtime work. Preview writes no files or workflow checkout.
+
+User-facing findings refer to each sample submission form as an SSF. A missing match identifies the sample from the sheet. Machine-readable finding codes and worksheet locations are retained.

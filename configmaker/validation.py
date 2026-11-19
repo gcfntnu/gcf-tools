@@ -105,7 +105,7 @@ class ValidationResult:
             prefix = "{} [{}]".format(finding["severity"].upper(), finding["code"])
             lines.append("{} {}{}".format(prefix, finding["message"], " ({})".format(": ".join(location)) if location else ""))
         if self.summary:
-            lines.append("Planned: {} sample(s), {} project(s); {} extra effective submission sample(s).".format(
+            lines.append("Planned: {} sample(s), {} project(s); {} additional SSF sample(s).".format(
                 self.summary.get("planned_sample_count", 0), len(self.summary.get("projects", [])),
                 self.summary.get("extra_submission_sample_count", 0)))
         return "\n".join(lines)
@@ -355,12 +355,12 @@ def parse_submission_form(content, path, result, require_demux=False):
             lab = _worksheet(book, path, LAB_SHEET, 1, _lab_column_mapper, result, optional_empty=True, pooled=require_demux)
             demux = _worksheet(book, path, "Cell Multiplexing", 1, _demux_column_mapper, result) if require_demux else None
     except (OSError, ValueError, KeyError, TypeError, ImportError, EOFError) as error:
-        result.add("error", "workbook.parse_failed", "Cannot parse submission workbook: {}".format(error), file=path)
+        result.add("error", "workbook.parse_failed", "Cannot read sample submission form (SSF): {}".format(error), file=path)
         return None
     # Bad zip/XML are raised by spreadsheet engines rather than pandas itself.
     except Exception as error:
         if error.__class__.__module__ in ("zipfile", "xml.etree.ElementTree", "lxml.etree", "openpyxl.utils.exceptions"):
-            result.add("error", "workbook.parse_failed", "Cannot parse submission workbook: {}".format(error), file=path)
+            result.add("error", "workbook.parse_failed", "Cannot read sample submission form (SSF): {}".format(error), file=path)
             return None
         raise
     if customer is None or lab is None or (require_demux and demux is None):
@@ -494,7 +494,7 @@ def validate_inputs(samplesheets, submission_forms, project_ids=None, keep_batch
                 for loss in merge_losses:
                     result.add("error", "sample.merge_loss", "SampleSheet Sample_ID {!r} is lost during the customer/lab inner join; it is missing from worksheet {!r}.".format(sid, loss["worksheet"]), sample_id=sid, **loss)
             else:
-                result.add("error", "sample.missing_metadata", "SampleSheet Sample_ID {!r} is absent from effective submission metadata.".format(sid), sample_id=sid, **planned_context[sid])
+                result.add("error", "sample.missing_metadata", "No SSF match for sample {!r} from this sample sheet. Check the Sample_ID in the sample submission form.".format(sid), sample_id=sid, **planned_context[sid])
         for sid, item in planned.items():
             project_set = metadata_projects.get(sid, set())
             if project_set and project_set != set(item["project_ids"]):
@@ -502,7 +502,7 @@ def validate_inputs(samplesheets, submission_forms, project_ids=None, keep_batch
                 result.add("warning", "sample.project_precedence", "Sample_ID {!r}: submission projects {} differ from SampleSheet projects {}; SampleSheet takes precedence.".format(sid, sorted(project_set), item["project_ids"]), sample_id=sid, **context)
     extras = sorted(set(metadata) - set(planned))
     if extras and can_match:
-        result.add("info", "metadata.extra_samples", "{} extra submission sample(s) are valid and omitted from the planned analysis: {}.".format(len(extras), ", ".join(extras)), details={"sample_ids": extras, "count": len(extras)})
+        result.add("info", "metadata.extra_samples", "{} additional SSF sample(s) are valid and omitted from the planned analysis: {}.".format(len(extras), ", ".join(extras)), details={"sample_ids": extras, "count": len(extras)})
     for sid, item in planned.items():
         item["sample_group"] = _plain(metadata.get(sid, {}).get("Sample_Group"))
     projects = {}
