@@ -439,6 +439,7 @@ def test_missing_metadata_has_originating_samplesheet_context(tmp_path):
     form = submission_form(tmp_path / "submission.xlsx", [customer_row("other")])
     _, report = report_for([sheet], [form])
     finding = next(item for item in report["errors"] if item["code"] == "sample.missing_metadata")
+    assert "No SSF match" in finding["message"]
     assert finding["file"] == str(sheet)
     assert finding["row"] == 5
     assert finding["column"] == "Sample_ID"

@@ -59,6 +59,8 @@ class ProjectPairResult(ValidationResult):
                       project_settings=copy.deepcopy(self.project_settings),
                       libprep_selections=copy.deepcopy(self.selections),
                       project_reports={key: value.to_dict() for key, value in self.project_results.items()})
+        if self.mode == "sheet_set":
+            report.update(kind="sheet_set", sheet_set_api_version=1)
         return report
 
     def render_text(self):
@@ -201,8 +203,16 @@ def _run_geometry(run_info):
         raise LibprepConfigError("Cannot determine physical run geometry from {}: {}".format(run_info, error)) from error
 
 
+class PhysicalGeometryRequired(LibprepConfigError):
+    """A valid planning input needs the physical run recipe to be resolved."""
+
+
 def _override_geometry(mask, physical, include_indexes=False):
     tokens = str(mask).split(";")
+    # A wildcard in an earlier read must not hide malformed subsequent tokens.
+    for token in tokens:
+        if not re.fullmatch(r"(?:[YIUN](?:[1-9][0-9]*|\*))+", token.upper()) or token.count("*") > 1:
+            raise LibprepConfigError("Unsupported OverrideCycles token {!r}".format(token))
     if physical is not None and len(tokens) != len(physical):
         raise LibprepConfigError("OverrideCycles has {} reads; physical run has {}".format(len(tokens), len(physical)))
     geometry, index_geometry = [], []
@@ -211,8 +221,10 @@ def _override_geometry(mask, physical, include_indexes=False):
         if not parts or "".join(letter + count for letter, count in parts) != token.upper():
             raise LibprepConfigError("Unsupported OverrideCycles token {!r}".format(token))
         if any(count == "*" for letter, count in parts):
-            if physical is None or sum(count == "*" for letter, count in parts) > 1:
+            if sum(count == "*" for letter, count in parts) > 1:
                 raise LibprepConfigError("OverrideCycles '*' requires an unambiguous physical run geometry")
+            if physical is None:
+                raise PhysicalGeometryRequired("OverrideCycles '*' requires the physical run geometry")
             remaining = physical[i][0] - sum(int(count) for letter, count in parts if count != "*")
             if remaining <= 0:
                 raise LibprepConfigError("OverrideCycles exceeds physical read length")
@@ -244,23 +256,56 @@ def derive_project_geometry(sheet, run_info=None):
     sheet = _parsed_sheet(sheet)
     settings = samplesheet_settings(sheet)
     physical, _lanes = _run_geometry(run_info)
-    declared = []
-    for row in sheet.get("sections", {}).get("reads", []):
-        if not row[0].strip():
-            continue
-        try:
-            declared.append(int(row[0]))
-        except ValueError as error:
-            raise LibprepConfigError("Invalid [Reads] cycle count in {}".format(sheet["path"])) from error
+    declared = declared_reads(sheet)
     fallback = [cycles for cycles, indexed in physical if not indexed] if physical else declared
     layouts = set()
     for row in sheet["records"]:
         mask = row.get("OverrideCycles") or settings.get("OverrideCycles")
+        if not mask and not fallback:
+            raise PhysicalGeometryRequired("Supply read lengths or physical RunInfo.xml to determine the biological reads.")
         geometry = _override_geometry(mask, physical) if mask else list(validate_read_geometry(fallback))
         layouts.add(tuple(geometry))
     if len(layouts) != 1:
         raise LibprepConfigError("Project has different effective biological read layouts; split the unsupported project definition")
     return list(next(iter(layouts)))
+
+
+def declared_reads(sheet):
+    rows = [r for r in sheet["sections"].get("reads", []) if r and r[0].strip()]
+    if not rows:
+        return []
+    try:
+        if sheet["data_section"].casefold() == "bclconvert_data":
+            named = {r[0].strip().casefold(): r[1].strip() for r in rows if len(r) >= 2}
+            if named:
+                return list(validate_read_geometry([int(named[k]) for k in ("read1cycles", "read2cycles") if k in named]))
+        return list(validate_read_geometry([int(r[0]) for r in rows]))
+    except ValueError as error:
+        raise LibprepConfigError("Invalid [Reads] cycle counts in {}".format(sheet["path"])) from error
+
+
+def _strict_project(result, sheet, project_id):
+    for row in sheet["records"]:
+        if row["Sample_Project"] != project_id:
+            result.add("error", "pair.sheet_project_conflict", "Project differs from Sample_Project; correct the selected sheet.",
+                       project_id=project_id, file=sheet["path"], row=row["_row"], column="Sample_Project",
+                       sample_id=row["Sample_ID"], details={"value": row["Sample_Project"]})
+
+
+def _strict_workbook(result, findings, project_id):
+    for finding in findings:
+        if finding["code"] == "sample.project_precedence":
+            result.add("error", "pair.form_project_conflict", "Submission project contradicts the selected sheet project; correct the pair.",
+                       project_id=project_id, **{k: v for k, v in finding.items() if k not in ("code", "message", "severity")})
+
+
+def validate_project_workbook(project_id, samplesheet, workbook):
+    """Strict one-project intake independent of workbook filenames."""
+    result = validate_inputs([samplesheet], [workbook])
+    for sheet in result.sheets:
+        _strict_project(result, sheet, project_id)
+    _strict_workbook(result, list(result.findings), project_id)
+    return result
 
 
 def _allowance(value):
@@ -292,6 +337,38 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
     OverrideCycles supplies an effective layout. Report inputs bind every file.
     """
     result = resolve_project_pairs(samplesheets, submission_forms)
+    return _validate_assignments(result, run_info, libprep_config, mismatch_policy, effective_settings,
+                                 allow_separate_passes, validate_legacy, skip_conversion_projects)
+
+
+def validate_sheet_set(project_sheets, *, run_info=None, libprep_config=None, mismatch_policy=None,
+                       effective_settings=None, allow_separate_passes=False, skip_conversion_projects=()):
+    """Validate a mapping of project ID to clean CSV path without workbook discovery."""
+    result = ProjectPairResult(mode="sheet_set")
+    if not project_sheets:
+        result.add("error", "input.missing_samplesheet", "Select at least one project sheet.")
+    for project_id, path in sorted(project_sheets.items()):
+        validated = ValidationResult()
+        path, content = _read(path, "samplesheet", validated)
+        if content is not None:
+            sheet = parse_samplesheet(content, path, validated)
+            if sheet:
+                validated.sheets.append(sheet)
+                validated.custom_options = sheet["options"]
+                ids = sorted({row["Sample_ID"] for row in sheet["records"]})
+                validated.summary = {
+                    "projects": [{"project_id": project_id, "sample_ids": ids, "sample_count": len(ids)}],
+                    "planned_samples": [{"sample_id": sid, "project_ids": [project_id]} for sid in ids],
+                }
+        result.inputs.extend(validated.inputs)
+        result.project_results[project_id] = validated
+        result.pairs.append(ProjectPair(project_id, path, None))
+    return _validate_assignments(result, run_info, libprep_config, mismatch_policy, effective_settings,
+                                 allow_separate_passes, False, skip_conversion_projects, planning=True)
+
+
+def _validate_assignments(result, run_info, libprep_config, mismatch_policy, effective_settings,
+                          allow_separate_passes, validate_legacy, skip_conversion_projects, planning=False):
     physical, lane_count, captured_run_info = None, None, None
     if run_info is not None:
         _path, captured_run_info = _read(run_info, "run_info", result)
@@ -315,7 +392,8 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
         policy = {"index": 1, "index2": 1}
     project_summaries = []
     for pair in result.pairs:
-        validated = validate_inputs([pair.sample_sheet], [pair.submission_form])
+        validated = (result.project_results[pair.project_id] if planning else
+                     validate_inputs([pair.sample_sheet], [pair.submission_form]))
         key = pair.project_id or "legacy"
         result.project_results[key] = validated
         for finding in validated.findings:
@@ -333,14 +411,8 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
             # multi-project or unindexed/manual-analysis acceptance.
             continue
         if pair.project_id:
-            for row in sheet["records"]:
-                if row["Sample_Project"] != pair.project_id:
-                    result.add("error", "pair.sheet_project_conflict", "Filename project differs from Sample_Project; project assignments are not borrowed or rewritten.",
-                               project_id=pair.project_id, file=pair.sample_sheet, row=row["_row"], column="Sample_Project", sample_id=row["Sample_ID"], details={"value": row["Sample_Project"]})
-            for finding in validated.findings:
-                if finding["code"] == "sample.project_precedence":
-                    result.add("error", "pair.form_project_conflict", "Submission project contradicts the filename/SampleSheet project; correct the pair.",
-                               project_id=pair.project_id, **{k: v for k, v in finding.items() if k not in ("code", "message", "severity")})
+            _strict_project(result, sheet, pair.project_id)
+            _strict_workbook(result, validated.findings, pair.project_id)
         try:
             settings = samplesheet_settings(sheet)
             settings.update((effective_settings or {}).get(key, {}))
@@ -353,11 +425,14 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
                            "IndependentIndexCollisionCheck is unsupported for project-paired validation; remove it or use a separately supported run plan before processing.",
                            project_id=pair.project_id, file=pair.sample_sheet, column="IndependentIndexCollisionCheck")
             has_geometry = run_info is not None or bool(sheet.get("sections", {}).get("reads")) or settings.get("OverrideCycles") or any(row.get("OverrideCycles") for row in sheet["records"])
-            if has_geometry:
+            if has_geometry or planning:
                 geometry = derive_project_geometry(sheet, run_info=captured_run_info)
                 result.project_geometry[key] = geometry
                 if snapshot is not None:
                     result.selections[key] = snapshot.select(validated.custom_options.get("Libprep"), geometry).diagnostics()
+        except PhysicalGeometryRequired as error:
+            result.add("info" if planning else "error", "planning.geometry_required" if planning else "demux.project_geometry",
+                       str(error), project_id=pair.project_id, file=pair.sample_sheet)
         except LibprepConfigError as error:
             result.add("error", "demux.project_geometry", str(error), project_id=pair.project_id, file=pair.sample_sheet)
             settings = result.project_settings.get(key, {})
@@ -391,6 +466,15 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
             except LibprepConfigError as error:
                 result.add("error", "demux.mismatch_policy", str(error), **context)
                 allowances = policy.copy()
+            mask = row_settings.get("OverrideCycles")
+            if planning and physical is None and mask and "*" not in mask:
+                tokens = mask.upper().split(";")
+                if all(re.fullmatch(r"(?:[YIUN][1-9][0-9]*)+", t) and ("I" in t or "Y" in t) for t in tokens):
+                    index_lengths = [sum(map(int, re.findall(r"I([0-9]+)", t))) for t in tokens if "I" in t]
+                    for i, column in enumerate(("index", "index2")):
+                        if indexes[column] and (i >= len(index_lengths) or len(indexes[column]) != index_lengths[i]):
+                            result.add("error", "demux.index_geometry", "Index length differs from the explicit OverrideCycles index cycles.",
+                                       column=column, **context)
             if physical is not None:
                 physical_indexes = [cycles for cycles, indexed in physical if indexed]
                 if row_settings.get("OverrideCycles"):
@@ -407,7 +491,7 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
                                            sample_id=sid, lane=lane, **indexes, mismatches=allowances,
                                            settings=row_settings, effective_read_geometry=result.project_geometry.get(key),
                                            index_provenance=row["_index_provenance"]))
-    if result.mode == "project_pairs" and not allow_separate_passes:
+    if result.mode in ("project_pairs", "sheet_set") and not allow_separate_passes:
         all_global_keys = set().union(*(set(settings) for settings in result.project_settings.values())) - PER_SAMPLE_SETTINGS
         for setting in sorted(all_global_keys):
             values = {key: settings.get(setting) for key, settings in result.project_settings.items()}
@@ -428,7 +512,48 @@ def validate_project_pairs(samplesheets, submission_forms, *, run_info=None,
                 continue
             if all(_distance(left[column], right[column]) <= left["mismatches"][column] + right["mismatches"][column] for column in ("index", "index2")):
                 result.add("error", "demux.index_collision", "Lane/index assignments overlap under the selected mismatch allowances.", **context)
+    if planning:
+        _check_planned_layouts(result, physical)
+        if physical is None:
+            result.add("info", "planning.physical_checks", "Physical lane bounds and acquired read/index cycles require RunInfo.xml.")
     planned = [item for value in result.project_results.values() for item in value.summary.get("planned_samples", [])]
     result.summary = dict(projects=project_summaries, planned_samples=planned, planned_sample_count=len(planned),
                           pair_count=len(result.pairs), assignment_count=len(assignments), matching_complete=result.ok)
     return result
+
+def _check_planned_layouts(result, physical):
+    """Unmasked reads must share one layout; explicit masks must fit that layout."""
+    unmasked = {}
+    masks = {}
+    for key, parsed in result.project_results.items():
+        if not parsed.sheets:
+            continue
+        sheet = parsed.sheets[0]
+        settings = result.project_settings.get(key, {})
+        for row in sheet["records"]:
+            mask = row.get("OverrideCycles") or settings.get("OverrideCycles")
+            if mask and "*" not in mask:
+                tokens = mask.upper().split(";")
+                if all(re.fullmatch(r"(?:[YIUN][1-9][0-9]*)+", token) for token in tokens):
+                    total = tuple(sum(map(int, re.findall(r"[0-9]+", token))) for token in tokens)
+                    masks.setdefault(total, set()).add(key)
+                    # Only explicit biological and index roles constrain the full
+                    # layout here. An entirely masked read needs physical RunInfo.
+                    if all("Y" in token or "I" in token for token in tokens):
+                        reads = tuple(n for n, token in zip(total, tokens) if "Y" in token)
+                        unmasked.setdefault(reads, set()).add(key)
+            if not mask:
+                try:
+                    reads = declared_reads(sheet)
+                except LibprepConfigError:
+                    continue  # The geometry check reports malformed declarations.
+                if reads:
+                    unmasked.setdefault(tuple(reads), set()).add(key)
+                    if physical and list(reads) != [n for n, indexed in physical if not indexed]:
+                        result.add("error", "planning.override_required", "Declared reads differ from the physical run; supply OverrideCycles.",
+                                   project_id=key, file=sheet["path"], row=row["_row"])
+    if len(unmasked) > 1 or len(masks) > 1:
+        projects = sorted({key for group in (unmasked, masks) for keys in group.values() for key in keys})
+        result.add("error", "planning.incompatible_layouts",
+                   "Projects {} require different run layouts; supply compatible OverrideCycles for the shorter reads.".format(", ".join(projects)),
+                   details={"project_ids": projects})
